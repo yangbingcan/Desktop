@@ -1,0 +1,196 @@
+/** @file 全局基础样式 - 企业级精致主题 v7.0 - 毛玻璃质感+丝滑过渡 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  font-family: var(--gl-font-family) !important;
+  font-size: var(--gl-font-size-base) !important;
+  color: var(--gl-text-primary) !important;
+  background: var(--gl-content-bg) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background var(--gl-transition-normal), color var(--gl-transition-normal);
+}
+
+a { color: var(--gl-primary); text-decoration: none; transition: color var(--gl-transition-fast); }
+a:hover { color: var(--gl-primary-hover); }
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+  transition: background var(--gl-transition-fast);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.gl-scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.ant-app {
+  height: 100% !important;
+  color: var(--gl-text-primary) !important;
+  background: var(--gl-content-bg) !important;
+}
+
+.ant-layout {
+  background: var(--gl-content-bg) !important;
+}
+
+.ant-layout-sider {
+  background: transparent !important;
+}
+
+.gl-glass {
+  backdrop-filter: blur(var(--gl-glass-blur)) saturate(var(--gl-glass-saturate));
+  -webkit-backdrop-filter: blur(var(--gl-glass-blur)) saturate(var(--gl-glass-saturate));
+}
+
+.gl-glass-light {
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+.gl-icon-btn {
+  transition: background var(--gl-transition-fast), color var(--gl-transition-fast), transform var(--gl-transition-fast);
+}
+.gl-icon-btn:hover {
+  background: var(--gl-hover-bg) !important;
+}
+.gl-icon-btn:active {
+  transform: scale(0.95);
+}
+
+.gl-sidebar-btn {
+  transition: background var(--gl-transition-fast), color var(--gl-transition-fast), transform var(--gl-transition-fast);
+}
+.gl-sidebar-btn:hover {
+  background: var(--gl-sidebar-item-hover) !important;
+}
+.gl-sidebar-btn:active {
+  transform: scale(0.97);
+}
+
+.gl-sidebar-popup-btn {
+  transition: background var(--gl-transition-fast), color var(--gl-transition-fast), transform var(--gl-transition-fast);
+}
+.gl-sidebar-popup-btn:hover {
+  background: var(--gl-hover-bg) !important;
+}
+.gl-sidebar-popup-btn:active {
+  transform: scale(0.97);
+}
+
+.gl-tab-close {
+  transition: background var(--gl-transition-fast), color var(--gl-transition-fast), transform var(--gl-transition-fast);
+}
+.gl-tab-close:hover {
+  background: rgba(255, 77, 79, 0.1) !important;
+  color: var(--gl-error) !important;
+  transform: scale(1.1);
+}
+
+.gl-win-close:hover {
+  background: #E81123 !important;
+  color: #fff !important;
+}
+
+.gl-card-glass {
+  background: var(--gl-card-bg);
+  backdrop-filter: blur(var(--gl-glass-blur)) saturate(var(--gl-glass-saturate));
+  -webkit-backdrop-filter: blur(var(--gl-glass-blur)) saturate(var(--gl-glass-saturate));
+  border: 1px solid var(--gl-card-border);
+  border-radius: var(--gl-radius-lg);
+  box-shadow: var(--gl-shadow-card);
+  transition: box-shadow var(--gl-transition-normal), transform var(--gl-transition-normal), border-color var(--gl-transition-normal);
+}
+
+.gl-card-glass:hover {
+  box-shadow: var(--gl-shadow-card-hover);
+  border-color: var(--gl-primary-supply);
+  transform: translateY(-1px);
+}
+
+.gl-fade-in {
+  animation: glFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes glFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.gl-slide-in-right {
+  animation: glSlideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes glSlideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.gl-scale-in {
+  animation: glScaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes glScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.gl-mask-left,
+.gl-mask-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.gl-mask-left {
+  left: 0;
+  background: linear-gradient(to right, var(--gl-titlebar-bg), transparent);
+}
+.gl-mask-right {
+  right: 0;
+  background: linear-gradient(to left, var(--gl-titlebar-bg), transparent);
+}
+.gl-mask-visible {
+  opacity: 1;
+}
+
+[data-compact='true'] .gl-sidebar-item {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+[data-compact='true'] main > div {
+  padding: 12px !important;
+}

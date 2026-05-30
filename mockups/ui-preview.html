@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管用GL - 企业级UI设计预览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<style>
+:root {
+  --gl-primary: #2563EB;
+  --gl-primary-hover: #3B82F6;
+  --gl-primary-active: #1D4ED8;
+  --gl-primary-light: #DBEAFE;
+  --gl-primary-bg: #EFF6FF;
+  --gl-sidebar-bg: #0F172A;
+  --gl-sidebar-item-hover: #1E293B;
+  --gl-sidebar-item-active-bg: rgba(37,99,235,0.15);
+  --gl-sidebar-item-active-border: #2563EB;
+  --gl-sidebar-text: #94A3B8;
+  --gl-sidebar-text-active: #FFFFFF;
+  --gl-sidebar-width: 220px;
+  --gl-sidebar-collapsed: 64px;
+  --gl-content-bg: #F1F5F9;
+  --gl-card-bg: #FFFFFF;
+  --gl-text-primary: #1E293B;
+  --gl-text-secondary: #64748B;
+  --gl-text-tertiary: #94A3B8;
+  --gl-border: #E2E8F0;
+  --gl-border-light: #F1F5F9;
+  --gl-success: #10B981;
+  --gl-success-bg: #ECFDF5;
+  --gl-warning: #F59E0B;
+  --gl-warning-bg: #FFFBEB;
+  --gl-error: #EF4444;
+  --gl-error-bg: #FEF2F2;
+  --gl-info: #3B82F6;
+  --gl-info-bg: #EFF6FF;
+  --gl-radius-sm: 4px;
+  --gl-radius-md: 6px;
+  --gl-radius-lg: 8px;
+  --gl-radius-xl: 12px;
+  --gl-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --gl-shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --gl-shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+  --gl-topbar-bg: #FFFFFF;
+  --gl-topbar-height: 52px;
+  --gl-tabbar-bg: #FFFFFF;
+  --gl-tabbar-height: 38px;
+  --gl-tab-bg: #FFFFFF;
+  --gl-tab-active-bg: var(--gl-content-bg);
+  --gl-tab-text: var(--gl-text-secondary);
+  --gl-tab-active-text: var(--gl-text-primary);
+  --gl-font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme="dark"] {
+  --gl-content-bg: #1E293B;
+  --gl-card-bg: #334155;
+  --gl-text-primary: #F1F5F9;
+  --gl-text-secondary: #94A3B8;
+  --gl-text-tertiary: #64748B;
+  --gl-border: #475569;
+  --gl-border-light: #334155;
+  --gl-sidebar-bg: #0B1120;
+  --gl-sidebar-item-hover: #1E293B;
+  --gl-topbar-bg: #334155;
+  --gl-tabbar-bg: #334155;
+  --gl-tab-bg: #334155;
+  --gl-tab-active-bg: var(--gl-content-bg);
+  --gl-tab-text: #94A3B8;
+  --gl-tab-active-text: #F1F5F9;
+  --gl-primary-light: #1E3A5F;
+  --gl-primary-bg: #1E3A5F;
+  --gl-success-bg: #064E3B;
+  --gl-warning-bg: #78350F;
+  --gl-error-bg: #7F1D1D;
+  --gl-info-bg: #1E3A5F;
+  --gl-shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --gl-shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+  --gl-shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: var(--gl-font-family); font-size:14px; color:var(--gl-text-primary); background:var(--gl-content-bg); overflow:hidden; height:100vh; }
+
+.page-nav {
+  position:fixed; top:0; left:0; right:0; z-index:9999;
+  background:var(--gl-sidebar-bg); height:44px;
+  display:flex; align-items:center; padding:0 16px; gap:8px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+.page-nav .nav-brand { color:#fff; font-weight:600; font-size:13px; margin-right:24px; white-space:nowrap; }
+.page-nav .nav-btn {
+  background:transparent; border:1px solid rgba(255,255,255,0.15); color:#94A3B8;
+  padding:4px 14px; border-radius:4px; cursor:pointer; font-size:12px; font-family:inherit;
+  transition:all 0.2s;
+}
+.page-nav .nav-btn:hover, .page-nav .nav-btn.active { background:var(--gl-primary); color:#fff; border-color:var(--gl-primary); }
+.page-nav .nav-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.page-nav .theme-toggle {
+  background:transparent; border:1px solid rgba(255,255,255,0.15); color:#94A3B8;
+  width:32px; height:32px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; font-size:14px;
+}
+.page-nav .theme-toggle:hover { background:rgba(255,255,255,0.1); color:#fff; }
+
+.page { display:none; height:calc(100vh - 44px); margin-top:44px; }
+.page.active { display:flex; }
+
+/* ========== LOGIN PAGE ========== */
+.login-page {
+  width:100%; height:100%; position:relative; overflow:hidden;
+  background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 40%, #1D4ED8 100%);
+}
+.login-bg-pattern {
+  position:absolute; inset:0;
+  background-image:
+    radial-gradient(circle at 20% 50%, rgba(37,99,235,0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(59,130,246,0.1) 0%, transparent 40%),
+    radial-gradient(circle at 60% 80%, rgba(96,165,250,0.08) 0%, transparent 40%);
+}
+.login-bg-grid {
+  position:absolute; inset:0;
+  background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.login-container {
+  position:relative; z-index:1; width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center; padding:40px;
+}
+.login-left {
+  flex:1; max-width:520px; padding-right:80px; color:#fff;
+}
+.login-left .brand-icon {
+  width:56px; height:56px; border-radius:14px;
+  background:linear-gradient(135deg, #3B82F6, #2563EB);
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px; font-weight:700; color:#fff; margin-bottom:28px;
+  box-shadow:0 8px 24px rgba(37,99,235,0.4);
+}
+.login-left h1 { font-size:36px; font-weight:700; margin-bottom:12px; letter-spacing:-0.5px; }
+.login-left .tagline { font-size:18px; color:rgba(255,255,255,0.7); margin-bottom:36px; }
+.login-left .features { list-style:none; }
+.login-left .features li {
+  display:flex; align-items:center; gap:12px; padding:10px 0;
+  color:rgba(255,255,255,0.8); font-size:14px;
+}
+.login-left .features li i { color:#60A5FA; font-size:16px; width:20px; text-align:center; }
+.login-card {
+  width:400px; background:rgba(255,255,255,0.95); backdrop-filter:blur(20px);
+  border-radius:16px; padding:40px; box-shadow:0 24px 48px rgba(0,0,0,0.2);
+}
+[data-theme="dark"] .login-card { background:rgba(30,41,59,0.95); }
+.login-card h2 { font-size:22px; font-weight:600; margin-bottom:6px; color:var(--gl-text-primary); }
+.login-card .login-subtitle { font-size:13px; color:var(--gl-text-secondary); margin-bottom:28px; }
+.login-card .form-group { margin-bottom:20px; }
+.login-card .form-label { display:block; font-size:13px; font-weight:500; color:var(--gl-text-secondary); margin-bottom:6px; }
+.login-card .form-input {
+  width:100%; height:42px; padding:0 12px 0 40px; border:1px solid var(--gl-border);
+  border-radius:8px; font-size:14px; font-family:inherit; color:var(--gl-text-primary);
+  background:var(--gl-card-bg); transition:all 0.2s; outline:none;
+}
+.login-card .form-input:focus { border-color:var(--gl-primary); box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
+.login-card .input-wrapper { position:relative; }
+.login-card .input-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--gl-text-tertiary); font-size:14px; }
+.login-card .form-options { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+.login-card .checkbox-label { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--gl-text-secondary); cursor:pointer; }
+.login-card .checkbox-label input { accent-color:var(--gl-primary); }
+.login-card .forgot-link { font-size:13px; color:var(--gl-primary); text-decoration:none; }
+.login-card .login-btn {
+  width:100%; height:44px; background:var(--gl-primary); color:#fff; border:none;
+  border-radius:8px; font-size:15px; font-weight:500; cursor:pointer; font-family:inherit;
+  transition:all 0.2s;
+}
+.login-card .login-btn:hover { background:var(--gl-primary-hover); }
+.login-card .login-footer { text-align:center; margin-top:20px; font-size:12px; color:var(--gl-text-tertiary); }
+
+/* ========== APP LAYOUT ========== */
+.app-layout { width:100%; height:100%; display:flex; }
+
+/* Sidebar */
+.sidebar {
+  width:var(--gl-sidebar-width); height:100%; background:var(--gl-sidebar-bg);
+  display:flex; flex-direction:column; flex-shrink:0; overflow:hidden;
+  border-right:1px solid rgba(255,255,255,0.06);
+}
+.sidebar-brand {
+  height:52px; display:flex; align-items:center; padding:0 16px; gap:10px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.sidebar-brand .brand-logo {
+  width:32px; height:32px; border-radius:8px;
+  background:linear-gradient(135deg, #3B82F6, #2563EB);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700; color:#fff; flex-shrink:0;
+}
+.sidebar-brand .brand-text { color:#fff; font-weight:600; font-size:15px; white-space:nowrap; }
+.sidebar-brand .brand-ver { color:#64748B; font-size:10px; margin-left:4px; }
+.sidebar-menu { flex:1; overflow-y:auto; padding:8px 0; }
+.sidebar-menu::-webkit-scrollbar { width:4px; }
+.sidebar-menu::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+.sidebar-group { margin-bottom:4px; }
+.sidebar-group-title {
+  padding:16px 20px 6px; font-size:11px; font-weight:500; color:#475569;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.sidebar-item {
+  display:flex; align-items:center; gap:10px; padding:9px 16px; margin:1px 8px;
+  border-radius:6px; color:var(--gl-sidebar-text); cursor:pointer;
+  transition:all 0.15s; font-size:13px; position:relative;
+}
+.sidebar-item:hover { background:var(--gl-sidebar-item-hover); color:#CBD5E1; }
+.sidebar-item.active {
+  background:var(--gl-sidebar-item-active-bg); color:var(--gl-sidebar-text-active);
+}
+.sidebar-item.active::before {
+  content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+  width:3px; height:20px; background:var(--gl-primary); border-radius:0 2px 2px 0;
+}
+.sidebar-item i { width:18px; text-align:center; font-size:14px; flex-shrink:0; }
+.sidebar-item .item-badge {
+  margin-left:auto; background:var(--gl-error); color:#fff;
+  font-size:10px; padding:1px 6px; border-radius:10px; font-weight:500;
+}
+.sidebar-user {
+  padding:12px 16px; border-top:1px solid rgba(255,255,255,0.06);
+  display:flex; align-items:center; gap:10px;
+}
+.sidebar-user .user-avatar {
+  width:32px; height:32px; border-radius:8px;
+  background:linear-gradient(135deg, #6366F1, #8B5CF6);
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:12px; font-weight:600; flex-shrink:0;
+}
+.sidebar-user .user-info { flex:1; min-width:0; }
+.sidebar-user .user-name { color:#E2E8F0; font-size:13px; font-weight:500; }
+.sidebar-user .user-role { color:#64748B; font-size:11px; }
+
+/* Main content */
+.main-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.topbar {
+  height:var(--gl-topbar-height); background:var(--gl-topbar-bg);
+  border-bottom:1px solid var(--gl-border); display:flex; align-items:center;
+  padding:0 20px; gap:16px; flex-shrink:0;
+}
+.topbar .breadcrumb { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--gl-text-secondary); }
+.topbar .breadcrumb .bc-sep { color:var(--gl-text-tertiary); }
+.topbar .breadcrumb .bc-current { color:var(--gl-text-primary); font-weight:500; }
+.topbar .topbar-right { margin-left:auto; display:flex; align-items:center; gap:12px; }
+.topbar .search-box {
+  width:220px; height:32px; border:1px solid var(--gl-border); border-radius:6px;
+  padding:0 10px 0 32px; font-size:13px; background:var(--gl-card-bg); color:var(--gl-text-primary);
+  font-family:inherit; outline:none; transition:all 0.2s;
+}
+.topbar .search-box:focus { border-color:var(--gl-primary); box-shadow:0 0 0 2px rgba(37,99,235,0.1); }
+.topbar .search-wrapper { position:relative; }
+.topbar .search-wrapper i { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--gl-text-tertiary); font-size:12px; }
+.topbar .icon-btn {
+  width:32px; height:32px; border-radius:6px; border:none; background:transparent;
+  color:var(--gl-text-secondary); cursor:pointer; display:flex; align-items:center;
+  justify-content:center; font-size:16px; transition:all 0.15s; position:relative;
+}
+.topbar .icon-btn:hover { background:var(--gl-content-bg); color:var(--gl-text-primary); }
+.topbar .icon-btn .badge-dot {
+  position:absolute; top:6px; right:6px; width:6px; height:6px;
+  background:var(--gl-error); border-radius:50%; border:1.5px solid var(--gl-topbar-bg);
+}
+.topbar .user-dropdown {
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  padding:4px 8px; border-radius:6px; transition:all 0.15s;
+}
+.topbar .user-dropdown:hover { background:var(--gl-content-bg); }
+.topbar .user-dropdown .avatar-sm {
+  width:28px; height:28px; border-radius:6px;
+  background:linear-gradient(135deg, #6366F1, #8B5CF6);
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:11px; font-weight:600;
+}
+.topbar .user-dropdown .user-name-sm { font-size:13px; color:var(--gl-text-primary); }
+
+.tab-bar {
+  height:var(--gl-tabbar-height); background:var(--gl-tabbar-bg);
+  border-bottom:1px solid var(--gl-border); display:flex; align-items:flex-end;
+  padding:0 8px; flex-shrink:0; overflow-x:auto; overflow-y:hidden;
+}
+.tab-bar::-webkit-scrollbar { height:0; }
+.tab-item {
+  display:flex; align-items:center; gap:6px; padding:7px 14px;
+  font-size:12px; color:var(--gl-tab-text); cursor:pointer;
+  border:1px solid transparent; border-bottom:none;
+  border-radius:6px 6px 0 0; transition:all 0.15s;
+  white-space:nowrap; position:relative; background:transparent;
+  font-family:inherit; max-width:160px;
+}
+.tab-item:hover { color:var(--gl-tab-active-text); background:var(--gl-tab-active-bg); }
+.tab-item.active {
+  color:var(--gl-tab-active-text); background:var(--gl-tab-active-bg);
+  border-color:var(--gl-border); font-weight:500;
+}
+.tab-item.active::after {
+  content:''; position:absolute; bottom:-1px; left:0; right:0;
+  height:2px; background:var(--gl-primary);
+}
+.tab-item i { font-size:12px; }
+.tab-item .tab-close {
+  width:16px; height:16px; border-radius:3px; border:none; background:transparent;
+  color:var(--gl-text-tertiary); cursor:pointer; display:flex; align-items:center;
+  justify-content:center; font-size:9px; transition:all 0.15s; margin-left:4px;
+}
+.tab-item .tab-close:hover { background:var(--gl-error-bg); color:var(--gl-error); }
+.tab-item .tab-dot {
+  width:6px; height:6px; border-radius:50%; background:var(--gl-primary); flex-shrink:0;
+}
+
+.content-area { flex:1; overflow-y:auto; padding:20px; background:var(--gl-content-bg); }
+.content-area::-webkit-scrollbar { width:6px; }
+.content-area::-webkit-scrollbar-thumb { background:var(--gl-border); border-radius:3px; }
+
+/* ========== DASHBOARD ========== */
+.welcome-banner {
+  background:linear-gradient(135deg, #1E40AF, #3B82F6);
+  border-radius:var(--gl-radius-xl); padding:28px 32px; color:#fff;
+  margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;
+  position:relative; overflow:hidden;
+}
+.welcome-banner::after {
+  content:''; position:absolute; right:-40px; top:-40px; width:200px; height:200px;
+  background:rgba(255,255,255,0.05); border-radius:50%;
+}
+.welcome-banner h2 { font-size:20px; font-weight:600; margin-bottom:4px; }
+.welcome-banner p { font-size:13px; color:rgba(255,255,255,0.8); }
+.welcome-banner .welcome-date { font-size:12px; color:rgba(255,255,255,0.6); margin-top:8px; }
+.welcome-banner .quick-actions { display:flex; gap:8px; }
+.welcome-banner .quick-btn {
+  padding:8px 16px; border-radius:6px; border:1px solid rgba(255,255,255,0.3);
+  background:rgba(255,255,255,0.1); color:#fff; font-size:12px; cursor:pointer;
+  font-family:inherit; transition:all 0.15s; backdrop-filter:blur(4px);
+}
+.welcome-banner .quick-btn:hover { background:rgba(255,255,255,0.2); }
+
+.stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+.stat-card {
+  background:var(--gl-card-bg); border-radius:var(--gl-radius-lg); padding:20px;
+  border:1px solid var(--gl-border); transition:all 0.2s;
+}
+.stat-card:hover { box-shadow:var(--gl-shadow-md); transform:translateY(-1px); }
+.stat-card .stat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.stat-card .stat-title { font-size:13px; color:var(--gl-text-secondary); }
+.stat-card .stat-icon {
+  width:36px; height:36px; border-radius:8px; display:flex; align-items:center;
+  justify-content:center; font-size:16px;
+}
+.stat-card .stat-icon.blue { background:var(--gl-primary-bg); color:var(--gl-primary); }
+.stat-card .stat-icon.green { background:var(--gl-success-bg); color:var(--gl-success); }
+.stat-card .stat-icon.orange { background:var(--gl-warning-bg); color:var(--gl-warning); }
+.stat-card .stat-icon.red { background:var(--gl-error-bg); color:var(--gl-error); }
+.stat-card .stat-value { font-size:28px; font-weight:700; color:var(--gl-text-primary); line-height:1; margin-bottom:6px; }
+.stat-card .stat-trend { font-size:12px; display:flex; align-items:center; gap:4px; }
+.stat-card .stat-trend.up { color:var(--gl-success); }
+.stat-card .stat-trend.down { color:var(--gl-error); }
+
+.chart-grid { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px; }
+.chart-card {
+  background:var(--gl-card-bg); border-radius:var(--gl-radius-lg); padding:20px;
+  border:1px solid var(--gl-border);
+}
+.chart-card .card-title { font-size:15px; font-weight:600; margin-bottom:16px; color:var(--gl-text-primary); }
+.chart-placeholder {
+  height:200px; background:var(--gl-content-bg); border-radius:var(--gl-radius-md);
+  display:flex; align-items:center; justify-content:center; color:var(--gl-text-tertiary);
+  font-size:13px;
+}
+.chart-placeholder i { margin-right:8px; }
+
+.activity-list { list-style:none; }
+.activity-item {
+  display:flex; align-items:flex-start; gap:12px; padding:10px 0;
+  border-bottom:1px solid var(--gl-border-light);
+}
+.activity-item:last-child { border-bottom:none; }
+.activity-dot {
+  width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0;
+}
+.activity-dot.blue { background:var(--gl-primary); }
+.activity-dot.green { background:var(--gl-success); }
+.activity-dot.orange { background:var(--gl-warning); }
+.activity-content { flex:1; }
+.activity-text { font-size:13px; color:var(--gl-text-primary); }
+.activity-time { font-size:11px; color:var(--gl-text-tertiary); margin-top:2px; }
+
+/* ========== DATA CENTER ========== */
+.page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.page-header h2 { font-size:18px; font-weight:600; }
+.page-header .header-actions { display:flex; gap:8px; }
+.btn {
+  padding:7px 16px; border-radius:6px; font-size:13px; font-family:inherit;
+  cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center; gap:6px;
+  border:1px solid var(--gl-border); background:var(--gl-card-bg); color:var(--gl-text-primary);
+}
+.btn:hover { border-color:var(--gl-primary); color:var(--gl-primary); }
+.btn-primary {
+  background:var(--gl-primary); color:#fff; border-color:var(--gl-primary);
+}
+.btn-primary:hover { background:var(--gl-primary-hover); }
+
+.filter-bar {
+  background:var(--gl-card-bg); border-radius:var(--gl-radius-lg); padding:16px;
+  border:1px solid var(--gl-border); margin-bottom:16px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.filter-input {
+  height:32px; padding:0 10px; border:1px solid var(--gl-border); border-radius:6px;
+  font-size:13px; font-family:inherit; color:var(--gl-text-primary); background:var(--gl-card-bg);
+  outline:none;
+}
+.filter-input:focus { border-color:var(--gl-primary); }
+.filter-select {
+  height:32px; padding:0 28px 0 10px; border:1px solid var(--gl-border); border-radius:6px;
+  font-size:13px; font-family:inherit; color:var(--gl-text-primary); background:var(--gl-card-bg);
+  outline:none; appearance:none; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 8px center;
+}
+
+.data-table {
+  background:var(--gl-card-bg); border-radius:var(--gl-radius-lg);
+  border:1px solid var(--gl-border); overflow:hidden;
+}
+.data-table table { width:100%; border-collapse:collapse; }
+.data-table th {
+  background:var(--gl-content-bg); padding:10px 14px; text-align:left;
+  font-size:12px; font-weight:600; color:var(--gl-text-secondary);
+  border-bottom:1px solid var(--gl-border); white-space:nowrap;
+}
+.data-table td {
+  padding:10px 14px; font-size:13px; border-bottom:1px solid var(--gl-border-light);
+  color:var(--gl-text-primary);
+}
+.data-table tr:hover td { background:var(--gl-primary-bg); }
+.data-table .status-tag {
+  display:inline-flex; align-items:center; padding:2px 8px; border-radius:4px;
+  font-size:11px; font-weight:500;
+}
+.status-tag.success { background:var(--gl-success-bg); color:var(--gl-success); }
+.status-tag.warning { background:var(--gl-warning-bg); color:var(--gl-warning); }
+.status-tag.error { background:var(--gl-error-bg); color:var(--gl-error); }
+.status-tag.info { background:var(--gl-info-bg); color:var(--gl-info); }
+
+.table-footer {
+  display:flex; justify-content:space-between; align-items:center; padding:12px 16px;
+  border-top:1px solid var(--gl-border);
+}
+.table-footer .page-info { font-size:12px; color:var(--gl-text-secondary); }
+.table-footer .pagination { display:flex; gap:4px; }
+.table-footer .page-btn {
+  width:28px; height:28px; border:1px solid var(--gl-border); border-radius:4px;
+  background:var(--gl-card-bg); color:var(--gl-text-primary); font-size:12px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:inherit;
+}
+.table-footer .page-btn.active { background:var(--gl-primary); color:#fff; border-color:var(--gl-primary); }
+
+/* ========== FORM DESIGNER ========== */
+.designer-layout { display:grid; grid-template-columns:240px 1fr 280px; gap:0; height:100%; }
+.designer-panel {
+  background:var(--gl-card-bg); border:1px solid var(--gl-border); overflow-y:auto;
+}
+.designer-panel::-webkit-scrollbar { width:4px; }
+.designer-panel::-webkit-scrollbar-thumb { background:var(--gl-border); border-radius:2px; }
+.panel-header {
+  padding:14px 16px; font-size:13px; font-weight:600; color:var(--gl-text-primary);
+  border-bottom:1px solid var(--gl-border); position:sticky; top:0;
+  background:var(--gl-card-bg); z-index:1;
+}
+.field-group { padding:8px 12px; }
+.field-group-title { font-size:11px; font-weight:600; color:var(--gl-text-tertiary); padding:8px 4px 4px; text-transform:uppercase; letter-spacing:0.5px; }
+.field-item {
+  display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:6px;
+  cursor:grab; font-size:13px; color:var(--gl-text-primary); transition:all 0.15s;
+  border:1px solid transparent;
+}
+.field-item:hover { background:var(--gl-primary-bg); border-color:var(--gl-primary-light); }
+.field-item i { color:var(--gl-primary); font-size:14px; width:18px; text-align:center; }
+
+.designer-canvas {
+  background:var(--gl-content-bg); padding:20px; overflow-y:auto;
+  display:flex; flex-direction:column; align-items:center;
+}
+.canvas-wrapper {
+  width:100%; max-width:720px; background:var(--gl-card-bg);
+  border-radius:var(--gl-radius-lg); border:1px solid var(--gl-border);
+  min-height:500px; padding:24px;
+}
+.canvas-form-title {
+  font-size:16px; font-weight:600; color:var(--gl-text-primary); margin-bottom:4px;
+  border:none; outline:none; width:100%; background:transparent;
+  font-family:inherit;
+}
+.canvas-form-desc {
+  font-size:13px; color:var(--gl-text-tertiary); margin-bottom:20px; padding-bottom:16px;
+  border-bottom:1px dashed var(--gl-border);
+}
+.canvas-field {
+  padding:12px 14px; border:1px solid var(--gl-border); border-radius:6px;
+  margin-bottom:10px; cursor:pointer; transition:all 0.15s; position:relative;
+}
+.canvas-field:hover { border-color:var(--gl-primary); }
+.canvas-field.selected { border-color:var(--gl-primary); box-shadow:0 0 0 2px rgba(37,99,235,0.1); }
+.canvas-field .field-label { font-size:13px; font-weight:500; color:var(--gl-text-primary); margin-bottom:6px; }
+.canvas-field .field-label .required { color:var(--gl-error); margin-left:2px; }
+.canvas-field .field-input {
+  width:100%; height:34px; border:1px solid var(--gl-border); border-radius:4px;
+  padding:0 10px; font-size:13px; color:var(--gl-text-tertiary); background:var(--gl-card-bg);
+  font-family:inherit;
+}
+.canvas-field .field-actions {
+  position:absolute; top:8px; right:8px; display:none; gap:4px;
+}
+.canvas-field:hover .field-actions { display:flex; }
+.canvas-field .field-action-btn {
+  width:22px; height:22px; border-radius:4px; border:none; background:var(--gl-content-bg);
+  color:var(--gl-text-secondary); cursor:pointer; display:flex; align-items:center;
+  justify-content:center; font-size:10px;
+}
+.canvas-field .field-action-btn:hover { background:var(--gl-error-bg); color:var(--gl-error); }
+
+.property-panel .prop-section { padding:12px 16px; border-bottom:1px solid var(--gl-border-light); }
+.property-panel .prop-section-title { font-size:12px; font-weight:600; color:var(--gl-text-secondary); margin-bottom:10px; }
+.property-panel .prop-row { margin-bottom:10px; }
+.property-panel .prop-label { font-size:12px; color:var(--gl-text-secondary); margin-bottom:4px; }
+.property-panel .prop-input {
+  width:100%; height:30px; border:1px solid var(--gl-border); border-radius:4px;
+  padding:0 8px; font-size:12px; color:var(--gl-text-primary); background:var(--gl-card-bg);
+  font-family:inherit; outline:none;
+}
+.property-panel .prop-input:focus { border-color:var(--gl-primary); }
+.property-panel .prop-switch {
+  display:flex; align-items:center; justify-content:space-between;
+}
+.property-panel .switch-track {
+  width:36px; height:20px; border-radius:10px; background:var(--gl-border);
+  cursor:pointer; position:relative; transition:all 0.2s;
+}
+.property-panel .switch-track.on { background:var(--gl-primary); }
+.property-panel .switch-thumb {
+  width:16px; height:16px; border-radius:50%; background:#fff;
+  position:absolute; top:2px; left:2px; transition:all 0.2s;
+  box-shadow:0 1px 3px rgba(0,0,0,0.15);
+}
+.property-panel .switch-track.on .switch-thumb { left:18px; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width:1200px) {
+  .stat-grid { grid-template-columns:repeat(2,1fr); }
+  .chart-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Page Navigation -->
+<div class="page-nav">
+  <span class="nav-brand"><i class="fas fa-cube" style="margin-right:6px;color:#3B82F6"></i>管用GL UI设计预览</span>
+  <button class="nav-btn active" onclick="showPage('login')">登录页</button>
+  <button class="nav-btn" onclick="showPage('dashboard')">仪表盘</button>
+  <button class="nav-btn" onclick="showPage('data-center')">数据中心</button>
+  <button class="nav-btn" onclick="showPage('form-designer')">表单设计器</button>
+  <div class="nav-right">
+    <span style="color:#64748B;font-size:11px">深色/浅色</span>
+    <button class="theme-toggle" onclick="toggleTheme()" title="切换深色/浅色模式">
+      <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ==================== LOGIN PAGE ==================== -->
+<div class="page active" id="page-login">
+  <div class="login-page">
+    <div class="login-bg-pattern"></div>
+    <div class="login-bg-grid"></div>
+    <div class="login-container">
+      <div class="login-left">
+        <div class="brand-icon">GL</div>
+        <h1>管用GL</h1>
+        <p class="tagline">用管用，真管用</p>
+        <ul class="features">
+          <li><i class="fas fa-puzzle-piece"></i>零代码搭建企业管理系统，拖拽即用</li>
+          <li><i class="fas fa-shield-halved"></i>企业级细粒度权限，行级+字段级控制</li>
+          <li><i class="fas fa-diagram-project"></i>可视化审批流程，配置即生效</li>
+          <li><i class="fas fa-database"></i>数据自主可控，本地存储不依赖云</li>
+          <li><i class="fas fa-rocket"></i>安装包仅15MB，秒装即用</li>
+        </ul>
+      </div>
+      <div class="login-card">
+        <h2>欢迎回来</h2>
+        <p class="login-subtitle">登录到管用GL企业资源管理平台</p>
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <div class="input-wrapper">
+            <i class="fas fa-user input-icon"></i>
+            <input class="form-input" type="text" placeholder="请输入用户名" value="admin">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock input-icon"></i>
+            <input class="form-input" type="password" placeholder="请输入密码" value="••••••••">
+          </div>
+        </div>
+        <div class="form-options">
+          <label class="checkbox-label"><input type="checkbox" checked> 记住密码</label>
+          <a href="#" class="forgot-link">忘记密码？</a>
+        </div>
+        <button class="login-btn" onclick="showPage('dashboard')">登 录</button>
+        <p class="login-footer">管用GL v0.1.0 · 企业资源管理低代码平台</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DASHBOARD PAGE ==================== -->
+<div class="page" id="page-dashboard">
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">GL</div>
+        <div><span class="brand-text">管用GL</span><span class="brand-ver">v0.1</span></div>
+      </div>
+      <div class="sidebar-menu">
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">概览</div>
+          <div class="sidebar-item active"><i class="fas fa-chart-pie"></i>仪表盘</div>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">核心引擎</div>
+          <div class="sidebar-item"><i class="fas fa-puzzle-piece"></i>表单设计器</div>
+          <div class="sidebar-item"><i class="fas fa-database"></i>数据中心</div>
+          <div class="sidebar-item"><i class="fas fa-diagram-project"></i>流程管理<span class="item-badge">3</span></div>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">系统管理</div>
+          <div class="sidebar-item"><i class="fas fa-shield-halved"></i>权限管理</div>
+          <div class="sidebar-item"><i class="fas fa-users"></i>用户管理</div>
+          <div class="sidebar-item"><i class="fas fa-file-lines"></i>操作日志</div>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">配置</div>
+          <div class="sidebar-item"><i class="fas fa-gear"></i>系统设置</div>
+          <div class="sidebar-item"><i class="fas fa-cloud"></i>部署管理</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar">管</div>
+        <div class="user-info">
+          <div class="user-name">管理员</div>
+          <div class="user-role">超级管理员</div>
+        </div>
+      </div>
+    </div>
+    <div class="main-area">
+      <div class="topbar">
+        <div class="breadcrumb">
+          <span>首页</span><span class="bc-sep">/</span><span class="bc-current">仪表盘</span>
+        </div>
+        <div class="topbar-right">
+          <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input class="search-box" placeholder="搜索表单、数据、用户...">
+          </div>
+          <button class="icon-btn"><i class="fas fa-expand"></i></button>
+          <button class="icon-btn"><i class="fas fa-bell"></i><span class="badge-dot"></span></button>
+          <div class="user-dropdown">
+            <div class="avatar-sm">管</div>
+            <span class="user-name-sm">管理员</span>
+            <i class="fas fa-chevron-down" style="font-size:10px;color:var(--gl-text-tertiary)"></i>
+          </div>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab-item active"><i class="fas fa-chart-pie"></i>仪表盘<span class="tab-close"><i class="fas fa-times"></i></span></div>
+        <div class="tab-item"><i class="fas fa-database"></i>商品管理<span class="tab-close"><i class="fas fa-times"></i></span></div>
+        <div class="tab-item"><i class="fas fa-puzzle-piece"></i>采购申请表<span class="tab-close"><i class="fas fa-times"></i></span></div>
+      </div>
+      <div class="content-area">
+        <div class="welcome-banner">
+          <div>
+            <h2>早上好，管理员 👋</h2>
+            <p>今天有 3 条待办事项需要处理</p>
+            <div class="welcome-date">2026年5月28日 星期四</div>
+          </div>
+          <div class="quick-actions">
+            <button class="quick-btn"><i class="fas fa-plus" style="margin-right:4px"></i>新建表单</button>
+            <button class="quick-btn"><i class="fas fa-upload" style="margin-right:4px"></i>导入数据</button>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">表单数量</span>
+              <div class="stat-icon blue"><i class="fas fa-puzzle-piece"></i></div>
+            </div>
+            <div class="stat-value">12</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 2 本周新增</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">数据记录</span>
+              <div class="stat-icon green"><i class="fas fa-database"></i></div>
+            </div>
+            <div class="stat-value">1,284</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 156 本周新增</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">用户数量</span>
+              <div class="stat-icon orange"><i class="fas fa-users"></i></div>
+            </div>
+            <div class="stat-value">8</div>
+            <div class="stat-trend up"><i class="fas fa-arrow-up"></i> 1 本周新增</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">待办事项</span>
+              <div class="stat-icon red"><i class="fas fa-clock"></i></div>
+            </div>
+            <div class="stat-value">3</div>
+            <div class="stat-trend down"><i class="fas fa-arrow-down"></i> 2 已处理</div>
+          </div>
+        </div>
+        <div class="chart-grid">
+          <div class="chart-card">
+            <div class="card-title">数据趋势</div>
+            <div class="chart-placeholder"><i class="fas fa-chart-line"></i>近7天数据提交趋势图</div>
+          </div>
+          <div class="chart-card">
+            <div class="card-title">最近动态</div>
+            <ul class="activity-list">
+              <li class="activity-item">
+                <div class="activity-dot blue"></div>
+                <div class="activity-content">
+                  <div class="activity-text">张三 提交了「采购申请」审批</div>
+                  <div class="activity-time">5分钟前</div>
+                </div>
+              </li>
+              <li class="activity-item">
+                <div class="activity-dot green"></div>
+                <div class="activity-content">
+                  <div class="activity-text">李四 创建了新表单「客户拜访记录」</div>
+                  <div class="activity-time">23分钟前</div>
+                </div>
+              </li>
+              <li class="activity-item">
+                <div class="activity-dot orange"></div>
+                <div class="activity-content">
+                  <div class="activity-text">王五 修改了「商品管理」表单字段</div>
+                  <div class="activity-time">1小时前</div>
+                </div>
+              </li>
+              <li class="activity-item">
+                <div class="activity-dot blue"></div>
+                <div class="activity-content">
+                  <div class="activity-text">赵六 导入了 56 条商品数据</div>
+                  <div class="activity-time">2小时前</div>
+                </div>
+              </li>
+              <li class="activity-item">
+                <div class="activity-dot green"></div>
+                <div class="activity-content">
+                  <div class="activity-text">系统 自动备份完成</div>
+                  <div class="activity-time">3小时前</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DATA CENTER PAGE ==================== -->
+<div class="page" id="page-data-center">
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">GL</div>
+        <div><span class="brand-text">管用GL</span><span class="brand-ver">v0.1</span></div>
+      </div>
+      <div class="sidebar-menu">
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">概览</div>
+          <div class="sidebar-item"><i class="fas fa-chart-pie"></i>仪表盘</div>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">核心引擎</div>
+          <div class="sidebar-item"><i class="fas fa-puzzle-piece"></i>表单设计器</div>
+          <div class="sidebar-item active"><i class="fas fa-database"></i>数据中心</div>
+          <div class="sidebar-item"><i class="fas fa-diagram-project"></i>流程管理</div>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">系统管理</div>
+          <div class="sidebar-item"><i class="fas fa-shield-halved"></i>权限管理</div>
+          <div class="sidebar-item"><i class="fas fa-users"></i>用户管理</div>
+          <div class="sidebar-item"><i class="fas fa-file-lines"></i>操作日志</div>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">配置</div>
+          <div class="sidebar-item"><i class="fas fa-gear"></i>系统设置</div>
+          <div class="sidebar-item"><i class="fas fa-cloud"></i>部署管理</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar">管</div>
+        <div class="user-info">
+          <div class="user-name">管理员</div>
+          <div class="user-role">超级管理员</div>
+        </div>
+      </div>
+    </div>
+    <div class="main-area">
+      <div class="topbar">
+        <div class="breadcrumb">
+          <span>核心引擎</span><span class="bc-sep">/</span><span class="bc-current">数据中心</span>
+        </div>
+        <div class="topbar-right">
+          <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input class="search-box" placeholder="搜索数据...">
+          </div>
+          <button class="icon-btn"><i class="fas fa-expand"></i></button>
+          <button class="icon-btn"><i class="fas fa-bell"></i><span class="badge-dot"></span></button>
+          <div class="user-dropdown">
+            <div class="avatar-sm">管</div>
+            <span class="user-name-sm">管理员</span>
+            <i class="fas fa-chevron-down" style="font-size:10px;color:var(--gl-text-tertiary)"></i>
+          </div>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab-item"><i class="fas fa-chart-pie"></i>仪表盘<span class="tab-close"><i class="fas fa-times"></i></span></div>
+        <div class="tab-item active"><i class="fas fa-database"></i>商品管理<span class="tab-close"><i class="fas fa-times"></i></span></div>
+        <div class="tab-item"><i class="fas fa-puzzle-piece"></i>采购申请表<span class="tab-close"><i class="fas fa-times"></i></span></div>
+      </div>
+      <div class="content-area">
+        <div class="page-header">
+          <h2>数据中心 · 商品管理</h2>
+          <div class="header-actions">
+            <button class="btn"><i class="fas fa-file-export"></i>导出</button>
+            <button class="btn"><i class="fas fa-file-import"></i>导入</button>
+            <button class="btn btn-primary"><i class="fas fa-plus"></i>新增商品</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <input class="filter-input" style="width:200px" placeholder="搜索商品名称/编码...">
+          <select class="filter-select" style="width:120px">
+            <option>全部分类</option>
+            <option>电子产品</option>
+            <option>办公用品</option>
+          </select>
+          <select class="filter-select" style="width:100px">
+            <option>全部状态</option>
+            <option>在售</option>
+            <option>停售</option>
+          </select>
+          <input class="filter-input" type="date" style="width:140px">
+          <span style="flex:1"></span>
+          <span style="font-size:12px;color:var(--gl-text-tertiary)">共 156 条记录</span>
+        </div>
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px"><input type="checkbox"></th>
+                <th>商品编码</th>
+                <th>商品名称</th>
+                <th>分类</th>
+                <th>规格</th>
+                <th>单位</th>
+                <th>库存</th>
+                <th>状态</th>
+                <th>更新时间</th>
+                <th style="width:100px">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td style="font-family:monospace;font-size:12px;color:var(--gl-primary)">SP001</td>
+                <td style="font-weight:500">联想ThinkPad X1 Carbon</td>
+                <td>电子产品</td>
+                <td>i7/16G/512G</td>
+                <td>台</td>
+                <td>23</td>
+                <td><span class="status-tag success">在售</span></td>
+                <td style="color:var(--gl-text-secondary);font-size:12px">2026-05-28 10:30</td>
+                <td>
+                  <a href="#" style="color:var(--gl-primary);font-size:12px;margin-right:8px">编辑</a>
+                  <a href="#" style="color:var(--gl-error);font-size:12px">删除</a>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td style="font-family:monospace;font-size:12px;color:var(--gl-primary)">SP002</td>
+                <td style="font-weight:500">戴尔U2723QE显示器</td>
+                <td>电子产品</td>
+                <td>27寸4K</td>
+                <td>台</td>
+                <td>15</td>
+                <td><span class="status-tag success">在售</span></td>
+                <td style="color:var(--gl-text-secondary);font-size:12px">2026-05-27 16:22</td>
+                <td>
+                  <a href="#" style="color:var(--gl-primary);font-size:12px;margin-right:8px">编辑</a>
+                  <a href="#" style="color:var(--gl-error);font-size:12px">删除</a>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td style="font-family:monospace;font-size:12px;color:var(--gl-primary)">SP003</td>
+                <td style="font-weight:500">得力A4打印纸</td>
+                <td>办公用品</td>
+                <td>70g/500张</td>
+                <td>包</td>
+                <td>200</td>
+                <td><span class="status-tag success">在售</span></td>
+                <td style="color:var(--gl-text-secondary);font-size:12px">2026-05-27 14:10</td>
+                <td>
+                  <a href="#" style="color:var(--gl-primary);font-size:12px;margin-right:8px">编辑</a>
+                  <a href="#" style="color:var(--gl-error);font-size:12px">删除</a>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td style="font-family:monospace;font-size:12px;color:var(--gl-primary)">SP004</td>
+                <td style="font-weight:500">罗技MX Master 3S</td>
+                <td>电子产品</td>
+                <td>无线/蓝牙</td>
+                <td>个</td>
+                <td>0</td>
+                <td><span class="status-tag warning">缺货</span></td>
+                <td style="color:var(--gl-text-secondary);font-size:12px">2026-05-26 09:45</td>
+                <td>
+                  <a href="#" style="color:var(--gl-primary);font-size:12px;margin-right:8px">编辑</a>
+                  <a href="#" style="color:var(--gl-error);font-size:12px">删除</a>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td style="font-family:monospace;font-size:12px;color:var(--gl-primary)">SP005</td>
+                <td style="font-weight:500">斑马G-Series标签打印机</td>
+                <td>电子产品</td>
+                <td>ZD220</td>
+                <td>台</td>
+                <td>5</td>
+                <td><span class="status-tag error">停售</span></td>
+                <td style="color:var(--gl-text-secondary);font-size:12px">2026-05-25 11:30</td>
+                <td>
+                  <a href="#" style="color:var(--gl-primary);font-size:12px;margin-right:8px">编辑</a>
+                  <a href="#" style="color:var(--gl-error);font-size:12px">删除</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="table-footer">
+            <div class="page-info">第 1-5 条，共 156 条</div>
+            <div class="pagination">
+              <button class="page-btn"><i class="fas fa-chevron-left" style="font-size:10px"></i></button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">...</button>
+              <button class="page-btn">32</button>
+              <button class="page-btn"><i class="fas fa-chevron-right" style="font-size:10px"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== FORM DESIGNER PAGE ==================== -->
+<div class="page" id="page-form-designer">
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">GL</div>
+        <div><span class="brand-text">管用GL</span><span class="brand-ver">v0.1</span></div>
+      </div>
+      <div class="sidebar-menu">
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">概览</div>
+          <div class="sidebar-item"><i class="fas fa-chart-pie"></i>仪表盘</div>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">核心引擎</div>
+          <div class="sidebar-item active"><i class="fas fa-puzzle-piece"></i>表单设计器</div>
+          <div class="sidebar-item"><i class="fas fa-database"></i>数据中心</div>
+          <div class="sidebar-item"><i class="fas fa-diagram-project"></i>流程管理</div>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">系统管理</div>
+          <div class="sidebar-item"><i class="fas fa-shield-halved"></i>权限管理</div>
+          <div class="sidebar-item"><i class="fas fa-users"></i>用户管理</div>
+          <div class="sidebar-item"><i class="fas fa-file-lines"></i>操作日志</div>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">配置</div>
+          <div class="sidebar-item"><i class="fas fa-gear"></i>系统设置</div>
+          <div class="sidebar-item"><i class="fas fa-cloud"></i>部署管理</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar">管</div>
+        <div class="user-info">
+          <div class="user-name">管理员</div>
+          <div class="user-role">超级管理员</div>
+        </div>
+      </div>
+    </div>
+    <div class="main-area">
+      <div class="topbar">
+        <div class="breadcrumb">
+          <span>核心引擎</span><span class="bc-sep">/</span><span class="bc-current">表单设计器</span>
+        </div>
+        <div class="topbar-right">
+          <button class="btn" style="font-size:12px;padding:4px 12px"><i class="fas fa-eye"></i>预览</button>
+          <button class="btn" style="font-size:12px;padding:4px 12px"><i class="fas fa-save"></i>保存</button>
+          <button class="btn btn-primary" style="font-size:12px;padding:4px 12px"><i class="fas fa-rocket"></i>发布</button>
+          <div class="user-dropdown" style="margin-left:8px">
+            <div class="avatar-sm">管</div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab-item"><i class="fas fa-chart-pie"></i>仪表盘<span class="tab-close"><i class="fas fa-times"></i></span></div>
+        <div class="tab-item"><i class="fas fa-database"></i>商品管理<span class="tab-close"><i class="fas fa-times"></i></span></div>
+        <div class="tab-item active"><i class="fas fa-puzzle-piece"></i>采购申请表<span class="tab-close"><i class="fas fa-times"></i></span></div>
+      </div>
+      <div class="content-area" style="padding:0;overflow:hidden">
+        <div class="designer-layout">
+          <div class="designer-panel" style="border-top:none;border-left:none;border-bottom:none">
+            <div class="panel-header"><i class="fas fa-puzzle-piece" style="margin-right:6px;color:var(--gl-primary)"></i>字段面板</div>
+            <div class="field-group">
+              <div class="field-group-title">基础字段</div>
+              <div class="field-item"><i class="fas fa-font"></i>单行文本</div>
+              <div class="field-item"><i class="fas fa-align-left"></i>多行文本</div>
+              <div class="field-item"><i class="fas fa-hashtag"></i>数字</div>
+              <div class="field-item"><i class="fas fa-calendar"></i>日期</div>
+              <div class="field-item"><i class="fas fa-clock"></i>日期时间</div>
+              <div class="field-item"><i class="fas fa-list"></i>下拉选择</div>
+              <div class="field-item"><i class="fas fa-toggle-on"></i>开关</div>
+            </div>
+            <div class="field-group">
+              <div class="field-group-title">增强字段</div>
+              <div class="field-item"><i class="fas fa-phone"></i>手机号</div>
+              <div class="field-item"><i class="fas fa-envelope"></i>邮箱</div>
+              <div class="field-item"><i class="fas fa-paperclip"></i>文件附件</div>
+              <div class="field-item"><i class="fas fa-image"></i>图片</div>
+              <div class="field-item"><i class="fas fa-link"></i>关联引用</div>
+              <div class="field-item"><i class="fas fa-table-cells"></i>子表格</div>
+            </div>
+            <div class="field-group">
+              <div class="field-group-title">布局组件</div>
+              <div class="field-item"><i class="fas fa-grip-lines"></i>分割线</div>
+              <div class="field-item"><i class="fas fa-heading"></i>说明文字</div>
+              <div class="field-item"><i class="fas fa-columns"></i>分栏布局</div>
+            </div>
+          </div>
+          <div class="designer-canvas">
+            <div class="canvas-wrapper">
+              <input class="canvas-form-title" value="采购申请表">
+              <div class="canvas-form-desc">拖拽左侧字段到此处，设计您的业务表单</div>
+              <div class="canvas-field selected">
+                <div class="field-label">申请人<span class="required">*</span></div>
+                <input class="field-input" placeholder="请输入申请人姓名" disabled>
+                <div class="field-actions">
+                  <button class="field-action-btn"><i class="fas fa-copy"></i></button>
+                  <button class="field-action-btn"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+              <div class="canvas-field">
+                <div class="field-label">所属部门<span class="required">*</span></div>
+                <input class="field-input" placeholder="请选择所属部门" disabled>
+                <div class="field-actions">
+                  <button class="field-action-btn"><i class="fas fa-copy"></i></button>
+                  <button class="field-action-btn"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+              <div class="canvas-field">
+                <div class="field-label">采购物品<span class="required">*</span></div>
+                <input class="field-input" placeholder="请输入采购物品名称" disabled>
+                <div class="field-actions">
+                  <button class="field-action-btn"><i class="fas fa-copy"></i></button>
+                  <button class="field-action-btn"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+              <div class="canvas-field">
+                <div class="field-label">采购数量<span class="required">*</span></div>
+                <input class="field-input" placeholder="请输入数量" disabled>
+                <div class="field-actions">
+                  <button class="field-action-btn"><i class="fas fa-copy"></i></button>
+                  <button class="field-action-btn"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+              <div class="canvas-field">
+                <div class="field-label">预算金额（元）</div>
+                <input class="field-input" placeholder="请输入预算金额" disabled>
+                <div class="field-actions">
+                  <button class="field-action-btn"><i class="fas fa-copy"></i></button>
+                  <button class="field-action-btn"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+              <div class="canvas-field">
+                <div class="field-label">期望到货日期</div>
+                <input class="field-input" placeholder="请选择日期" disabled>
+                <div class="field-actions">
+                  <button class="field-action-btn"><i class="fas fa-copy"></i></button>
+                  <button class="field-action-btn"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+              <div class="canvas-field">
+                <div class="field-label">备注说明</div>
+                <textarea class="field-input" style="height:60px;padding:8px 10px;resize:none" placeholder="请输入备注信息" disabled></textarea>
+                <div class="field-actions">
+                  <button class="field-action-btn"><i class="fas fa-copy"></i></button>
+                  <button class="field-action-btn"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="designer-panel" style="border-top:none;border-right:none;border-bottom:none">
+            <div class="panel-header"><i class="fas fa-sliders" style="margin-right:6px;color:var(--gl-primary)"></i>属性配置</div>
+            <div class="prop-section">
+              <div class="prop-section-title">字段属性</div>
+              <div class="prop-row">
+                <div class="prop-label">字段标识</div>
+                <input class="prop-input" value="applicant" style="font-family:monospace">
+              </div>
+              <div class="prop-row">
+                <div class="prop-label">字段标题</div>
+                <input class="prop-input" value="申请人">
+              </div>
+              <div class="prop-row">
+                <div class="prop-label">占位提示</div>
+                <input class="prop-input" value="请输入申请人姓名">
+              </div>
+              <div class="prop-row">
+                <div class="prop-label">字段类型</div>
+                <select class="prop-input" style="appearance:auto;padding:0 8px">
+                  <option selected>单行文本</option>
+                  <option>多行文本</option>
+                  <option>数字</option>
+                </select>
+              </div>
+            </div>
+            <div class="prop-section">
+              <div class="prop-section-title">校验规则</div>
+              <div class="prop-row">
+                <div class="prop-switch">
+                  <span class="prop-label" style="margin:0">必填</span>
+                  <div class="switch-track on"><div class="switch-thumb"></div></div>
+                </div>
+              </div>
+              <div class="prop-row">
+                <div class="prop-switch">
+                  <span class="prop-label" style="margin:0">唯一</span>
+                  <div class="switch-track"><div class="switch-thumb"></div></div>
+                </div>
+              </div>
+              <div class="prop-row">
+                <div class="prop-label">最大长度</div>
+                <input class="prop-input" value="50" type="number">
+              </div>
+            </div>
+            <div class="prop-section">
+              <div class="prop-section-title">权限控制</div>
+              <div class="prop-row">
+                <div class="prop-switch">
+                  <span class="prop-label" style="margin:0">可见</span>
+                  <div class="switch-track on"><div class="switch-thumb"></div></div>
+                </div>
+              </div>
+              <div class="prop-row">
+                <div class="prop-switch">
+                  <span class="prop-label" style="margin:0">可编辑</span>
+                  <div class="switch-track on"><div class="switch-thumb"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const icon = document.getElementById('themeIcon');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.removeAttribute('data-theme');
+    icon.className = 'fas fa-moon';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    icon.className = 'fas fa-sun';
+  }
+}
+
+document.querySelectorAll('.sidebar-item').forEach(item => {
+  item.addEventListener('click', function() {
+    this.closest('.sidebar-menu').querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.canvas-field').forEach(field => {
+  field.addEventListener('click', function(e) {
+    if (e.target.closest('.field-action-btn')) return;
+    document.querySelectorAll('.canvas-field').forEach(f => f.classList.remove('selected'));
+    this.classList.add('selected');
+  });
+});
+
+document.querySelectorAll('.switch-track').forEach(track => {
+  track.addEventListener('click', function() {
+    this.classList.toggle('on');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+[package]
+name = "guanyong-gl"
+version = "0.2.0"
+description = "管用GL - 企业资源管理低代码平台"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "guanyong_gl_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.31", features = ["bundled"] }
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tower-http = { version = "0.5", features = ["cors"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+sha2 = "0.10"
+hmac = "0.12"
+hex = "0.4"
+futures = "0.3"
+rand = "0.8"
+
+[features]
+server = []
