@@ -20,7 +20,8 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import StatusBadge from '../../../components/common/StatusBadge'
-import { getRoles, type RoleItem } from '../../../services/roleService'
+import { usePermission } from '../../../hooks/usePermission'
+import { getRoleOptions, type RoleBrief } from '../../../services/roleService'
 import {
   createUser,
   deleteUser,
@@ -62,6 +63,10 @@ const STATUS_MAP: Record<number, { type: 'success' | 'error'; label: string }> =
 }
 
 export default function UserManagePage() {
+  const { hasAction } = usePermission()
+  const canAdd = hasAction('user_manage', 'add')
+  const canEdit = hasAction('user_manage', 'edit')
+  const canDelete = hasAction('user_manage', 'delete')
   /* ========== 列表相关状态 ========== */
   const [loading, setLoading] = useState(false)
   const [dataSource, setDataSource] = useState<UserItem[]>([])
@@ -72,7 +77,7 @@ export default function UserManagePage() {
   const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined)
 
   /* ========== 角色列表（弹窗用） ========== */
-  const [roleOptions, setRoleOptions] = useState<RoleItem[]>([])
+  const [roleOptions, setRoleOptions] = useState<RoleBrief[]>([])
 
   /* ========== 新增弹窗 ========== */
   const [createOpen, setCreateOpen] = useState(false)
@@ -118,7 +123,7 @@ export default function UserManagePage() {
   /* ========== 加载角色选项 ========== */
   const fetchRoles = useCallback(async () => {
     try {
-      const roles = await getRoles()
+      const roles = await getRoleOptions()
       setRoleOptions(roles)
     } catch {
       // 角色加载失败不阻塞主流程
@@ -378,15 +383,17 @@ export default function UserManagePage() {
 
         return (
           <Space size={0} split={<span style={{ color: 'var(--gl-border)' }}>|</span>}>
-            <Button type="link" size="small" onClick={() => handleEdit(record)}>
-              编辑
-            </Button>
-            {isEnabled && (
+            {canEdit && (
+              <Button type="link" size="small" onClick={() => handleEdit(record)}>
+                编辑
+              </Button>
+            )}
+            {canEdit && isEnabled && (
               <Button type="link" size="small" onClick={() => handleResetPassword(record)}>
                 重置密码
               </Button>
             )}
-            {isEnabled ? (
+            {canEdit && (isEnabled ? (
               <Popconfirm
                 title="确认禁用"
                 description={`确定要禁用用户「${record.real_name || record.username}」吗？`}
@@ -410,10 +417,12 @@ export default function UserManagePage() {
                   启用
                 </Button>
               </Popconfirm>
+            ))}
+            {canDelete && (
+              <Button type="link" size="small" danger onClick={() => handleDelete(record)}>
+                删除
+              </Button>
             )}
-            <Button type="link" size="small" danger onClick={() => handleDelete(record)}>
-              删除
-            </Button>
           </Space>
         )
       },
@@ -428,17 +437,7 @@ export default function UserManagePage() {
         className="rounded-xl p-5"
         style={{ background: 'var(--gl-card-bg)', border: '1px solid var(--gl-border)' }}
       >
-        <div className="flex items-center justify-between">
-          <h1 className="text-[18px] font-semibold" style={{ color: 'var(--gl-text-primary)' }}>
-            用户管理
-          </h1>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            新增用户
-          </Button>
-        </div>
-
-        {/* 筛选区 */}
-        <div className="flex items-center gap-3 mt-4">
+        <div className="flex items-center gap-3">
           <Input.Search
             placeholder="搜索用户名/姓名"
             allowClear
@@ -465,6 +464,12 @@ export default function UserManagePage() {
           <Button icon={<ReloadOutlined />} onClick={fetchUsers}>
             刷新
           </Button>
+          <div className="flex-1" />
+          {canAdd && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              新增用户
+            </Button>
+          )}
         </div>
       </div>
 
@@ -506,7 +511,8 @@ export default function UserManagePage() {
         okText="创建"
         cancelText="取消"
         destroyOnClose
-        width={520}
+        maskClosable={false}
+        width={640}
       >
         <Form
           form={createForm}
@@ -514,54 +520,56 @@ export default function UserManagePage() {
           className="mt-4"
           autoComplete="off"
         >
-          <Form.Item
-            name="username"
-            label="用户名"
-            rules={[{ required: true, message: '请输入用户名' }]}
-          >
-            <Input placeholder="请输入用户名" maxLength={32} />
-          </Form.Item>
-          <Form.Item
-            name="real_name"
-            label="姓名"
-            rules={[{ required: true, message: '请输入姓名' }]}
-          >
-            <Input placeholder="请输入姓名" maxLength={32} />
-          </Form.Item>
-          <Form.Item name="phone" label="手机号">
-            <Input placeholder="请输入手机号" maxLength={20} />
-          </Form.Item>
-          <Form.Item name="email" label="邮箱">
-            <Input placeholder="请输入邮箱" maxLength={64} />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            label="密码"
-            rules={[{ required: true, message: '请输入密码' }]}
-          >
-            <Input.Password
-              placeholder="请输入密码"
-              addonAfter={
-                <Button
-                  type="link"
-                  size="small"
-                  icon={<KeyOutlined />}
-                  onClick={handleAutoGeneratePassword}
-                  style={{ padding: 0, height: 'auto', fontSize: 12 }}
-                >
-                  自动生成
-                </Button>
-              }
-            />
-          </Form.Item>
-          <Form.Item name="role_ids" label="角色">
-            <Select
-              mode="multiple"
-              placeholder="请选择角色"
-              options={roleOptions.map((r) => ({ label: r.name, value: r.id }))}
-              allowClear
-            />
-          </Form.Item>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Form.Item
+              name="username"
+              label="用户名"
+              rules={[{ required: true, message: '请输入用户名' }]}
+            >
+              <Input placeholder="请输入用户名" maxLength={32} />
+            </Form.Item>
+            <Form.Item
+              name="real_name"
+              label="姓名"
+              rules={[{ required: true, message: '请输入姓名' }]}
+            >
+              <Input placeholder="请输入姓名" maxLength={32} />
+            </Form.Item>
+            <Form.Item name="phone" label="手机号">
+              <Input placeholder="请输入手机号" maxLength={20} />
+            </Form.Item>
+            <Form.Item name="email" label="邮箱">
+              <Input placeholder="请输入邮箱" maxLength={64} />
+            </Form.Item>
+            <Form.Item
+              name="password"
+              label="密码"
+              rules={[{ required: true, message: '请输入密码' }]}
+            >
+              <Input.Password
+                placeholder="请输入密码"
+                addonAfter={
+                  <Button
+                    type="link"
+                    size="small"
+                    icon={<KeyOutlined />}
+                    onClick={handleAutoGeneratePassword}
+                    style={{ padding: 0, height: 'auto', fontSize: 12 }}
+                  >
+                    自动生成
+                  </Button>
+                }
+              />
+            </Form.Item>
+            <Form.Item name="role_ids" label="角色">
+              <Select
+                mode="multiple"
+                placeholder="请选择角色"
+                options={roleOptions.map((r) => ({ label: r.name, value: r.id }))}
+                allowClear
+              />
+            </Form.Item>
+          </div>
         </Form>
       </Modal>
 
@@ -575,10 +583,11 @@ export default function UserManagePage() {
         okText="保存"
         cancelText="取消"
         destroyOnClose
-        width={520}
+        maskClosable={false}
+        width={640}
       >
         {editingUser && (
-          <div className="mb-4 px-3 py-2 rounded" style={{ background: 'var(--gl-content-bg)' }}>
+          <div className="mb-4 px-3 py-2 rounded" style={{ color: 'var(--gl-text-tertiary)' }}>
             <span style={{ color: 'var(--gl-text-tertiary)' }}>用户名：</span>
             <span style={{ color: 'var(--gl-text-primary)' }} className="font-medium">
               {editingUser.username}
@@ -591,27 +600,29 @@ export default function UserManagePage() {
           className="mt-4"
           autoComplete="off"
         >
-          <Form.Item
-            name="real_name"
-            label="姓名"
-            rules={[{ required: true, message: '请输入姓名' }]}
-          >
-            <Input placeholder="请输入姓名" maxLength={32} />
-          </Form.Item>
-          <Form.Item name="phone" label="手机号">
-            <Input placeholder="请输入手机号" maxLength={20} />
-          </Form.Item>
-          <Form.Item name="email" label="邮箱">
-            <Input placeholder="请输入邮箱" maxLength={64} />
-          </Form.Item>
-          <Form.Item name="role_ids" label="角色">
-            <Select
-              mode="multiple"
-              placeholder="请选择角色"
-              options={roleOptions.map((r) => ({ label: r.name, value: r.id }))}
-              allowClear
-            />
-          </Form.Item>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Form.Item
+              name="real_name"
+              label="姓名"
+              rules={[{ required: true, message: '请输入姓名' }]}
+            >
+              <Input placeholder="请输入姓名" maxLength={32} />
+            </Form.Item>
+            <Form.Item name="phone" label="手机号">
+              <Input placeholder="请输入手机号" maxLength={20} />
+            </Form.Item>
+            <Form.Item name="email" label="邮箱">
+              <Input placeholder="请输入邮箱" maxLength={64} />
+            </Form.Item>
+            <Form.Item name="role_ids" label="角色">
+              <Select
+                mode="multiple"
+                placeholder="请选择角色"
+                options={roleOptions.map((r) => ({ label: r.name, value: r.id }))}
+                allowClear
+              />
+            </Form.Item>
+          </div>
         </Form>
       </Modal>
 
@@ -625,6 +636,7 @@ export default function UserManagePage() {
         okText="确认重置"
         cancelText="取消"
         destroyOnClose
+        maskClosable={false}
         width={440}
       >
         {resettingUser && (

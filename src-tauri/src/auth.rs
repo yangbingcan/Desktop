@@ -13,7 +13,7 @@ const TOKEN_SECRET: &[u8] = b"guanyong_gl_token_secret_key_2026";
 
 const TOKEN_MAX_AGE_SECS: i64 = 24 * 60 * 60;
 
-const ALL_PERMS: &[&str] = &["dashboard", "permission", "user_manage", "settings"];
+const ALL_PERMS: &[&str] = &["dashboard", "permission", "user_manage", "settings", "system_log"];
 
 fn hash_password_with_salt(password: &str, salt: &str) -> String {
     let mut hasher = Sha256::new();
@@ -118,7 +118,10 @@ impl AuthContext {
         if self.is_super_admin {
             return Ok(());
         }
-        if self.permissions.contains(&perm.to_string()) {
+        let perm_str = perm.to_string();
+        if self.permissions.contains(&perm_str)
+            || self.permissions.iter().any(|p| p.starts_with(&format!("{}:", perm)))
+        {
             Ok(())
         } else {
             Err("您没有执行此操作的权限".to_string())
@@ -216,6 +219,8 @@ pub fn login(
 
     let token = generate_token(&id);
 
+    crate::operation_logs::record_operation_log(conn, &uname, "login", "登录系统", "认证", None);
+
     Ok(LoginResponse {
         token,
         user: UserInfo {
@@ -311,6 +316,8 @@ pub fn update_password(
         params![new_hash, user_id],
     )
     .map_err(|e| translate_db_error(e))?;
+
+    crate::operation_logs::record_operation_log(conn, &verify_token(&token)?, "update", "修改密码", "认证", None);
 
     Ok(())
 }

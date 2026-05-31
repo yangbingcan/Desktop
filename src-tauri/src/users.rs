@@ -160,6 +160,8 @@ pub fn create_user(db: State<'_, DbState>, token: String, params: CreateUserPara
 
     let user = query_user_by_id(conn, &id)?;
 
+    crate::operation_logs::record_operation_log(conn, &ctx.username, "create", "创建用户", "用户管理", Some(&format!("用户名: {}", username)));
+
     Ok(CreateUserResult {
         user,
         generated_password: None,
@@ -219,7 +221,11 @@ pub fn update_user(db: State<'_, DbState>, token: String, params: UpdateUserPara
         }
     }
 
-    query_user_by_id(conn, &params.id)
+    let user = query_user_by_id(conn, &params.id)?;
+
+    crate::operation_logs::record_operation_log(conn, &ctx.username, "update", "更新用户", "用户管理", Some(&format!("用户ID: {}", params.id)));
+
+    Ok(user)
 }
 
 #[tauri::command]
@@ -247,6 +253,8 @@ pub fn delete_user(db: State<'_, DbState>, token: String, id: String) -> Result<
         .map_err(|e| translate_db_error(e))?;
     conn.execute("DELETE FROM users WHERE id = ?1", params![id])
         .map_err(|e| translate_db_error(e))?;
+
+    crate::operation_logs::record_operation_log(conn, &ctx.username, "delete", "删除用户", "用户管理", Some(&format!("用户ID: {}", id)));
 
     Ok(())
 }
@@ -283,6 +291,8 @@ pub fn toggle_user_status(db: State<'_, DbState>, token: String, params: ToggleU
         params![params.status, params.id],
     ).map_err(|e| translate_db_error(e))?;
 
+    crate::operation_logs::record_operation_log(conn, &ctx.username, "update", "切换用户状态", "用户管理", Some(&format!("用户ID: {}, 状态: {}", params.id, if params.status == 1 { "启用" } else { "禁用" })));
+
     Ok(())
 }
 
@@ -305,6 +315,8 @@ pub fn reset_user_password(db: State<'_, DbState>, token: String, params: ResetP
         "UPDATE users SET password_hash = ?1, updated_at = datetime('now', 'localtime') WHERE id = ?2",
         params![hashed, params.id],
     ).map_err(|e| translate_db_error(e))?;
+
+    crate::operation_logs::record_operation_log(conn, &ctx.username, "update", "重置用户密码", "用户管理", Some(&format!("用户ID: {}", params.id)));
 
     Ok(())
 }

@@ -40,8 +40,14 @@ export default function DashboardPage() {
         </div>
         <div className="flex gap-3 relative z-10">
           <button
-            className="px-5 py-2.5 rounded-lg text-[13px] font-medium transition-all hover:shadow-lg"
-            style={{ background: 'white', color: '#2563EB' }}
+            className="px-5 py-2.5 rounded-lg text-[13px] font-medium transition-all hover:shadow-lg border-0 outline-none"
+            style={{
+              background: 'rgba(255, 255, 255, 0.18)',
+              color: 'white',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+            }}
             onClick={() => navigate('/settings')}
           >
             系统设置

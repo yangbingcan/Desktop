@@ -82,6 +82,9 @@ pub struct PermissionItem {
     pub key: String,
     pub label: String,
     pub group: String,
+    pub module: String,
+    pub module_label: String,
+    pub action: String,
 }
 
 #[allow(dead_code)]
@@ -113,4 +116,38 @@ impl RpcResponse {
     pub fn error(msg: &str) -> Self {
         RpcResponse { ok: false, data: serde_json::Value::Null, error: msg.to_string() }
     }
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OperationLog {
+    pub id: String,
+    pub username: String,
+    pub action_type: String,
+    pub action: String,
+    pub module: String,
+    pub detail: String,
+    pub computer_name: String,
+    pub ip_address: String,
+    pub mac_address: String,
+    pub os_info: String,
+    pub app_version: String,
+    pub created_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetOperationLogsParams {
+    pub page: Option<i32>,
+    pub page_size: Option<i32>,
+    pub keyword: Option<String>,
+    pub action_type: Option<String>,
+    pub module: Option<String>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetOperationLogsResult {
+    pub items: Vec<OperationLog>,
+    pub total: i32,
 }

@@ -10,6 +10,8 @@ type SidebarStyle = 'dark' | 'light'
 type CompactMode = 'comfortable' | 'compact'
 type BorderRadiusStyle = 'sharp' | 'rounded' | 'full'
 
+type EyeCareLevel = 'off' | 'mild' | 'moderate' | 'strong'
+
 interface UISettings {
   primaryColor: PrimaryColor
   fontSize: FontSize
@@ -19,7 +21,8 @@ interface UISettings {
   sidebarStyle: SidebarStyle
   compactMode: CompactMode
   borderRadius: BorderRadiusStyle
-  colorWeak: boolean
+  eyeCare: EyeCareLevel
+  warmTone: boolean
 }
 
 interface AppState {
@@ -44,7 +47,8 @@ const DEFAULT_UI_SETTINGS: UISettings = {
   sidebarStyle: 'dark',
   compactMode: 'comfortable',
   borderRadius: 'rounded',
-  colorWeak: false,
+  eyeCare: 'off',
+  warmTone: false,
 }
 
 const PRIMARY_VARIANTS: Record<PrimaryColor, { hover: string; active: string; light: string; bg: string; lightDark: string; bgDark: string }> = {
@@ -121,10 +125,16 @@ function applyUISettings(settings: UISettings) {
     root.removeAttribute('data-border-radius')
   }
 
-  if (settings.colorWeak) {
-    root.setAttribute('data-color-weak', 'true')
+  if (settings.eyeCare !== 'off') {
+    root.setAttribute('data-eye-care', settings.eyeCare)
   } else {
-    root.removeAttribute('data-color-weak')
+    root.removeAttribute('data-eye-care')
+  }
+
+  if (settings.warmTone) {
+    root.setAttribute('data-warm-tone', 'true')
+  } else {
+    root.removeAttribute('data-warm-tone')
   }
 }
 
@@ -193,4 +203,4 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSettingsOpen: (open) => set({ settingsOpen: open }),
 }))
 
-export type { ThemeMode, PrimaryColor, FontSize, SidebarWidth, NavMode, SidebarStyle, CompactMode, BorderRadiusStyle, UISettings }
+export type { ThemeMode, PrimaryColor, FontSize, SidebarWidth, NavMode, SidebarStyle, CompactMode, BorderRadiusStyle, EyeCareLevel, UISettings }

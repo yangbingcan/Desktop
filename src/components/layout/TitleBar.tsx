@@ -1,4 +1,4 @@
-/** @file 自定义标题栏 v10.0 - 毛玻璃质感+丝滑动画+个人信息弹窗 */
+/** @file 自定义标题栏 v11.0 - 毛玻璃质感+丝滑动画+个人信息弹窗+切换用户 */
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -16,13 +16,24 @@ import {
   BlockOutlined,
   UserOutlined,
   LockOutlined,
+  SwapOutlined,
+  LogoutOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons'
-import { Badge, Dropdown, Modal, Form, Input, message, type MenuProps } from 'antd'
+import { Badge, Dropdown, Modal, Form, Input, message, type MenuProps, Button } from 'antd'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useAppStore } from '../../stores/appStore'
 import { useTabStore } from '../../stores/tabStore'
 import { useAuthStore } from '../../stores/authStore'
 import { invokeCommand } from '../../services/api'
+import { login } from '../../services/authService'
+import {
+  getRememberedAccounts,
+  getStoredPassword,
+  clearStoredPassword,
+  setLastUsername,
+  type RememberedAccount,
+} from '../../utils/rememberPassword'
 
 export default function TitleBar() {
   const navigate = useNavigate()
@@ -30,7 +41,8 @@ export default function TitleBar() {
   const unlistenRef = useRef<(() => void) | null>(null)
   const { sidebarCollapsed, toggleSidebar, themeMode, toggleTheme, setSettingsOpen } = useAppStore()
   const { tabs, activeKey, removeTab, setActiveKey, closeOtherTabs, closeAllTabs, closeLeftTabs, closeRightTabs, moveTab } = useTabStore()
-  const { logout, user, setUser } = useAuthStore()
+  const { logout, user, setUser, setLogin } = useAuthStore()
+  const { resetTabs } = useTabStore()
   const tabsRef = useRef<HTMLDivElement>(null)
   const [showLeftMask, setShowLeftMask] = useState(false)
   const [showRightMask, setShowRightMask] = useState(false)
@@ -43,6 +55,10 @@ export default function TitleBar() {
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [profileForm] = Form.useForm()
   const [passwordForm] = Form.useForm()
+
+  const [switchUserOpen, setSwitchUserOpen] = useState(false)
+  const [switchAccounts, setSwitchAccounts] = useState<RememberedAccount[]>([])
+  const [switchLoading, setSwitchLoading] = useState<string | null>(null)
 
   useEffect(() => {
     navigate(activeKey)
@@ -163,10 +179,11 @@ export default function TitleBar() {
   }
 
   const userMenuItems: MenuProps['items'] = [
-    { key: 'profile', label: '个人信息' },
-    { key: 'change-password', label: '修改密码' },
+    { key: 'profile', label: '个人信息', icon: <UserOutlined /> },
+    { key: 'change-password', label: '修改密码', icon: <LockOutlined /> },
+    { key: 'switch-user', label: '切换用户', icon: <SwapOutlined /> },
     { type: 'divider' },
-    { key: 'logout', label: '退出登录', danger: true },
+    { key: 'logout', label: '退出登录', icon: <LogoutOutlined />, danger: true },
   ]
 
   const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
@@ -185,11 +202,52 @@ export default function TitleBar() {
         passwordForm.resetFields()
         setPasswordOpen(true)
         break
+      case 'switch-user':
+        setSwitchAccounts(getRememberedAccounts())
+        setSwitchUserOpen(true)
+        break
       case 'logout':
         logout()
         navigate('/login')
         break
     }
+  }
+
+  const handleSwitchUser = async (account: RememberedAccount) => {
+    if (account.username === user?.username) {
+      message.info('当前已是该用户')
+      return
+    }
+    const password = getStoredPassword(account.username)
+    if (!password) {
+      message.warning('该用户未保存密码，请手动登录')
+      logout()
+      resetTabs()
+      setSwitchUserOpen(false)
+      navigate('/login')
+      return
+    }
+    setSwitchLoading(account.username)
+    try {
+      const result = await login(account.username, password)
+      logout()
+      resetTabs()
+      setLogin(result.token, result.user)
+      setLastUsername(account.username)
+      setSwitchUserOpen(false)
+      navigate('/dashboard')
+      message.success(`已切换到 ${result.user.real_name || result.user.username}`)
+    } catch {
+      message.error('请检查用户名或密码是否正确')
+    } finally {
+      setSwitchLoading(null)
+    }
+  }
+
+  const handleDeleteRemembered = (username: string) => {
+    clearStoredPassword(username)
+    setSwitchAccounts(getRememberedAccounts())
+    message.success(`已清除 ${username} 的记住密码`)
   }
 
   const handleProfileSubmit = async (values: { real_name: string; phone: string; email: string }) => {
@@ -418,7 +476,8 @@ export default function TitleBar() {
         okText="保存"
         cancelText="取消"
         destroyOnClose
-        width={440}
+        maskClosable={false}
+        width={560}
       >
         <Form
           form={profileForm}
@@ -426,22 +485,24 @@ export default function TitleBar() {
           onFinish={handleProfileSubmit}
           style={{ marginTop: 16 }}
         >
-          <Form.Item label="用户名">
-            <Input value={user?.username} disabled prefix={<UserOutlined />} />
-          </Form.Item>
-          <Form.Item
-            label="姓名"
-            name="real_name"
-            rules={[{ required: true, message: '请输入姓名' }]}
-          >
-            <Input placeholder="请输入姓名" />
-          </Form.Item>
-          <Form.Item label="手机号" name="phone">
-            <Input placeholder="请输入手机号" />
-          </Form.Item>
-          <Form.Item label="邮箱" name="email">
-            <Input placeholder="请输入邮箱" />
-          </Form.Item>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Form.Item label="用户名">
+              <Input value={user?.username} disabled prefix={<UserOutlined />} />
+            </Form.Item>
+            <Form.Item
+              label="姓名"
+              name="real_name"
+              rules={[{ required: true, message: '请输入姓名' }]}
+            >
+              <Input placeholder="请输入姓名" />
+            </Form.Item>
+            <Form.Item label="手机号" name="phone">
+              <Input placeholder="请输入手机号" />
+            </Form.Item>
+            <Form.Item label="邮箱" name="email">
+              <Input placeholder="请输入邮箱" />
+            </Form.Item>
+          </div>
         </Form>
       </Modal>
 
@@ -454,6 +515,7 @@ export default function TitleBar() {
         okText="确认修改"
         cancelText="取消"
         destroyOnClose
+        maskClosable={false}
         width={440}
       >
         <Form
@@ -495,6 +557,88 @@ export default function TitleBar() {
             <Input.Password placeholder="请再次输入新密码" prefix={<LockOutlined />} />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="切换用户"
+        open={switchUserOpen}
+        onCancel={() => setSwitchUserOpen(false)}
+        footer={null}
+        destroyOnClose
+        maskClosable={false}
+        width={400}
+      >
+        <div style={{ marginTop: 8 }}>
+          {switchAccounts.length === 0 ? (
+            <div className="text-center py-6" style={{ color: 'var(--gl-text-tertiary)' }}>
+              <p>暂无记住密码的账号</p>
+              <p className="text-[12px] mt-1">登录时勾选「记住密码」后可在此快速切换</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {switchAccounts.map((account) => {
+                const isCurrent = account.username === user?.username
+                return (
+                  <div
+                    key={account.username}
+                    className="flex items-center justify-between px-3 py-2.5 rounded-lg transition-all"
+                    style={{
+                      background: isCurrent ? 'var(--gl-primary-supply)' : 'transparent',
+                      border: `1px solid ${isCurrent ? 'var(--gl-primary)' : 'var(--gl-border)'}`,
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-semibold text-white flex-shrink-0"
+                        style={{
+                          background: isCurrent
+                            ? 'linear-gradient(135deg, #1677FF, #4096FF)'
+                            : 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                        }}
+                      >
+                        {account.username.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[13px] font-medium truncate" style={{ color: 'var(--gl-text-primary)' }}>
+                          {account.username}
+                          {isCurrent && (
+                            <span className="ml-2 text-[11px] font-normal" style={{ color: 'var(--gl-primary)' }}>
+                              当前
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px]" style={{ color: 'var(--gl-text-tertiary)' }}>
+                          {account.hasPassword ? '已记住密码' : '未记住密码'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                      {!isCurrent && account.hasPassword && (
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<SwapOutlined />}
+                          loading={switchLoading === account.username}
+                          onClick={() => handleSwitchUser(account)}
+                        >
+                          切换
+                        </Button>
+                      )}
+                      <Button
+                        type="text"
+                        size="small"
+                        danger={account.hasPassword}
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleDeleteRemembered(account.username)}
+                        title={account.hasPassword ? '清除记住的密码' : '移除记录'}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </Modal>
     </header>
   )

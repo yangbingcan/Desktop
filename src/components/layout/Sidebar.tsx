@@ -9,12 +9,14 @@ import {
   AppstoreOutlined,
   ControlOutlined,
   SearchOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import { Input } from 'antd'
 import { useAppStore } from '../../stores/appStore'
 import { useTabStore } from '../../stores/tabStore'
 import { useAuthStore } from '../../stores/authStore'
 import { routePermissionMap } from '../../services/permissionMap'
+import { recordPageView } from '../../services/operationLogService'
 import type { Tab } from '../../stores/tabStore'
 
 interface MenuItem {
@@ -42,8 +44,16 @@ function filterMenuByPermissions(groups: GroupConfig[], permissions: string[], i
     .map(group => ({
       ...group,
       items: group.items.filter(item => {
-        const permKey = routePermissionMap[item.key]
-        return !permKey || permissions.includes(permKey)
+        if (item.key === '/dashboard') return true
+        let permModule: string | undefined
+        for (const [prefix, mod] of Object.entries(routePermissionMap)) {
+          if (item.key === prefix || item.key.startsWith(prefix + '/')) {
+            permModule = mod
+            break
+          }
+        }
+        if (!permModule) return true
+        return permissions.some(p => p === permModule || p.startsWith(permModule + ':'))
       }),
     }))
     .filter(group => group.items.length > 0)
@@ -69,8 +79,9 @@ export default function Sidebar() {
       name: '系统管理',
       icon: <ControlOutlined />,
       items: [
-        { key: '/permission/roles', icon: <SafetyOutlined />, iconName: 'SafetyOutlined', label: '角色权限', group: '系统管理' },
         { key: '/user/list', icon: <UserOutlined />, iconName: 'UserOutlined', label: '用户管理', group: '系统管理' },
+        { key: '/permission/roles', icon: <SafetyOutlined />, iconName: 'SafetyOutlined', label: '角色权限', group: '系统管理' },
+        { key: '/system/logs', icon: <FileTextOutlined />, iconName: 'FileTextOutlined', label: '系统日志', group: '系统管理' },
         { key: '/settings', icon: <SettingOutlined />, iconName: 'SettingOutlined', label: '系统设置', group: '系统管理' },
       ],
     },
@@ -89,6 +100,9 @@ export default function Sidebar() {
 
   const handleLeafClick = useCallback(
     (item: MenuItem) => {
+      const { tabs } = useTabStore.getState()
+      const isNewTab = !tabs.some((t) => t.key === item.key)
+
       const tab: Tab = {
         key: item.key,
         title: item.label,
@@ -96,6 +110,10 @@ export default function Sidebar() {
         closable: item.key !== '/dashboard',
       }
       addTab(tab)
+
+      if (isNewTab) {
+        recordPageView(item.label, item.group).catch(() => {})
+      }
     },
     [addTab],
   )
@@ -106,30 +124,21 @@ export default function Sidebar() {
       if (!group) return
 
       if (sidebarCollapsed) {
-        if (group.items.length === 1) {
+        if (popupGroup === groupName) {
           setPopupGroup(null)
-          handleLeafClick(group.items[0])
         } else {
-          if (popupGroup === groupName) {
-            setPopupGroup(null)
-          } else {
-            const el = groupRefs.current[groupName]
-            if (el) {
-              const rect = el.getBoundingClientRect()
-              setPopupPos({
-                top: rect.top,
-                left: rect.right + 4,
-              })
-            }
-            setPopupGroup(groupName)
+          const el = groupRefs.current[groupName]
+          if (el) {
+            const rect = el.getBoundingClientRect()
+            setPopupPos({
+              top: rect.top,
+              left: rect.right + 4,
+            })
           }
+          setPopupGroup(groupName)
         }
       } else {
-        if (group.items.length === 1) {
-          handleLeafClick(group.items[0])
-        } else {
-          setExpandedGroup(expandedGroup === groupName ? null : groupName)
-        }
+        setExpandedGroup(expandedGroup === groupName ? null : groupName)
       }
     },
     [sidebarCollapsed, expandedGroup, popupGroup, handleLeafClick],
@@ -232,19 +241,18 @@ export default function Sidebar() {
             if (uiSettings.navMode === 'all' && !sidebarCollapsed) {
               return (
                 <div key={group.name} className="mb-1">
-                  <div
-                    className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider"
-                    style={{ color: 'var(--gl-sidebar-group-expanded)' }}
-                  >
-                    {group.name}
+                  <div className="gl-sidebar-section-title">
+                    <span
+                      className="text-[11px] font-semibold uppercase tracking-wider"
+                      style={{ color: 'var(--gl-sidebar-group-collapsed)' }}
+                    >
+                      {group.name}
+                    </span>
                   </div>
                   {group.items.map((item) => renderMenuItem(item, false))}
                 </div>
               )
             }
-
-            const isSingleItem = group.items.length === 1
-            const singleActive = isSingleItem && activePath === group.items[0].key
 
             return (
               <div key={group.name} className="mb-0.5">
@@ -253,47 +261,45 @@ export default function Sidebar() {
                   onClick={() => handleGroupClick(group.name)}
                   className="gl-sidebar-btn flex items-center gap-2.5 px-3 py-[7px] rounded-lg cursor-pointer transition-all text-[13px] relative"
                   style={{
-                    color: (isExpanded || singleActive || groupHasActive)
+                    color: (isExpanded || groupHasActive)
                       ? 'var(--gl-sidebar-group-expanded)'
                       : 'var(--gl-sidebar-group-collapsed)',
-                    fontWeight: (isExpanded || singleActive || groupHasActive) ? 600 : 400,
+                    fontWeight: (isExpanded || groupHasActive) ? 600 : 400,
                     background: 'transparent',
                   }}
                 >
                   {groupHasActive && !isExpanded && !sidebarCollapsed && (
                     <span
                       className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full"
-                      style={{ background: 'var(--gl-primary)', height: '60%', transition: 'background var(--gl-transition-fast)' }}
+                      style={{ background: 'var(--gl-primary)', height: '60%', boxShadow: '0 0 8px rgba(22, 119, 255, 0.3)', transition: 'background var(--gl-transition-fast)' }}
                     />
                   )}
                   <span className="w-[18px] text-center text-[14px] flex-shrink-0">{group.icon}</span>
                   {!sidebarCollapsed && (
                     <>
                       <span className="whitespace-nowrap flex-1">{group.name}</span>
-                      {!isSingleItem && (
-                        <span
-                          className="text-[10px] transition-transform duration-200"
-                          style={{
-                            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                            color: 'var(--gl-sidebar-group-collapsed)',
-                          }}
-                        >
-                          ▸
-                        </span>
-                      )}
+                      <span
+                        className="text-[10px] transition-transform duration-200"
+                        style={{
+                          transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                          color: 'var(--gl-sidebar-group-collapsed)',
+                        }}
+                      >
+                        ▸
+                      </span>
                     </>
                   )}
                 </div>
 
-                {!sidebarCollapsed && !isSingleItem && (
+                {!sidebarCollapsed && (
                   <div
-                    className="overflow-hidden transition-all duration-200 ease-in-out"
+                    className="overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                     style={{
                       maxHeight: isExpanded ? `${group.items.length * 40}px` : '0px',
                       opacity: isExpanded ? 1 : 0,
                     }}
                   >
-                    <div className="ml-[19px] pl-4 border-l-2" style={{ borderColor: 'var(--gl-border)' }}>
+                    <div className="ml-[19px] pl-4 gl-sidebar-group-line">
                       {group.items.map((item) => renderMenuItem(item, true))}
                     </div>
                   </div>
@@ -318,11 +324,13 @@ export default function Sidebar() {
               borderRadius: 'var(--gl-radius-lg)',
             }}
           >
-            <div
-              className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider"
-              style={{ color: 'var(--gl-text-tertiary)' }}
-            >
-              {popupGroup}
+            <div className="gl-sidebar-section-title">
+              <span
+                className="text-[11px] font-semibold uppercase tracking-wider"
+                style={{ color: 'var(--gl-text-tertiary)' }}
+              >
+                {popupGroup}
+              </span>
             </div>
             {filteredMenuConfig
               .find((g) => g.name === popupGroup)
@@ -350,25 +358,19 @@ export default function Sidebar() {
     </aside>
   )
 
-  function renderMenuItem(item: MenuItem, isChild: boolean) {
+  function renderMenuItem(item: MenuItem, _isChild: boolean) {
     const isActive = activePath === item.key || activePath.startsWith(item.key + '/')
     return (
       <div
         key={item.key}
         onClick={() => handleLeafClick(item)}
-        className="gl-sidebar-btn flex items-center gap-2.5 px-3 py-[7px] rounded-lg cursor-pointer transition-all text-[13px] relative"
+        className={`gl-sidebar-btn flex items-center gap-2.5 px-3 py-[7px] rounded-lg cursor-pointer transition-all text-[13px] ${isActive ? 'gl-sidebar-item-active' : ''}`}
         style={{
           color: isActive ? 'var(--gl-primary)' : 'var(--gl-sidebar-text)',
           background: isActive ? 'var(--gl-sidebar-item-active-bg)' : 'transparent',
           fontWeight: isActive ? 600 : 400,
         }}
       >
-        {isChild && isActive && (
-          <span
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full"
-            style={{ background: 'var(--gl-primary)', height: '60%', transition: 'background var(--gl-transition-fast)' }}
-          />
-        )}
         <span className="w-[18px] text-center text-[14px] flex-shrink-0">{item.icon}</span>
         {!sidebarCollapsed && <span className="whitespace-nowrap">{item.label}</span>}
       </div>

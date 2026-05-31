@@ -1,78 +1,59 @@
-/** @file 登录页 v2.0 - 全屏渐变+毛玻璃登录卡片+高级视觉效果 */
-import { useState, useEffect } from 'react'
+/** @file 登录页 v9.0 - 极简高级+散布光点+柔和极光色洗+共享记住密码 */
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Form, Input, Button, Checkbox, message } from 'antd'
-import { UserOutlined, LockOutlined } from '@ant-design/icons'
+import {
+  UserOutlined,
+  LockOutlined,
+  CloseOutlined,
+  MinusOutlined,
+  SunOutlined,
+  MoonOutlined,
+} from '@ant-design/icons'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useAuthStore } from '../../../stores/authStore'
 import { useTabStore } from '../../../stores/tabStore'
+import { useTheme } from '../../../hooks/useTheme'
 import { login } from '../../../services/authService'
+import {
+  getStoredPassword,
+  storePassword,
+  clearStoredPassword,
+  getStoredRemember,
+  setStoredRemember,
+  getLastUsername,
+  setLastUsername,
+} from '../../../utils/rememberPassword'
 
-const LAST_USERNAME_KEY = 'gl_last_username'
-const REMEMBER_PASSWORD_KEY = 'gl_remember_password'
-const OBFUSCATE_KEY = 'GL_REMEMBER_PWD_OBFUSCATE_2026'
-
-function xorObfuscate(input: string, key: string): string {
-  let result = ''
-  for (let i = 0; i < input.length; i++) {
-    result += String.fromCharCode(input.charCodeAt(i) ^ key.charCodeAt(i % key.length))
-  }
-  return result
-}
-
-function encryptPassword(password: string, username: string): string {
-  const combinedKey = OBFUSCATE_KEY + username
-  const xored = xorObfuscate(password, combinedKey)
-  return btoa(encodeURIComponent(xored))
-}
-
-function decryptPassword(encrypted: string, username: string): string {
-  const combinedKey = OBFUSCATE_KEY + username
-  const xored = decodeURIComponent(atob(encrypted))
-  return xorObfuscate(xored, combinedKey)
-}
-
-function getStoredPassword(username: string): string {
-  try {
-    const data = localStorage.getItem(`${REMEMBER_PASSWORD_KEY}_${username}`)
-    if (!data) return ''
-    const parsed = JSON.parse(data)
-    const now = Date.now()
-    if (parsed.exp && now > parsed.exp) {
-      localStorage.removeItem(`${REMEMBER_PASSWORD_KEY}_${username}`)
-      return ''
-    }
-    if (!parsed.pwd) return ''
-    return decryptPassword(parsed.pwd, username)
-  } catch {
-    return ''
-  }
-}
-
-function storePassword(username: string, password: string) {
-  try {
-    const encrypted = encryptPassword(password, username)
-    const data = { pwd: encrypted, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 }
-    localStorage.setItem(`${REMEMBER_PASSWORD_KEY}_${username}`, JSON.stringify(data))
-  } catch { /* ignore */ }
-}
-
-function clearStoredPassword(username: string) {
-  localStorage.removeItem(`${REMEMBER_PASSWORD_KEY}_${username}`)
-}
-
-function getStoredRemember(): boolean {
-  return localStorage.getItem('gl_remember_checked') === 'true'
-}
+const SCATTER_DOTS = [
+  { x: 10, y: 14, size: 4, delay: 0, dur: 3.2 },
+  { x: 82, y: 8, size: 3, delay: 1.1, dur: 3.8 },
+  { x: 92, y: 35, size: 5, delay: 0.5, dur: 2.8 },
+  { x: 18, y: 65, size: 3, delay: 1.9, dur: 3.5 },
+  { x: 70, y: 88, size: 4, delay: 0.7, dur: 3.0 },
+  { x: 35, y: 30, size: 3, delay: 1.4, dur: 4.0 },
+  { x: 95, y: 70, size: 4, delay: 0.3, dur: 3.3 },
+  { x: 5, y: 45, size: 5, delay: 1.7, dur: 2.6 },
+  { x: 55, y: 10, size: 3, delay: 2.1, dur: 3.6 },
+  { x: 42, y: 92, size: 4, delay: 0.9, dur: 3.1 },
+  { x: 75, y: 50, size: 3, delay: 1.5, dur: 3.9 },
+  { x: 14, y: 88, size: 5, delay: 0.4, dur: 2.9 },
+  { x: 60, y: 58, size: 4, delay: 1.0, dur: 3.4 },
+  { x: 28, y: 52, size: 3, delay: 2.3, dur: 3.7 },
+  { x: 88, y: 55, size: 4, delay: 0.6, dur: 2.7 },
+]
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const { setLogin } = useAuthStore()
   const { resetTabs } = useTabStore()
+  const { isDark, toggleTheme } = useTheme()
+  const appWindow = useMemo(() => getCurrentWindow(), [])
 
-  const lastUsername = localStorage.getItem(LAST_USERNAME_KEY) || ''
+  const lastUsername = getLastUsername()
   const lastRemember = getStoredRemember()
-  const storedPassword = lastRemember && lastUsername ? getStoredPassword(lastUsername) : ''
+  const storedPassword = lastUsername ? getStoredPassword(lastUsername) : ''
 
   const [form] = Form.useForm()
 
@@ -87,20 +68,27 @@ export default function LoginPage() {
     }
   }, [form, lastUsername, storedPassword, lastRemember])
 
+  const handleMinimize = () => {
+    appWindow.minimize().catch(() => {})
+  }
+  const handleClose = () => {
+    appWindow.close().catch(() => {})
+  }
+
   const onFinish = async (values: { username: string; password: string; remember: boolean }) => {
     setLoading(true)
     try {
       const result = await login(values.username, values.password)
       resetTabs()
       setLogin(result.token, result.user)
-      localStorage.setItem(LAST_USERNAME_KEY, values.username)
+      setLastUsername(values.username)
 
       if (values.remember) {
         storePassword(values.username, values.password)
-        localStorage.setItem('gl_remember_checked', 'true')
+        setStoredRemember(true)
       } else {
         clearStoredPassword(values.username)
-        localStorage.setItem('gl_remember_checked', 'false')
+        setStoredRemember(false)
       }
 
       message.success('登录成功')
@@ -114,89 +102,103 @@ export default function LoginPage() {
 
   return (
     <div
-      className="h-screen w-screen flex overflow-hidden relative"
-      style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 40%, #1677FF 100%)' }}
+      className="h-screen w-screen flex items-center justify-center overflow-hidden relative"
+      style={{ background: `radial-gradient(ellipse 60% 50% at 50% 50%, var(--gl-login-spotlight) 0%, transparent 70%), linear-gradient(160deg, var(--gl-login-bg) 0%, var(--gl-login-bg-end) 100%)` }}
     >
-      <div className="absolute inset-0 opacity-[0.07]">
-        <div
-          className="absolute top-[10%] left-[10%] w-[500px] h-[500px] rounded-full"
-          style={{ background: 'radial-gradient(circle, #4096FF 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute bottom-[5%] right-[15%] w-[600px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(circle, #8B5CF6 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute top-[50%] left-[50%] w-[400px] h-[400px] rounded-full"
-          style={{ background: 'radial-gradient(circle, #10B981 0%, transparent 70%)' }}
-        />
-      </div>
-
-      <div className="hidden lg:flex flex-1 flex-col justify-center items-center px-16 relative z-10">
-        <div className="relative text-center">
+      <div className="gl-login-aurora" />
+      <div className="gl-login-grid" />
+      <div className="gl-login-dots-layer">
+        {SCATTER_DOTS.map((dot, i) => (
           <div
-            className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white mx-auto mb-8"
-            style={{ background: 'linear-gradient(135deg, #4096FF, #1677FF)', boxShadow: '0 20px 50px rgba(22, 119, 255, 0.35)' }}
-          >
-            GL
-          </div>
-          <h1 className="text-[40px] font-bold text-white mb-4 tracking-tight">管用GL</h1>
-          <p className="text-[17px] text-[#94A3B8] mb-2 font-light">企业资源管理平台</p>
-          <p className="text-[14px] text-[#64748B] max-w-[420px] leading-relaxed">
-            低代码表单引擎 · 数据中心 · 流程审批 · 权限管理
-          </p>
+            key={i}
+            className="gl-login-dot"
+            style={{
+              left: `${dot.x}%`,
+              top: `${dot.y}%`,
+              width: dot.size,
+              height: dot.size,
+              '--gl-dot-delay': `${dot.delay}s`,
+              '--gl-dot-duration': `${dot.dur}s`,
+            } as React.CSSProperties}
+          />
+        ))}
+      </div>
+      <div className="gl-login-noise" />
 
-          <div className="grid grid-cols-4 gap-6 mt-14">
-            {[
-              { icon: '📋', label: '表单设计' },
-              { icon: '📊', label: '数据分析' },
-              { icon: '🔄', label: '流程审批' },
-              { icon: '🔐', label: '权限管控' },
-            ].map((item) => (
-              <div key={item.label} className="text-center group">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2 transition-transform group-hover:scale-110"
-                  style={{ background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(8px)' }}
-                >
-                  <span className="text-xl">{item.icon}</span>
-                </div>
-                <div className="text-[12px] text-[#94A3B8]">{item.label}</div>
-              </div>
-            ))}
-          </div>
+      <div className="absolute top-0 right-0 flex items-center z-20" style={{ height: 36 }}>
+        <div
+          className="gl-login-win-btn flex items-center justify-center cursor-pointer transition-all"
+          style={{ width: 40, height: 36, color: 'var(--gl-login-win-color)' }}
+          onClick={toggleTheme}
+          aria-label={isDark ? '切换浅色模式' : '切换深色模式'}
+        >
+          {isDark ? <SunOutlined style={{ fontSize: 13 }} /> : <MoonOutlined style={{ fontSize: 13 }} />}
+        </div>
+        <div
+          className="gl-login-win-btn flex items-center justify-center cursor-pointer transition-all"
+          style={{ width: 46, height: 36, color: 'var(--gl-login-win-color)' }}
+          onClick={handleMinimize}
+          aria-label="最小化"
+        >
+          <MinusOutlined style={{ fontSize: 12 }} />
+        </div>
+        <div
+          className="gl-login-win-btn gl-login-win-close flex items-center justify-center cursor-pointer transition-all"
+          style={{ width: 46, height: 36, color: 'var(--gl-login-win-color)' }}
+          onClick={handleClose}
+          aria-label="关闭"
+        >
+          <CloseOutlined style={{ fontSize: 12 }} />
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-6 lg:px-16 relative z-10">
-        <div
-          className="w-full max-w-[420px] rounded-2xl p-8 gl-fade-in"
-          style={{
-            background: 'rgba(255, 255, 255, 0.88)',
-            backdropFilter: 'blur(24px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5)',
-            border: '1px solid rgba(255, 255, 255, 0.6)',
-          }}
-        >
-          <div className="lg:hidden text-center mb-8">
-            <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold text-white mx-auto mb-3"
-              style={{ background: 'linear-gradient(135deg, #4096FF, #1677FF)', boxShadow: '0 8px 20px rgba(22, 119, 255, 0.3)' }}
-            >
-              GL
+      <div
+        className="gl-login-card gl-login-card-enter w-full max-w-[400px] rounded-2xl relative z-10 overflow-hidden"
+        style={{
+          background: 'var(--gl-login-card-bg)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          boxShadow: 'var(--gl-login-card-shadow)',
+          border: '1px solid var(--gl-login-card-border)',
+          borderTopColor: 'var(--gl-login-card-border-top)',
+        }}
+      >
+        <div className="gl-login-card-accent" />
+
+        <div className="px-8 pt-9 pb-4">
+          <div className="flex items-center gap-4 mb-1 relative">
+            <div className="gl-login-logo-ring">
+              <div className="gl-login-logo-glow" />
+              <div
+                className="gl-login-logo-pulse w-11 h-11 rounded-xl flex items-center justify-center text-base font-bold text-white relative"
+                style={{
+                  background: `linear-gradient(135deg, var(--gl-login-logo-from), var(--gl-login-logo-to))`,
+                }}
+              >
+                GL
+              </div>
             </div>
-            <h2 className="text-xl font-bold" style={{ color: 'var(--gl-text-primary)' }}>管用GL</h2>
+            <div>
+              <h1
+                className="text-[20px] font-bold tracking-tight leading-tight"
+                style={{
+                  background: `linear-gradient(135deg, var(--gl-login-title-from), var(--gl-login-title-to))`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                管用GL
+              </h1>
+              <p className="text-[12px] leading-tight" style={{ color: 'var(--gl-login-text-muted)' }}>
+                企业资源管理平台
+              </p>
+            </div>
           </div>
+        </div>
 
-          <div className="hidden lg:block mb-8">
-            <h2 className="text-[24px] font-bold mb-2 tracking-tight" style={{ color: 'var(--gl-text-primary)' }}>
-              欢迎回来
-            </h2>
-            <p className="text-[14px]" style={{ color: 'var(--gl-text-secondary)' }}>
-              请登录您的账号以继续
-            </p>
-          </div>
+        <div className="gl-login-divider" />
 
+        <div className="px-8 pt-5 pb-8">
           <Form
             form={form}
             name="login"
@@ -212,10 +214,14 @@ export default function LoginPage() {
             >
               <Input
                 autoFocus
-                prefix={<UserOutlined style={{ color: 'var(--gl-text-tertiary)' }} />}
+                prefix={<UserOutlined style={{ color: 'var(--gl-login-text-muted)', fontSize: 14 }} />}
                 placeholder="请输入用户名"
                 size="large"
-                style={{ borderRadius: 10, height: 46 }}
+                variant="borderless"
+                style={{
+                  height: 48,
+                  color: 'var(--gl-login-text)',
+                }}
               />
             </Form.Item>
 
@@ -224,34 +230,62 @@ export default function LoginPage() {
               rules={[{ required: true, message: '请输入密码' }]}
             >
               <Input.Password
-                prefix={<LockOutlined style={{ color: 'var(--gl-text-tertiary)' }} />}
+                prefix={<LockOutlined style={{ color: 'var(--gl-login-text-muted)', fontSize: 14 }} />}
                 placeholder="请输入密码"
                 size="large"
-                style={{ borderRadius: 10, height: 46 }}
+                variant="borderless"
+                style={{
+                  height: 48,
+                  color: 'var(--gl-login-text)',
+                }}
               />
             </Form.Item>
 
             <Form.Item>
               <div className="flex justify-start items-center">
                 <Form.Item name="remember" valuePropName="checked" noStyle>
-                  <Checkbox style={{ fontSize: 13 }}>记住密码</Checkbox>
+                  <Checkbox style={{ fontSize: 13, color: 'var(--gl-login-text-secondary)' }}>
+                    记住密码
+                  </Checkbox>
                 </Form.Item>
               </div>
             </Form.Item>
 
-            <Form.Item>
+            <Form.Item style={{ marginBottom: 0 }}>
               <Button
                 type="primary"
                 htmlType="submit"
                 loading={loading}
                 block
                 size="large"
+                className="gl-login-btn"
                 style={{
                   borderRadius: 10,
-                  height: 46,
+                  height: 44,
                   fontWeight: 600,
                   fontSize: 15,
-                  boxShadow: '0 4px 14px rgba(22, 119, 255, 0.3)',
+                  background: '#1677FF',
+                  border: 'none',
+                  boxShadow: '0 4px 14px rgba(22, 119, 255, 0.25)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#4096FF'
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 119, 255, 0.35)'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#1677FF'
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(22, 119, 255, 0.25)'
+                  e.currentTarget.style.transform = 'translateY(0)'
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.background = '#0958D9'
+                  e.currentTarget.style.transform = 'translateY(0) scale(0.98)'
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.background = '#4096FF'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
                 }}
               >
                 登 录

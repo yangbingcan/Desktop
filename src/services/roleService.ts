@@ -16,6 +16,9 @@ export interface PermissionItem {
   key: string
   label: string
   group: string
+  module: string
+  module_label: string
+  action: string
 }
 
 function getToken(): string {
@@ -49,4 +52,13 @@ export async function deleteRole(id: string): Promise<void> {
 
 export async function getPermissions(): Promise<PermissionItem[]> {
   return invokeCommand<PermissionItem[]>('get_permissions')
+}
+
+export async function getRoleOptions(): Promise<RoleBrief[]> {
+  return invokeCommand<RoleBrief[]>('get_role_options', { token: getToken() })
+}
+
+export interface RoleBrief {
+  id: string
+  name: string
 }

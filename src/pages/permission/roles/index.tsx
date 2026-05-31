@@ -1,22 +1,23 @@
-/** @file 权限管理 - 角色列表、新增编辑、权限配置 */
+/** @file 权限管理 - 角色列表 + Excel矩阵权限配置（独立页面，非弹窗） */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   PlusOutlined,
   ReloadOutlined,
   ExclamationCircleOutlined,
+  CopyOutlined,
+  SnippetsOutlined,
+  ArrowLeftOutlined,
 } from '@ant-design/icons'
 import {
   Button,
   Checkbox,
-  Col,
-  Form,
   Input,
   message,
   Modal,
-  Row,
   Space,
   Table,
   Tag,
+  Tooltip,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -28,36 +29,65 @@ import {
   type PermissionItem,
   type RoleItem,
 } from '../../../services/roleService'
+import { PERMISSION_ACTIONS } from '../../../services/permissionMap'
+import { usePermission } from '../../../hooks/usePermission'
 
-interface RoleFormValues {
-  name: string
-  description?: string
-  permission_keys?: string[]
-}
+type ViewMode = 'list' | 'edit' | 'create'
 
 export default function PermissionRolesPage() {
   const [loading, setLoading] = useState(false)
   const [dataSource, setDataSource] = useState<RoleItem[]>([])
   const [keyword, setKeyword] = useState('')
-
   const [permissions, setPermissions] = useState<PermissionItem[]>([])
 
-  const groupedPermissions = useMemo(() => {
-    const map = new Map<string, PermissionItem[]>()
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [editingRole, setEditingRole] = useState<RoleItem | null>(null)
+  const [roleName, setRoleName] = useState('')
+  const [roleDesc, setRoleDesc] = useState('')
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+  const [saving, setSaving] = useState(false)
+  const [clipboard, setClipboard] = useState<string[] | null>(null)
+
+  const { hasAction } = usePermission()
+  const canAdd = hasAction('permission', 'add')
+  const canEdit = hasAction('permission', 'edit')
+  const canDelete = hasAction('permission', 'delete')
+
+  const moduleGroups = useMemo(() => {
+    interface ModuleGroup {
+      module: string
+      moduleLabel: string
+      group: string
+      actions: PermissionItem[]
+    }
+    const map = new Map<string, ModuleGroup>()
     permissions.forEach((p) => {
-      const list = map.get(p.group) || []
-      list.push(p)
-      map.set(p.group, list)
+      const existing = map.get(p.module)
+      if (existing) {
+        existing.actions.push(p)
+      } else {
+        map.set(p.module, {
+          module: p.module,
+          moduleLabel: p.module_label,
+          group: p.group,
+          actions: [p],
+        })
+      }
     })
-    return Array.from(map.entries()).map(([group, items]) => ({ group, items }))
+    const groups = new Map<string, ModuleGroup[]>()
+    map.forEach((val) => {
+      const list = groups.get(val.group) || []
+      list.push(val)
+      groups.set(val.group, list)
+    })
+    return Array.from(groups.entries()).map(([group, modules]) => ({ group, modules }))
   }, [permissions])
 
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalLoading, setModalLoading] = useState(false)
-  const [editingRole, setEditingRole] = useState<RoleItem | null>(null)
-  const [form] = Form.useForm<RoleFormValues>()
-
-  const [expandedKeys, setExpandedKeys] = useState<readonly string[]>([])
+  const allModules = useMemo(() => {
+    const result: { module: string; moduleLabel: string; group: string; actions: PermissionItem[] }[] = []
+    moduleGroups.forEach(({ modules }) => modules.forEach((m) => result.push(m)))
+    return result
+  }, [moduleGroups])
 
   const fetchRoles = useCallback(async () => {
     setLoading(true)
@@ -79,9 +109,7 @@ export default function PermissionRolesPage() {
     try {
       const list = await getPermissions()
       setPermissions(list)
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
   }, [])
 
   useEffect(() => {
@@ -92,8 +120,10 @@ export default function PermissionRolesPage() {
 
   const handleCreate = () => {
     setEditingRole(null)
-    form.resetFields()
-    setModalOpen(true)
+    setRoleName('')
+    setRoleDesc('')
+    setSelectedKeys(new Set())
+    setViewMode('create')
   }
 
   const handleEdit = (role: RoleItem) => {
@@ -102,44 +132,47 @@ export default function PermissionRolesPage() {
       return
     }
     setEditingRole(role)
-    form.setFieldsValue({
-      name: role.name,
-      description: role.description || undefined,
-      permission_keys: role.permissions,
-    })
-    setModalOpen(true)
+    setRoleName(role.name)
+    setRoleDesc(role.description || '')
+    setSelectedKeys(new Set(role.permissions))
+    setViewMode('edit')
   }
 
-  const handleSubmit = async () => {
+  const handleSave = async () => {
+    const name = roleName.trim()
+    if (!name) {
+      message.error('请输入角色名称')
+      return
+    }
+
+    setSaving(true)
     try {
-      const values = await form.validateFields()
-      setModalLoading(true)
+      const permKeys = Array.from(selectedKeys)
 
       if (editingRole) {
         await updateRole({
           id: editingRole.id,
-          name: values.name,
-          description: values.description,
-          permission_keys: values.permission_keys,
+          name,
+          description: roleDesc || undefined,
+          permission_keys: permKeys,
         })
         message.success('角色更新成功')
       } else {
         await createRole({
-          name: values.name,
-          description: values.description,
-          permission_keys: values.permission_keys,
+          name,
+          description: roleDesc || undefined,
+          permission_keys: permKeys,
         })
         message.success('角色创建成功')
       }
 
-      setModalOpen(false)
+      setViewMode('list')
       fetchRoles()
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'message' in err) {
-        message.error(String((err as { message: string }).message))
-      }
+      const msg = err instanceof Error ? err.message : String(err ?? '操作失败')
+      if (msg) message.error(msg)
     } finally {
-      setModalLoading(false)
+      setSaving(false)
     }
   }
 
@@ -148,12 +181,10 @@ export default function PermissionRolesPage() {
       message.warning('系统角色不可删除')
       return
     }
-
     const hasUsers = role.user_count > 0
     const content = hasUsers
       ? `该角色已分配给 ${role.user_count} 个用户，删除后相关用户将失去对应权限。确认删除？`
       : `确定要删除角色「${role.name}」吗？此操作不可恢复。`
-
     Modal.confirm({
       title: '确认删除',
       icon: <ExclamationCircleOutlined />,
@@ -173,9 +204,212 @@ export default function PermissionRolesPage() {
     })
   }
 
-  const getPermissionLabels = (keys: string[]): string[] => {
-    const labelMap = new Map(permissions.map((p) => [p.key, p.label]))
-    return keys.map((k) => labelMap.get(k) || k)
+  const handleCopyPermissions = (role: RoleItem) => {
+    setClipboard(role.permissions)
+    message.success(`已复制「${role.name}」的 ${role.permissions.length} 项权限`)
+  }
+
+  const handlePastePermissions = () => {
+    if (!clipboard) {
+      message.warning('请先复制一个角色的权限')
+      return
+    }
+    setSelectedKeys(new Set(clipboard))
+    message.success(`已粘贴 ${clipboard.length} 项权限`)
+  }
+
+  const toggleKey = (key: string) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const toggleRow = (mod: { actions: PermissionItem[] }) => {
+    const allKeys = mod.actions.map((a) => a.key)
+    const allChecked = allKeys.every((k) => selectedKeys.has(k))
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      allKeys.forEach((k) => {
+        if (allChecked) next.delete(k)
+        else next.add(k)
+      })
+      return next
+    })
+  }
+
+  const toggleColumn = (actionKey: string) => {
+    const allKeys = allModules.map((m) => `${m.module}:${actionKey}`)
+    const allChecked = allKeys.every((k) => selectedKeys.has(k))
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      allKeys.forEach((k) => {
+        if (allChecked) next.delete(k)
+        else next.add(k)
+      })
+      return next
+    })
+  }
+
+  const toggleGroup = (modules: { actions: PermissionItem[] }[]) => {
+    const allKeys = modules.flatMap((m) => m.actions.map((a) => a.key))
+    const allChecked = allKeys.every((k) => selectedKeys.has(k))
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      allKeys.forEach((k) => {
+        if (allChecked) next.delete(k)
+        else next.add(k)
+      })
+      return next
+    })
+  }
+
+  const toggleAll = () => {
+    const allKeys = permissions.map((p) => p.key)
+    const allChecked = allKeys.every((k) => selectedKeys.has(k))
+    if (allChecked) {
+      setSelectedKeys(new Set())
+    } else {
+      setSelectedKeys(new Set(allKeys))
+    }
+  }
+
+  if (viewMode === 'edit' || viewMode === 'create') {
+    return (
+      <div className="space-y-4">
+        <div
+          className="rounded-xl p-4"
+          style={{ background: 'var(--gl-card-bg)', border: '1px solid var(--gl-border)' }}
+        >
+          <div className="flex items-center gap-3">
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => setViewMode('list')}
+            >
+              返回列表
+            </Button>
+            <div className="h-4 w-px" style={{ background: 'var(--gl-border)' }} />
+            <span className="font-medium" style={{ color: 'var(--gl-text-primary)' }}>
+              {viewMode === 'create' ? '新增角色' : `编辑角色 - ${editingRole?.name}`}
+            </span>
+            <div className="flex-1" />
+            <Tooltip title={clipboard ? `粘贴（已复制 ${clipboard.length} 项权限）` : '请先在列表中复制角色权限'}>
+              <Button
+                icon={<SnippetsOutlined />}
+                onClick={handlePastePermissions}
+                disabled={!clipboard}
+              >
+                粘贴权限
+              </Button>
+            </Tooltip>
+            <Button onClick={() => setViewMode('list')}>取消</Button>
+            <Button type="primary" loading={saving} onClick={handleSave}>
+              保存
+            </Button>
+          </div>
+        </div>
+
+        <div
+          className="rounded-xl p-5"
+          style={{ background: 'var(--gl-card-bg)', border: '1px solid var(--gl-border)' }}
+        >
+          <div className="flex items-center gap-4 mb-5">
+            <div className="flex items-center gap-2">
+              <label className="text-sm whitespace-nowrap" style={{ color: 'var(--gl-text-secondary)' }}>
+                角色名称<span style={{ color: 'var(--gl-error)' }}>*</span>
+              </label>
+              <Input
+                value={roleName}
+                onChange={(e) => setRoleName(e.target.value)}
+                placeholder="请输入角色名称"
+                maxLength={32}
+                style={{ width: 200 }}
+                status={roleName.trim() === '' && viewMode === 'edit' ? undefined : undefined}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm whitespace-nowrap" style={{ color: 'var(--gl-text-secondary)' }}>
+                角色描述
+              </label>
+              <Input
+                value={roleDesc}
+                onChange={(e) => setRoleDesc(e.target.value)}
+                placeholder="请输入角色描述"
+                maxLength={200}
+                style={{ width: 300 }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-medium" style={{ color: 'var(--gl-text-secondary)', fontSize: 13 }}>
+              功能权限（已选 {selectedKeys.size} / {permissions.length}）
+            </span>
+            <Space size={8}>
+              <Button size="small" onClick={toggleAll}>
+                {selectedKeys.size === permissions.length ? '全部取消' : '全部选择'}
+              </Button>
+            </Space>
+          </div>
+
+          <div
+            className="overflow-x-auto rounded-lg"
+            style={{ border: '1px solid var(--gl-border)' }}
+          >
+            <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: 900 }}>
+              <thead>
+                <tr style={{ background: 'var(--gl-fill-quaternary)' }}>
+                  <th
+                    className="text-left px-3 py-2 font-medium sticky left-0 z-10"
+                    style={{
+                      borderBottom: '1px solid var(--gl-border)',
+                      borderRight: '1px solid var(--gl-border)',
+                      background: 'var(--gl-fill-quaternary)',
+                      minWidth: 120,
+                      fontSize: 13,
+                      color: 'var(--gl-text-secondary)',
+                    }}
+                  >
+                    模块
+                  </th>
+                  {PERMISSION_ACTIONS.map((action) => {
+                    const allKeys = allModules.map((m) => `${m.module}:${action.key}`)
+                    const allChecked = allKeys.every((k) => selectedKeys.has(k))
+                    const someChecked = allKeys.some((k) => selectedKeys.has(k))
+                    return (
+                      <th
+                        key={action.key}
+                        className="px-2 py-2 text-center font-normal cursor-pointer select-none"
+                        style={{
+                          borderBottom: '1px solid var(--gl-border)',
+                          fontSize: 12,
+                          color: allChecked ? 'var(--gl-primary)' : someChecked ? 'var(--gl-primary)' : 'var(--gl-text-tertiary)',
+                          minWidth: 56,
+                          whiteSpace: 'nowrap',
+                        }}
+                        onClick={() => toggleColumn(action.key)}
+                      >
+                        <div className="flex flex-col items-center gap-0.5">
+                          <Checkbox checked={allChecked} indeterminate={someChecked && !allChecked} />
+                          <span>{action.label}</span>
+                        </div>
+                      </th>
+                    )
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {moduleGroups.map(({ group, modules }) => (
+                  <FragmentWithGroup key={group} group={group} modules={modules} selectedKeys={selectedKeys} toggleGroup={toggleGroup} toggleRow={toggleRow} toggleKey={toggleKey} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const columns: ColumnsType<RoleItem> = [
@@ -212,20 +446,10 @@ export default function PermissionRolesPage() {
       dataIndex: 'permissions',
       width: 90,
       align: 'center',
-      render: (permissions: string[], record) => (
-        <Button
-          type="link"
-          size="small"
-          style={{ padding: 0, height: 'auto', fontWeight: 'normal' }}
-          onClick={() => {
-            const isExpanded = expandedKeys.includes(record.id)
-            setExpandedKeys(isExpanded ? [] : [record.id])
-          }}
-        >
-          <Tag color={permissions.length > 0 ? 'green' : 'default'}>
-            {permissions.length}
-          </Tag>
-        </Button>
+      render: (permissions: string[]) => (
+        <Tag color={permissions.length > 0 ? 'green' : 'default'}>
+          {permissions.length}
+        </Tag>
       ),
     },
     {
@@ -236,21 +460,29 @@ export default function PermissionRolesPage() {
     {
       title: '操作',
       key: 'action',
-      width: 120,
+      width: 200,
       fixed: 'right',
       render: (_, record) => {
         if (isAdminRole(record)) {
           return <span style={{ color: 'var(--gl-text-tertiary)' }}>-</span>
         }
-
         return (
           <Space size={0} split={<span style={{ color: 'var(--gl-border)' }}>|</span>}>
-            <Button type="link" size="small" onClick={() => handleEdit(record)}>
-              编辑
-            </Button>
-            <Button type="link" size="small" danger onClick={() => handleDelete(record)}>
-              删除
-            </Button>
+            {canEdit && (
+              <Button type="link" size="small" onClick={() => handleEdit(record)}>
+                编辑
+              </Button>
+            )}
+            <Tooltip title="复制权限到剪贴板，可在编辑角色时粘贴">
+              <Button type="link" size="small" icon={<CopyOutlined />} onClick={() => handleCopyPermissions(record)}>
+                复制
+              </Button>
+            </Tooltip>
+            {canDelete && (
+              <Button type="link" size="small" danger onClick={() => handleDelete(record)}>
+                删除
+              </Button>
+            )}
           </Space>
         )
       },
@@ -263,16 +495,7 @@ export default function PermissionRolesPage() {
         className="rounded-xl p-5"
         style={{ background: 'var(--gl-card-bg)', border: '1px solid var(--gl-border)' }}
       >
-        <div className="flex items-center justify-between">
-          <h1 className="text-[18px] font-semibold" style={{ color: 'var(--gl-text-primary)' }}>
-            权限管理
-          </h1>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            新增角色
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-3 mt-4">
+        <div className="flex items-center gap-3">
           <Input.Search
             placeholder="搜索角色名称"
             allowClear
@@ -282,6 +505,12 @@ export default function PermissionRolesPage() {
           <Button icon={<ReloadOutlined />} onClick={fetchRoles}>
             刷新
           </Button>
+          <div className="flex-1" />
+          {canAdd && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              新增角色
+            </Button>
+          )}
         </div>
       </div>
 
@@ -295,106 +524,87 @@ export default function PermissionRolesPage() {
           loading={loading}
           columns={columns}
           dataSource={dataSource}
-          scroll={{ x: 830 }}
+          scroll={{ x: 930 }}
           pagination={false}
-          expandable={{
-            expandedRowKeys: expandedKeys,
-            onExpandedRowsChange: (keys) => setExpandedKeys(keys as string[]),
-            expandedRowRender: (record) => {
-              const labels = getPermissionLabels(record.permissions)
-              if (labels.length === 0) {
-                return (
-                  <span style={{ color: 'var(--gl-text-tertiary)' }}>暂无权限配置</span>
-                )
-              }
-              const keySet = new Set(record.permissions)
-              return (
-                <div className="space-y-3">
-                  {groupedPermissions.map(({ group, items }) => {
-                    const matched = items.filter((p) => keySet.has(p.key))
-                    if (matched.length === 0) return null
-                    return (
-                      <div key={group}>
-                        <span
-                          className="font-medium mr-3"
-                          style={{ color: 'var(--gl-text-secondary)', fontSize: 13 }}
-                        >
-                          {group}
-                        </span>
-                        <Space size={[4, 8]} wrap>
-                          {matched.map((p) => (
-                            <Tag key={p.key} color="processing" style={{ margin: 0 }}>
-                              {p.label}
-                            </Tag>
-                          ))}
-                        </Space>
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            },
-          }}
         />
       </div>
-
-      <Modal
-        title={editingRole ? '编辑角色' : '新增角色'}
-        open={modalOpen}
-        onOk={handleSubmit}
-        onCancel={() => setModalOpen(false)}
-        confirmLoading={modalLoading}
-        okText={editingRole ? '保存' : '创建'}
-        cancelText="取消"
-        destroyOnClose
-        width={600}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          className="mt-4"
-          autoComplete="off"
-        >
-          <Form.Item
-            name="name"
-            label="角色名称"
-            rules={[{ required: true, message: '请输入角色名称' }]}
-          >
-            <Input placeholder="请输入角色名称" maxLength={32} />
-          </Form.Item>
-          <Form.Item name="description" label="角色描述">
-            <Input.TextArea
-              placeholder="请输入角色描述"
-              maxLength={200}
-              showCount
-              autoSize={{ minRows: 2, maxRows: 4 }}
-            />
-          </Form.Item>
-          <Form.Item name="permission_keys" label="功能权限">
-            <div className="space-y-4">
-              {groupedPermissions.map(({ group, items }) => (
-                <div key={group}>
-                  <div
-                    className="mb-2 font-medium"
-                    style={{ color: 'var(--gl-text-secondary)', fontSize: 13 }}
-                  >
-                    {group}
-                  </div>
-                  <Checkbox.Group>
-                    <Row gutter={[16, 8]}>
-                      {items.map((p) => (
-                        <Col key={p.key} span={8}>
-                          <Checkbox value={p.key}>{p.label}</Checkbox>
-                        </Col>
-                      ))}
-                    </Row>
-                  </Checkbox.Group>
-                </div>
-              ))}
-            </div>
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
+  )
+}
+
+function FragmentWithGroup({ group, modules, selectedKeys, toggleGroup, toggleRow, toggleKey }: {
+  group: string
+  modules: { module: string; moduleLabel: string; actions: PermissionItem[] }[]
+  selectedKeys: Set<string>
+  toggleGroup: (modules: { actions: PermissionItem[] }[]) => void
+  toggleRow: (mod: { actions: PermissionItem[] }) => void
+  toggleKey: (key: string) => void
+}) {
+  const groupAllKeys = modules.flatMap((m) => m.actions.map((a) => a.key))
+  const groupAllChecked = groupAllKeys.every((k) => selectedKeys.has(k))
+  const groupSomeChecked = groupAllKeys.some((k) => selectedKeys.has(k))
+
+  return (
+    <>
+      <tr
+        className="cursor-pointer select-none"
+        style={{ background: 'var(--gl-fill-quaternary)' }}
+        onClick={() => toggleGroup(modules)}
+      >
+        <td
+          colSpan={1 + PERMISSION_ACTIONS.length}
+          className="px-3 py-1.5 font-medium"
+          style={{
+            borderBottom: '1px solid var(--gl-border)',
+            fontSize: 13,
+            color: 'var(--gl-text-secondary)',
+          }}
+        >
+          <Checkbox checked={groupAllChecked} indeterminate={groupSomeChecked && !groupAllChecked} />
+          <span className="ml-2">{group}</span>
+        </td>
+      </tr>
+      {modules.map((mod) => {
+        const rowAllKeys = mod.actions.map((a) => a.key)
+        const rowAllChecked = rowAllKeys.every((k) => selectedKeys.has(k))
+        const rowSomeChecked = rowAllKeys.some((k) => selectedKeys.has(k))
+        return (
+          <tr key={mod.module} className="hover:bg-[var(--gl-row-hover)]">
+            <td
+              className="px-3 py-1.5 sticky left-0 cursor-pointer select-none"
+              style={{
+                borderBottom: '1px solid var(--gl-border)',
+                borderRight: '1px solid var(--gl-border)',
+                background: 'var(--gl-card-bg)',
+                fontSize: 13,
+                color: 'var(--gl-text-primary)',
+                whiteSpace: 'nowrap',
+              }}
+              onClick={() => toggleRow(mod)}
+            >
+              <Checkbox checked={rowAllChecked} indeterminate={rowSomeChecked && !rowAllChecked} />
+              <span className="ml-2">{mod.moduleLabel}</span>
+            </td>
+            {PERMISSION_ACTIONS.map((action) => {
+              const key = `${mod.module}:${action.key}`
+              const perm = mod.actions.find((a) => a.action === action.key)
+              return (
+                <td
+                  key={action.key}
+                  className="px-2 py-1.5 text-center cursor-pointer select-none"
+                  style={{
+                    borderBottom: '1px solid var(--gl-border)',
+                    fontSize: 12,
+                  }}
+                  onClick={() => perm && toggleKey(key)}
+                >
+                  <Checkbox checked={selectedKeys.has(key)} disabled={!perm} />
+                </td>
+              )
+            })}
+          </tr>
+        )
+      })}
+    </>
   )
 }

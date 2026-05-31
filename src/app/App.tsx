@@ -1,4 +1,4 @@
-/** @file 应用入口 v9.0 - 清理低代码模块，保留用户权限管理 */
+/** @file 应用入口 v10.0 - 清理低代码模块，保留用户权限管理 */
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, App as AntApp, theme as antTheme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
@@ -9,6 +9,7 @@ import LoginPage from '../pages/auth/login'
 import DashboardPage from '../pages/dashboard'
 import PermissionRolesPage from '../pages/permission/roles'
 import UserListPage from '../pages/user/list'
+import SystemLogsPage from '../pages/system/logs'
 import SettingsGeneralPage from '../pages/settings/general'
 import '../styles/ant-overrides.css'
 import RequireAuth from '../components/auth/RequireAuth'
@@ -54,6 +55,7 @@ function AppRoutes() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/permission/roles" element={<PermissionRolesPage />} />
               <Route path="/user/list" element={<UserListPage />} />
+              <Route path="/system/logs" element={<SystemLogsPage />} />
               <Route path="/settings" element={<SettingsGeneralPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

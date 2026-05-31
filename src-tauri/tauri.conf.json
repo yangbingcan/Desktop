@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "管用GL",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "identifier": "com.guanyong-gl.app",
   "build": {
     "beforeDevCommand": "npm run dev",

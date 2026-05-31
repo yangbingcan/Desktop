@@ -6,6 +6,7 @@ mod error_util;
 mod auth;
 mod users;
 mod roles;
+mod operation_logs;
 #[cfg(feature = "server")]
 mod server;
 
@@ -41,6 +42,11 @@ pub fn run() {
             roles::update_role,
             roles::delete_role,
             roles::get_permissions,
+            roles::get_role_options,
+            operation_logs::get_operation_logs,
+            operation_logs::delete_operation_logs,
+            operation_logs::clean_operation_logs,
+            operation_logs::record_page_view,
         ])
         .run(tauri::generate_context!())
         .expect("管用GL启动失败");

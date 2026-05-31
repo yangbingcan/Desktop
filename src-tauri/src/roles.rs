@@ -3,17 +3,51 @@
 use crate::auth::verify_and_get_context;
 use crate::database::DbState;
 use crate::error_util::translate_db_error;
-use crate::models::{PermissionItem, RoleItem};
+use crate::models::{PermissionItem, RoleItem, RoleBrief};
 use rusqlite::{params, Row};
 use tauri::State;
 
 fn all_permissions() -> Vec<PermissionItem> {
-    vec![
-        PermissionItem { key: "dashboard".into(), label: "仪表盘".into(), group: "功能权限".into() },
-        PermissionItem { key: "permission".into(), label: "权限管理".into(), group: "功能权限".into() },
-        PermissionItem { key: "user_manage".into(), label: "用户管理".into(), group: "功能权限".into() },
-        PermissionItem { key: "settings".into(), label: "系统设置".into(), group: "功能权限".into() },
-    ]
+    let actions: &[(&str, &str)] = &[
+        ("view", "查看"),
+        ("add", "新增"),
+        ("edit", "修改"),
+        ("delete", "删除"),
+        ("audit", "审核"),
+        ("unaudit", "消审"),
+        ("void", "冲单"),
+        ("edit_date", "修改业务日期"),
+        ("edit_other", "修改其他信息"),
+        ("preview", "预览"),
+        ("print", "打印"),
+        ("design_report", "设计报表"),
+        ("import", "导入"),
+        ("export", "导出"),
+        ("terminate", "终止"),
+    ];
+
+    let modules: &[(&str, &str, &str)] = &[
+        ("dashboard", "仪表盘", "仪表盘"),
+        ("permission", "权限管理", "系统管理"),
+        ("user_manage", "用户管理", "系统管理"),
+        ("settings", "系统设置", "系统管理"),
+        ("system_log", "系统日志", "系统管理"),
+    ];
+
+    let mut result = Vec::new();
+    for &(module, module_label, group) in modules {
+        for &(action, action_label) in actions {
+            result.push(PermissionItem {
+                key: format!("{}:{}", module, action),
+                label: format!("{}-{}", module_label, action_label),
+                group: group.to_string(),
+                module: module.to_string(),
+                module_label: module_label.to_string(),
+                action: action.to_string(),
+            });
+        }
+    }
+    result
 }
 
 fn load_role_permissions(conn: &rusqlite::Connection, role_id: &str) -> Vec<String> {
@@ -109,6 +143,7 @@ pub fn get_roles(db: State<'_, DbState>, token: String, keyword: Option<String>)
     };
 
     let items = raws.into_iter().map(|raw| raw_to_role_item(conn, raw)).collect();
+
     Ok(items)
 }
 
@@ -152,21 +187,21 @@ pub fn create_role(db: State<'_, DbState>, token: String, params: CreateRolePara
         for key in keys {
             let perm_id = uuid::Uuid::new_v4().to_string();
             conn.execute(
-                "INSERT INTO role_permissions (id, role_id, permission_key) VALUES (?1, ?2, ?3)",
-                params![perm_id, id, key],
+                "INSERT INTO role_permissions (id, role_id, role_name, permission_key) VALUES (?1, ?2, ?3, ?4)",
+                params![perm_id, id, name, key],
             ).map_err(|e| translate_db_error(e))?;
         }
     }
 
-    Ok(RoleItem {
-        id,
-        name,
-        description: params.description.unwrap_or_default(),
-        is_system: false,
-        permissions: params.permission_keys.unwrap_or_default(),
-        user_count: 0,
-        created_at: String::new(),
-    })
+    let raw = conn.query_row(
+        "SELECT id, name, description, is_system, created_at FROM roles WHERE id = ?1",
+        params![id],
+        |row| row_to_role_raw(row),
+    ).map_err(|e| translate_db_error(e))?;
+
+    crate::operation_logs::record_operation_log(conn, &ctx.username, "create", "创建角色", "角色权限", Some(&format!("角色: {}", name)));
+
+    Ok(raw_to_role_item(conn, raw))
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -194,11 +229,17 @@ pub fn update_role(db: State<'_, DbState>, token: String, params: UpdateRolePara
         return Err("系统角色不可修改".to_string());
     }
 
-    if let Some(ref name) = params.name {
-        let trimmed = name.trim().to_string();
+    let current_name: String = conn.query_row(
+        "SELECT name FROM roles WHERE id = ?1",
+        params![params.id],
+        |row| row.get(0),
+    ).map_err(|e| translate_db_error(e))?;
+
+    let new_name = params.name.as_deref().map(|n| n.trim()).filter(|n| !n.is_empty());
+    if let Some(n) = new_name {
         let exists: bool = conn.query_row(
             "SELECT COUNT(*) > 0 FROM roles WHERE name = ?1 AND id != ?2",
-            params![trimmed, params.id],
+            params![n, params.id],
             |row| row.get(0),
         ).unwrap_or(false);
         if exists {
@@ -206,9 +247,11 @@ pub fn update_role(db: State<'_, DbState>, token: String, params: UpdateRolePara
         }
     }
 
+    let effective_name = new_name.unwrap_or(&current_name);
+
     conn.execute(
-        "UPDATE roles SET name = COALESCE(?1, name), description = COALESCE(?2, description), updated_at = datetime('now', 'localtime') WHERE id = ?3",
-        params![params.name, params.description, params.id],
+        "UPDATE roles SET name = ?1, description = COALESCE(?2, description), updated_at = datetime('now', 'localtime') WHERE id = ?3",
+        params![effective_name, params.description, params.id],
     ).map_err(|e| translate_db_error(e))?;
 
     if let Some(ref keys) = params.permission_keys {
@@ -217,8 +260,8 @@ pub fn update_role(db: State<'_, DbState>, token: String, params: UpdateRolePara
         for key in keys {
             let perm_id = uuid::Uuid::new_v4().to_string();
             conn.execute(
-                "INSERT INTO role_permissions (id, role_id, permission_key) VALUES (?1, ?2, ?3)",
-                params![perm_id, params.id, key],
+                "INSERT INTO role_permissions (id, role_id, role_name, permission_key) VALUES (?1, ?2, ?3, ?4)",
+                params![perm_id, params.id, effective_name, key],
             ).map_err(|e| translate_db_error(e))?;
         }
     }
@@ -228,6 +271,8 @@ pub fn update_role(db: State<'_, DbState>, token: String, params: UpdateRolePara
         params![params.id],
         |row| row_to_role_raw(row),
     ).map_err(|e| translate_db_error(e))?;
+
+    crate::operation_logs::record_operation_log(conn, &ctx.username, "update", "更新角色", "角色权限", Some(&format!("角色ID: {}", params.id)));
 
     Ok(raw_to_role_item(conn, raw))
 }
@@ -265,7 +310,31 @@ pub fn delete_role(db: State<'_, DbState>, token: String, id: String) -> Result<
     conn.execute("DELETE FROM roles WHERE id = ?1", params![id])
         .map_err(|e| translate_db_error(e))?;
 
+    crate::operation_logs::record_operation_log(conn, &ctx.username, "delete", "删除角色", "角色权限", Some(&format!("角色ID: {}", id)));
+
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_role_options(db: State<'_, DbState>, token: String) -> Result<Vec<RoleBrief>, String> {
+    let conn = db.lock().map_err(|e| format!("数据库锁获取失败: {}", e))?;
+    let conn = conn.as_ref().ok_or("数据库未初始化")?;
+
+    let ctx = verify_and_get_context(conn, &token)?;
+    ctx.require_permission("user_manage")?;
+
+    let mut stmt = conn.prepare("SELECT id, name FROM roles ORDER BY created_at DESC")
+        .map_err(|e| translate_db_error(e))?;
+    let items: Vec<RoleBrief> = stmt.query_map([], |row: &Row| {
+        Ok(RoleBrief {
+            id: row.get(0)?,
+            name: row.get(1)?,
+        })
+    }).map_err(|e| translate_db_error(e))?
+    .filter_map(|r| r.ok())
+    .collect();
+
+    Ok(items)
 }
 
 #[tauri::command]

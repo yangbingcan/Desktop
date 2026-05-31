@@ -90,13 +90,49 @@ a:hover { color: var(--gl-primary-hover); }
 }
 
 .gl-sidebar-btn {
-  transition: background var(--gl-transition-fast), color var(--gl-transition-fast), transform var(--gl-transition-fast);
+  transition: background var(--gl-transition-fast), color var(--gl-transition-fast), transform var(--gl-transition-fast), box-shadow var(--gl-transition-fast);
 }
 .gl-sidebar-btn:hover {
   background: var(--gl-sidebar-item-hover) !important;
+  transform: translateX(2px);
 }
 .gl-sidebar-btn:active {
-  transform: scale(0.97);
+  transform: scale(0.97) translateX(2px);
+}
+
+.gl-sidebar-item-active {
+  position: relative;
+}
+.gl-sidebar-item-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--gl-primary);
+  box-shadow: 0 0 8px rgba(22, 119, 255, 0.3);
+  transition: background var(--gl-transition-fast), box-shadow var(--gl-transition-fast);
+}
+
+.gl-sidebar-group-line {
+  border-left: 1px dashed var(--gl-border);
+  transition: border-color var(--gl-transition-normal);
+}
+
+.gl-sidebar-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 4px;
+  margin-top: 4px;
+}
+.gl-sidebar-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gl-border), transparent);
 }
 
 .gl-sidebar-popup-btn {
@@ -193,4 +229,280 @@ a:hover { color: var(--gl-primary-hover); }
 
 [data-compact='true'] main > div {
   padding: 12px !important;
+}
+
+.gl-login-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.gl-login-aurora::before {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(ellipse 130% 90% at 10% 15%, var(--gl-login-aurora-1) 0%, transparent 65%),
+    radial-gradient(ellipse 90% 130% at 90% 85%, var(--gl-login-aurora-2) 0%, transparent 60%);
+  animation: glAuroraDrift 30s ease-in-out infinite alternate;
+}
+
+@keyframes glAuroraDrift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(2%, -1.5%) rotate(0.3deg); }
+  66% { transform: translate(-1.5%, 2%) rotate(-0.2deg); }
+  100% { transform: translate(1%, -1%) rotate(0.15deg); }
+}
+
+.gl-login-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    linear-gradient(var(--gl-login-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gl-login-grid-line) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 70% 65% at 50% 50%, black 15%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 65% at 50% 50%, black 15%, transparent 75%);
+}
+
+.gl-login-dots-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.gl-login-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--gl-login-dot-color);
+  box-shadow: 0 0 6px 1px var(--gl-login-dot-glow);
+  animation: glDotPulse var(--gl-dot-duration, 3s) ease-in-out infinite;
+  animation-delay: var(--gl-dot-delay, 0s);
+}
+
+@keyframes glDotPulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.6); }
+}
+
+.gl-login-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.2;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+.gl-login-logo-pulse {
+  animation: glLogoPulse 3s ease-in-out infinite;
+}
+
+@keyframes glLogoPulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(22, 119, 255, 0.2); }
+  50% { box-shadow: 0 4px 24px rgba(22, 119, 255, 0.35); }
+}
+
+.gl-login-card-accent {
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, transparent, #1677FF 20%, #4096FF 50%, #1677FF 80%, transparent);
+  animation: glAccentGlow 2s ease-out forwards;
+}
+
+.gl-login-card-accent::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 10%;
+  right: 10%;
+  height: 12px;
+  background: linear-gradient(180deg, rgba(22, 119, 255, 0.08), transparent);
+  pointer-events: none;
+}
+
+@keyframes glAccentGlow {
+  0% { opacity: 0; transform: scaleX(0.3); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+.gl-login-logo-ring {
+  position: relative;
+}
+
+.gl-login-logo-ring::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(22, 119, 255, 0.12);
+  pointer-events: none;
+  animation: glRingFadeIn 0.8s 0.3s ease-out both;
+}
+
+@keyframes glRingFadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.gl-login-logo-glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 32px;
+  background: radial-gradient(circle, rgba(22, 119, 255, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.gl-login-divider {
+  height: 1px;
+  margin: 0 8px;
+  background: linear-gradient(90deg, transparent, var(--gl-login-card-border), transparent);
+}
+
+.gl-login-card-enter {
+  animation: glCardEnter 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes glCardEnter {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gl-login-logo-pulse,
+  .gl-login-card-enter,
+  .gl-login-card-accent,
+  .gl-login-logo-ring::after,
+  .gl-login-aurora::before,
+  .gl-login-dot {
+    animation: none !important;
+  }
+  .gl-login-card-enter {
+    opacity: 1;
+    transform: none;
+  }
+  .gl-login-card-accent {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.gl-login-card {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.gl-login-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--gl-login-card-shadow-hover) !important;
+}
+
+.gl-login-card .ant-input,
+.gl-login-card .ant-input-affix-wrapper {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1.5px solid var(--gl-login-input-border) !important;
+  border-radius: 0 !important;
+  color: var(--gl-login-text) !important;
+  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding-left: 0 !important;
+}
+
+.gl-login-card .ant-input-affix-wrapper {
+  padding-left: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.gl-login-card .ant-input-affix-wrapper .ant-input-prefix {
+  margin-right: 8px;
+}
+
+.gl-login-card .ant-input::placeholder,
+.gl-login-card .ant-input-affix-wrapper input::placeholder {
+  color: var(--gl-login-text-muted) !important;
+}
+
+.gl-login-card .ant-input:focus,
+.gl-login-card .ant-input-focused,
+.gl-login-card .ant-input-affix-wrapper:focus,
+.gl-login-card .ant-input-affix-wrapper-focused {
+  border-bottom-color: var(--gl-login-input-focus-border) !important;
+  border: none !important;
+  border-bottom: 1.5px solid var(--gl-login-input-focus-border) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 1px 0 0 var(--gl-login-input-focus-glow) !important;
+}
+
+.gl-login-card .ant-input-affix-wrapper .ant-input {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--gl-login-text) !important;
+  padding-left: 0 !important;
+}
+
+.gl-login-card .ant-input-affix-wrapper .ant-input:focus {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.gl-login-card .ant-checkbox-wrapper {
+  color: var(--gl-login-text-secondary) !important;
+}
+
+.gl-login-card .ant-checkbox-inner {
+  background: transparent !important;
+  border-color: var(--gl-login-input-border) !important;
+}
+
+.gl-login-card .ant-checkbox-checked .ant-checkbox-inner {
+  background: #1677FF !important;
+  border-color: #1677FF !important;
+}
+
+.gl-login-card .ant-form-item-explain-error {
+  color: #FF6B6B !important;
+}
+
+.gl-login-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.gl-login-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  animation: glBtnShimmer 3s 1s ease-in-out infinite;
+}
+
+@keyframes glBtnShimmer {
+  0% { left: -100%; }
+  30% { left: 100%; }
+  100% { left: 100%; }
+}
+
+.gl-login-win-btn:hover {
+  background: var(--gl-login-win-hover-bg) !important;
+  color: var(--gl-login-win-hover-color) !important;
+}
+
+.gl-login-win-btn.gl-login-win-close:hover {
+  background: #E81123 !important;
+  color: #fff !important;
 }

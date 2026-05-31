@@ -1,7 +1,7 @@
 /** @file 主题设置面板 - 外观/排版/布局/辅助配置，右侧抽屉 */
 import { Drawer, Segmented, Switch, Input, Button, Divider } from 'antd'
 import { useAppStore } from '../../stores/appStore'
-import type { PrimaryColor, FontSize, SidebarWidth, NavMode, SidebarStyle, CompactMode, BorderRadiusStyle } from '../../stores/appStore'
+import type { PrimaryColor, FontSize, SidebarWidth, NavMode, SidebarStyle, CompactMode, BorderRadiusStyle, EyeCareLevel } from '../../stores/appStore'
 
 const COLOR_OPTIONS: { value: PrimaryColor; label: string; hex: string }[] = [
   { value: '#1677FF', label: '拂晓蓝', hex: '#1677FF' },
@@ -150,11 +150,25 @@ export default function ThemeSettings() {
       <Divider style={{ margin: '8px 0 16px', borderColor: 'var(--gl-border-light)' }} />
       <SectionTitle>辅助</SectionTitle>
 
-      <SettingRow label="色弱模式">
+      <SettingRow label="护眼模式">
+        <Segmented
+          value={uiSettings.eyeCare}
+          onChange={(v) => setUISettings({ eyeCare: v as EyeCareLevel })}
+          size="small"
+          options={[
+            { label: '关闭', value: 'off' },
+            { label: '轻柔', value: 'mild' },
+            { label: '适中', value: 'moderate' },
+            { label: '强效', value: 'strong' },
+          ]}
+        />
+      </SettingRow>
+
+      <SettingRow label="色温偏暖">
         <Switch
           size="small"
-          checked={uiSettings.colorWeak}
-          onChange={(checked) => setUISettings({ colorWeak: checked })}
+          checked={uiSettings.warmTone}
+          onChange={(checked) => setUISettings({ warmTone: checked })}
         />
       </SettingRow>
 
