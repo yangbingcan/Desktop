@@ -13,7 +13,7 @@ const TOKEN_SECRET: &[u8] = b"guanyong_gl_token_secret_key_2026";
 
 const TOKEN_MAX_AGE_SECS: i64 = 24 * 60 * 60;
 
-const ALL_PERMS: &[&str] = &["dashboard", "form_designer", "data_center", "workflow", "permission", "user_manage", "settings"];
+const ALL_PERMS: &[&str] = &["dashboard", "permission", "user_manage", "settings"];
 
 fn hash_password_with_salt(password: &str, salt: &str) -> String {
     let mut hasher = Sha256::new();
@@ -79,6 +79,7 @@ pub fn verify_token(token: &str) -> Result<String, String> {
     }
 }
 
+#[allow(dead_code)]
 pub struct AuthContext {
     pub user_id: String,
     pub username: String,

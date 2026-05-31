@@ -1,6 +1,6 @@
 [package]
 name = "guanyong-gl"
-version = "0.2.0"
+version = "0.4.0"
 description = "管用GL - 企业资源管理低代码平台"
 authors = ["you"]
 edition = "2021"

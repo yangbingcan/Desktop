@@ -294,7 +294,7 @@ export default function TitleBar() {
                   onDragOver={(e) => handleDragOver(e, idx)}
                   onDrop={(e) => handleDrop(e, idx)}
                   onDragEnd={handleDragEnd}
-                  onClick={() => { setActiveKey(tab.key); navigate(tab.key) }}
+                  onClick={() => { setActiveKey(tab.key) }}
                   className="flex items-center gap-1.5 h-8 px-3 cursor-pointer transition-all flex-shrink-0 text-[13px] relative select-none"
                   style={{
                     maxWidth: 160,

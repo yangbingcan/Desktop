@@ -70,7 +70,7 @@ fn migrate(conn: &Connection) -> Result<(), String> {
             rusqlite::params![admin_id, "admin", hashed_pwd],
         ).map_err(|e| format!("创建默认用户失败: {}", e))?;
 
-        let perms = ["dashboard", "form_designer", "data_center", "workflow", "permission", "user_manage", "settings"];
+        let perms = ["dashboard", "permission", "user_manage", "settings"];
         for perm in perms {
             let perm_id = uuid::Uuid::new_v4().to_string();
             tx.execute(

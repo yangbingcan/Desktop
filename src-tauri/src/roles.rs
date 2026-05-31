@@ -10,9 +10,6 @@ use tauri::State;
 fn all_permissions() -> Vec<PermissionItem> {
     vec![
         PermissionItem { key: "dashboard".into(), label: "仪表盘".into(), group: "功能权限".into() },
-        PermissionItem { key: "form_designer".into(), label: "表单设计器".into(), group: "功能权限".into() },
-        PermissionItem { key: "data_center".into(), label: "数据中心".into(), group: "功能权限".into() },
-        PermissionItem { key: "workflow".into(), label: "流程管理".into(), group: "功能权限".into() },
         PermissionItem { key: "permission".into(), label: "权限管理".into(), group: "功能权限".into() },
         PermissionItem { key: "user_manage".into(), label: "用户管理".into(), group: "功能权限".into() },
         PermissionItem { key: "settings".into(), label: "系统设置".into(), group: "功能权限".into() },

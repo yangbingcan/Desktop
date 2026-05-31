@@ -1,4 +1,4 @@
-/** @file 应用入口 v8.0 - 企业级精致主题，毛玻璃质感配色 */
+/** @file 应用入口 v9.0 - 清理低代码模块，保留用户权限管理 */
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, App as AntApp, theme as antTheme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
@@ -7,9 +7,6 @@ import AppLayout from '../components/layout/AppLayout'
 import GlobalLoading from '../components/common/GlobalLoading'
 import LoginPage from '../pages/auth/login'
 import DashboardPage from '../pages/dashboard'
-import FormDesignerPage from '../pages/form-designer'
-import DataCenterListPage from '../pages/data-center/list'
-import WorkflowPendingPage from '../pages/workflow/pending'
 import PermissionRolesPage from '../pages/permission/roles'
 import UserListPage from '../pages/user/list'
 import SettingsGeneralPage from '../pages/settings/general'
@@ -55,9 +52,6 @@ function AppRoutes() {
             <Route path="/login" element={<LoginPage />} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/form-designer" element={<FormDesignerPage />} />
-              <Route path="/data-center" element={<DataCenterListPage />} />
-              <Route path="/workflow/pending" element={<WorkflowPendingPage />} />
               <Route path="/permission/roles" element={<PermissionRolesPage />} />
               <Route path="/user/list" element={<UserListPage />} />
               <Route path="/settings" element={<SettingsGeneralPage />} />

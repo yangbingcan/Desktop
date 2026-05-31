@@ -1,4 +1,4 @@
-/** @file 数据模型定义 - 所有业务实体的结构体 */
+/** @file 数据模型定义 - 用户权限管理相关结构体 */
 
 use serde::{Deserialize, Serialize};
 

@@ -29,7 +29,6 @@ import {
   type RoleItem,
 } from '../../../services/roleService'
 
-/** 角色表单值 */
 interface RoleFormValues {
   name: string
   description?: string
@@ -37,15 +36,12 @@ interface RoleFormValues {
 }
 
 export default function PermissionRolesPage() {
-  /* ========== 列表相关状态 ========== */
   const [loading, setLoading] = useState(false)
   const [dataSource, setDataSource] = useState<RoleItem[]>([])
   const [keyword, setKeyword] = useState('')
 
-  /* ========== 权限列表（弹窗用） ========== */
   const [permissions, setPermissions] = useState<PermissionItem[]>([])
 
-  /** 按 group 分组的权限，用于弹窗中 Checkbox.Group 展示 */
   const groupedPermissions = useMemo(() => {
     const map = new Map<string, PermissionItem[]>()
     permissions.forEach((p) => {
@@ -56,16 +52,13 @@ export default function PermissionRolesPage() {
     return Array.from(map.entries()).map(([group, items]) => ({ group, items }))
   }, [permissions])
 
-  /* ========== 新增/编辑弹窗 ========== */
   const [modalOpen, setModalOpen] = useState(false)
   const [modalLoading, setModalLoading] = useState(false)
   const [editingRole, setEditingRole] = useState<RoleItem | null>(null)
   const [form] = Form.useForm<RoleFormValues>()
 
-  /* ========== 权限详情展开行 ========== */
   const [expandedKeys, setExpandedKeys] = useState<readonly string[]>([])
 
-  /* ========== 加载角色列表 ========== */
   const fetchRoles = useCallback(async () => {
     setLoading(true)
     try {
@@ -82,13 +75,12 @@ export default function PermissionRolesPage() {
     fetchRoles()
   }, [fetchRoles])
 
-  /* ========== 加载权限列表 ========== */
   const fetchPermissions = useCallback(async () => {
     try {
       const list = await getPermissions()
       setPermissions(list)
     } catch {
-      // 权限加载失败不阻塞主流程
+      /* ignore */
     }
   }, [])
 
@@ -96,17 +88,14 @@ export default function PermissionRolesPage() {
     fetchPermissions()
   }, [fetchPermissions])
 
-  /* ========== 判断是否admin角色 ========== */
   const isAdminRole = (role: RoleItem) => role.name === 'admin' || role.is_system
 
-  /* ========== 新增角色 ========== */
   const handleCreate = () => {
     setEditingRole(null)
     form.resetFields()
     setModalOpen(true)
   }
 
-  /* ========== 编辑角色 ========== */
   const handleEdit = (role: RoleItem) => {
     if (isAdminRole(role)) {
       message.warning('系统角色不可编辑')
@@ -121,14 +110,12 @@ export default function PermissionRolesPage() {
     setModalOpen(true)
   }
 
-  /* ========== 新增/编辑提交 ========== */
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
       setModalLoading(true)
 
       if (editingRole) {
-        // 编辑模式
         await updateRole({
           id: editingRole.id,
           name: values.name,
@@ -137,7 +124,6 @@ export default function PermissionRolesPage() {
         })
         message.success('角色更新成功')
       } else {
-        // 新增模式
         await createRole({
           name: values.name,
           description: values.description,
@@ -149,7 +135,6 @@ export default function PermissionRolesPage() {
       setModalOpen(false)
       fetchRoles()
     } catch (err: unknown) {
-      // 表单校验失败不提示，接口错误提示
       if (err && typeof err === 'object' && 'message' in err) {
         message.error(String((err as { message: string }).message))
       }
@@ -158,7 +143,6 @@ export default function PermissionRolesPage() {
     }
   }
 
-  /* ========== 删除角色 ========== */
   const handleDelete = (role: RoleItem) => {
     if (isAdminRole(role)) {
       message.warning('系统角色不可删除')
@@ -189,13 +173,11 @@ export default function PermissionRolesPage() {
     })
   }
 
-  /* ========== 根据权限key列表查找对应label ========== */
   const getPermissionLabels = (keys: string[]): string[] => {
     const labelMap = new Map(permissions.map((p) => [p.key, p.label]))
     return keys.map((k) => labelMap.get(k) || k)
   }
 
-  /* ========== 表格列定义 ========== */
   const columns: ColumnsType<RoleItem> = [
     {
       title: '角色名称',
@@ -254,11 +236,12 @@ export default function PermissionRolesPage() {
     {
       title: '操作',
       key: 'action',
-      width: 140,
+      width: 120,
       fixed: 'right',
       render: (_, record) => {
-        // 系统角色不显示操作按钮
-        if (isAdminRole(record)) return null
+        if (isAdminRole(record)) {
+          return <span style={{ color: 'var(--gl-text-tertiary)' }}>-</span>
+        }
 
         return (
           <Space size={0} split={<span style={{ color: 'var(--gl-border)' }}>|</span>}>
@@ -274,10 +257,8 @@ export default function PermissionRolesPage() {
     },
   ]
 
-  /* ========== 渲染 ========== */
   return (
     <div className="space-y-4">
-      {/* 页面头部 */}
       <div
         className="rounded-xl p-5"
         style={{ background: 'var(--gl-card-bg)', border: '1px solid var(--gl-border)' }}
@@ -291,7 +272,6 @@ export default function PermissionRolesPage() {
           </Button>
         </div>
 
-        {/* 搜索区 */}
         <div className="flex items-center gap-3 mt-4">
           <Input.Search
             placeholder="搜索角色名称"
@@ -305,7 +285,6 @@ export default function PermissionRolesPage() {
         </div>
       </div>
 
-      {/* 表格区 */}
       <div
         className="rounded-xl"
         style={{ background: 'var(--gl-card-bg)', border: '1px solid var(--gl-border)' }}
@@ -328,7 +307,6 @@ export default function PermissionRolesPage() {
                   <span style={{ color: 'var(--gl-text-tertiary)' }}>暂无权限配置</span>
                 )
               }
-              // 按分组展示权限
               const keySet = new Set(record.permissions)
               return (
                 <div className="space-y-3">
@@ -360,7 +338,6 @@ export default function PermissionRolesPage() {
         />
       </div>
 
-      {/* ========== 新增/编辑角色弹窗 ========== */}
       <Modal
         title={editingRole ? '编辑角色' : '新增角色'}
         open={modalOpen}
@@ -394,7 +371,6 @@ export default function PermissionRolesPage() {
             />
           </Form.Item>
           <Form.Item name="permission_keys" label="功能权限">
-            {/* 按分组展示权限复选框 */}
             <div className="space-y-4">
               {groupedPermissions.map(({ group, items }) => (
                 <div key={group}>

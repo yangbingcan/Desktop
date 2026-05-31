@@ -1,16 +1,12 @@
-/** @file 侧边栏导航 v7.0 - 毛玻璃质感+丝滑动画+交互优化 */
-import { useState, useCallback, useRef, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+/** @file 侧边栏导航 v10.0 - 清理低代码模块，保留用户权限管理 */
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   DashboardOutlined,
-  FormOutlined,
-  DatabaseOutlined,
-  AuditOutlined,
   SafetyOutlined,
   UserOutlined,
   SettingOutlined,
   AppstoreOutlined,
-  ThunderboltOutlined,
   ControlOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
@@ -40,34 +36,6 @@ interface PopupPosition {
   left: number
 }
 
-const menuConfig: GroupConfig[] = [
-  {
-    name: '仪表盘',
-    icon: <AppstoreOutlined />,
-    items: [
-      { key: '/dashboard', icon: <DashboardOutlined />, iconName: 'DashboardOutlined', label: '仪表盘', group: '仪表盘' },
-    ],
-  },
-  {
-    name: '核心引擎',
-    icon: <ThunderboltOutlined />,
-    items: [
-      { key: '/form-designer', icon: <FormOutlined />, iconName: 'FormOutlined', label: '表单设计器', group: '核心引擎' },
-      { key: '/data-center', icon: <DatabaseOutlined />, iconName: 'DatabaseOutlined', label: '数据中心', group: '核心引擎' },
-      { key: '/workflow/pending', icon: <AuditOutlined />, iconName: 'AuditOutlined', label: '流程管理', group: '核心引擎' },
-    ],
-  },
-  {
-    name: '系统管理',
-    icon: <ControlOutlined />,
-    items: [
-      { key: '/permission/roles', icon: <SafetyOutlined />, iconName: 'SafetyOutlined', label: '权限管理', group: '系统管理' },
-      { key: '/user/list', icon: <UserOutlined />, iconName: 'UserOutlined', label: '用户管理', group: '系统管理' },
-      { key: '/settings', icon: <SettingOutlined />, iconName: 'SettingOutlined', label: '系统设置', group: '系统管理' },
-    ],
-  },
-]
-
 function filterMenuByPermissions(groups: GroupConfig[], permissions: string[], isSuperAdmin: boolean): GroupConfig[] {
   if (isSuperAdmin) return groups
   return groups
@@ -82,13 +50,32 @@ function filterMenuByPermissions(groups: GroupConfig[], permissions: string[], i
 }
 
 export default function Sidebar() {
-  const navigate = useNavigate()
   const location = useLocation()
   const { sidebarCollapsed, uiSettings } = useAppStore()
   const { addTab } = useTabStore()
   const { user } = useAuthStore()
   const permissions = user?.permissions ?? []
   const isSuperAdmin = user?.is_super_admin ?? false
+
+  const menuConfig: GroupConfig[] = useMemo(() => [
+    {
+      name: '仪表盘',
+      icon: <AppstoreOutlined />,
+      items: [
+        { key: '/dashboard', icon: <DashboardOutlined />, iconName: 'DashboardOutlined', label: '仪表盘', group: '仪表盘' },
+      ],
+    },
+    {
+      name: '系统管理',
+      icon: <ControlOutlined />,
+      items: [
+        { key: '/permission/roles', icon: <SafetyOutlined />, iconName: 'SafetyOutlined', label: '角色权限', group: '系统管理' },
+        { key: '/user/list', icon: <UserOutlined />, iconName: 'UserOutlined', label: '用户管理', group: '系统管理' },
+        { key: '/settings', icon: <SettingOutlined />, iconName: 'SettingOutlined', label: '系统设置', group: '系统管理' },
+      ],
+    },
+  ], [])
+
   const filteredMenuConfig = filterMenuByPermissions(menuConfig, permissions, isSuperAdmin)
   const filteredAllItems = filteredMenuConfig.flatMap((g) => g.items)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
@@ -109,37 +96,40 @@ export default function Sidebar() {
         closable: item.key !== '/dashboard',
       }
       addTab(tab)
-      navigate(item.key)
     },
-    [addTab, navigate],
+    [addTab],
   )
 
   const handleGroupClick = useCallback(
     (groupName: string) => {
+      const group = filteredMenuConfig.find((g) => g.name === groupName)
+      if (!group) return
+
       if (sidebarCollapsed) {
-        const group = filteredMenuConfig.find((g) => g.name === groupName)
-        if (group) {
-          if (group.items.length === 1) {
+        if (group.items.length === 1) {
+          setPopupGroup(null)
+          handleLeafClick(group.items[0])
+        } else {
+          if (popupGroup === groupName) {
             setPopupGroup(null)
-            handleLeafClick(group.items[0])
           } else {
-            if (popupGroup === groupName) {
-              setPopupGroup(null)
-            } else {
-              const el = groupRefs.current[groupName]
-              if (el) {
-                const rect = el.getBoundingClientRect()
-                setPopupPos({
-                  top: rect.top,
-                  left: rect.right + 4,
-                })
-              }
-              setPopupGroup(groupName)
+            const el = groupRefs.current[groupName]
+            if (el) {
+              const rect = el.getBoundingClientRect()
+              setPopupPos({
+                top: rect.top,
+                left: rect.right + 4,
+              })
             }
+            setPopupGroup(groupName)
           }
         }
       } else {
-        setExpandedGroup(expandedGroup === groupName ? null : groupName)
+        if (group.items.length === 1) {
+          handleLeafClick(group.items[0])
+        } else {
+          setExpandedGroup(expandedGroup === groupName ? null : groupName)
+        }
       }
     },
     [sidebarCollapsed, expandedGroup, popupGroup, handleLeafClick],
@@ -173,9 +163,9 @@ export default function Sidebar() {
   const hasActiveChild = useCallback(
     (groupName: string) => {
       const group = filteredMenuConfig.find((g) => g.name === groupName)
-      return group ? group.items.some((item) => activePath === item.key) : false
+      return group ? group.items.some((item) => activePath === item.key || activePath.startsWith(item.key + '/')) : false
     },
-    [activePath],
+    [activePath, filteredMenuConfig],
   )
 
   return (
@@ -361,7 +351,7 @@ export default function Sidebar() {
   )
 
   function renderMenuItem(item: MenuItem, isChild: boolean) {
-    const isActive = activePath === item.key
+    const isActive = activePath === item.key || activePath.startsWith(item.key + '/')
     return (
       <div
         key={item.key}
