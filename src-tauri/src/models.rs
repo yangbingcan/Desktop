@@ -151,3 +151,44 @@ pub struct GetOperationLogsResult {
     pub items: Vec<OperationLog>,
     pub total: i32,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetSystemConfigResult {
+    pub configs: std::collections::HashMap<String, String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BackupDatabaseResult {
+    pub success: bool,
+    pub file_path: String,
+    pub file_size: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RestoreDatabaseResult {
+    pub success: bool,
+    pub need_restart: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SystemInfo {
+    pub app_name: String,
+    pub app_version: String,
+    pub db_version: i32,
+    pub os_info: String,
+    pub db_path: String,
+    pub data_dir: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StorageInfo {
+    pub db_size: u64,
+    pub log_count: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UploadLogoResult {
+    pub success: bool,
+    pub file_name: String,
+    pub file_path: String,
+}

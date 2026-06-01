@@ -1,4 +1,4 @@
-/** @file 系统日志 - 操作日志列表、筛选、详情、删除与清理 */
+/** @file 系统日志 - 操作日志列表、筛选、详情、删除 */
 import { useCallback, useEffect, useState } from 'react'
 import {
   DeleteOutlined,
@@ -20,7 +20,6 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { usePermission } from '../../../hooks/usePermission'
 import {
-  cleanOperationLogs,
   deleteOperationLogs,
   getOperationLogs,
   type OperationLogItem,
@@ -66,9 +65,6 @@ export default function SystemLogsPage() {
 
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailRecord, setDetailRecord] = useState<OperationLogItem | null>(null)
-
-  const [cleanOpen, setCleanOpen] = useState(false)
-  const [cleanLoading, setCleanLoading] = useState(false)
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
@@ -123,31 +119,6 @@ export default function SystemLogsPage() {
         }
       },
     })
-  }
-
-  const handleClean = () => {
-    setCleanOpen(true)
-  }
-
-  const handleCleanSubmit = async () => {
-    if (!dateRange?.[0] || !dateRange?.[1]) {
-      message.warning('请选择时间范围')
-      return
-    }
-    setCleanLoading(true)
-    try {
-      const result = await cleanOperationLogs(
-        dateRange[0].format('YYYY-MM-DD'),
-        dateRange[1].format('YYYY-MM-DD'),
-      )
-      setCleanOpen(false)
-      message.success(`已清理 ${result.deleted_count} 条日志`)
-      fetchLogs()
-    } catch {
-      message.error('清理失败')
-    } finally {
-      setCleanLoading(false)
-    }
   }
 
   const columns: ColumnsType<OperationLogItem> = [
@@ -254,11 +225,6 @@ export default function SystemLogsPage() {
               删除选中 ({selectedRowKeys.length})
             </Button>
           )}
-          {canDelete && (
-            <Button icon={<DeleteOutlined />} onClick={handleClean}>
-              清理日志
-            </Button>
-          )}
         </div>
       </div>
 
@@ -323,26 +289,6 @@ export default function SystemLogsPage() {
             <Descriptions.Item label="应用版本" span={2}>{detailRecord.app_version || '-'}</Descriptions.Item>
           </Descriptions>
         )}
-      </Modal>
-
-      <Modal
-        title="清理日志"
-        open={cleanOpen}
-        onOk={handleCleanSubmit}
-        onCancel={() => setCleanOpen(false)}
-        confirmLoading={cleanLoading}
-        okText="确认清理"
-        okType="danger"
-        cancelText="取消"
-      >
-        <p className="mb-4" style={{ color: 'var(--gl-text-secondary)' }}>
-          选择要清理的时间范围，该范围内的所有日志将被永久删除。
-        </p>
-        <DatePicker.RangePicker
-          style={{ width: '100%' }}
-          value={dateRange as any}
-          onChange={(val) => setDateRange(val as any)}
-        />
       </Modal>
     </div>
   )

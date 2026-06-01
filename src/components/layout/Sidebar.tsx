@@ -1,5 +1,6 @@
 /** @file 侧边栏导航 v10.0 - 清理低代码模块，保留用户权限管理 */
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router-dom'
 import {
   DashboardOutlined,
@@ -97,6 +98,7 @@ export default function Sidebar() {
 
   const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const sidebarRef = useRef<HTMLElement>(null)
+  const popupRef = useRef<HTMLDivElement>(null)
 
   const handleLeafClick = useCallback(
     (item: MenuItem) => {
@@ -152,7 +154,11 @@ export default function Sidebar() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (popupGroup && sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+      if (!popupGroup) return
+      const target = e.target as Node
+      const inSidebar = sidebarRef.current?.contains(target)
+      const inPopup = popupRef.current?.contains(target)
+      if (!inSidebar && !inPopup) {
         setPopupGroup(null)
       }
     }
@@ -310,10 +316,11 @@ export default function Sidebar() {
         )}
       </div>
 
-      {sidebarCollapsed && popupGroup && (
+      {sidebarCollapsed && popupGroup && createPortal(
         <>
           <div className="fixed inset-0 z-40" onClick={() => setPopupGroup(null)} />
           <div
+            ref={popupRef}
             className="fixed z-50 gl-glass gl-scale-in py-1 min-w-[160px]"
             style={{
               top: popupPos.top,
@@ -353,7 +360,8 @@ export default function Sidebar() {
                 )
               })}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </aside>
   )
