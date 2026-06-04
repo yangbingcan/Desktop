@@ -1,35 +1,64 @@
-/** @file 操作日志 - 日志记录辅助函数、日志查询与清理（含鉴权） */
+//! 操作日志 - 日志记录辅助函数、日志查询与清理
 
 use crate::auth::verify_and_get_context;
-use crate::database::DbState;
+use crate::database::{DbState, TokenSecret};
 use crate::error_util::translate_db_error;
 use crate::models::{GetOperationLogsParams, GetOperationLogsResult, OperationLog};
 use rusqlite::{params, Row};
+use std::sync::OnceLock;
 use tauri::State;
 
+/// 批量删除操作日志的最大数量限制
+const DELETE_BATCH_LIMIT: usize = 1000;
+
+/// 缓存的计算机名
+static COMPUTER_NAME: OnceLock<String> = OnceLock::new();
+
+/// 缓存的IP地址
+static IP_ADDRESS: OnceLock<String> = OnceLock::new();
+
+/// 缓存的MAC地址
+static MAC_ADDRESS: OnceLock<String> = OnceLock::new();
+
+/// 缓存的操作系统信息
+static OS_INFO: OnceLock<String> = OnceLock::new();
+
+/// 获取计算机名（首次调用后缓存）
 fn get_computer_name() -> String {
-    hostname::get()
-        .map(|h| h.to_string_lossy().to_string())
-        .unwrap_or_default()
+    COMPUTER_NAME.get_or_init(|| {
+        hostname::get()
+            .map(|h| h.to_string_lossy().to_string())
+            .unwrap_or_default()
+    }).clone()
 }
 
+/// 获取本机IP地址（首次调用后缓存）
 fn get_ip_address() -> String {
-    local_ip_address::local_ip()
-        .map(|ip| ip.to_string())
-        .unwrap_or_default()
+    IP_ADDRESS.get_or_init(|| {
+        local_ip_address::local_ip()
+            .map(|ip| ip.to_string())
+            .unwrap_or_default()
+    }).clone()
 }
 
+/// 获取MAC地址（首次调用后缓存）
 fn get_mac_address() -> String {
-    mac_address::get_mac_address()
-        .map(|m| m.to_string().replace(':', ""))
-        .unwrap_or_default()
+    MAC_ADDRESS.get_or_init(|| {
+        mac_address::get_mac_address()
+            .map(|m| m.to_string().replace(':', ""))
+            .unwrap_or_default()
+    }).clone()
 }
 
+/// 获取操作系统信息（首次调用后缓存）
 fn get_os_info() -> String {
-    let info = os_info::get();
-    format!("{} {}", info.os_type(), info.version())
+    OS_INFO.get_or_init(|| {
+        let info = os_info::get();
+        format!("{} {}", info.os_type(), info.version())
+    }).clone()
 }
 
+/// 记录操作日志（辅助函数，各模块调用）
 pub fn record_operation_log(
     conn: &rusqlite::Connection,
     username: &str,
@@ -46,12 +75,15 @@ pub fn record_operation_log(
     let app_version = env!("CARGO_PKG_VERSION").to_string();
     let detail_val = detail.unwrap_or("");
 
-    let _ = conn.execute(
+    if let Err(e) = conn.execute(
         "INSERT INTO operation_logs (id, username, action_type, action, module, detail, computer_name, ip_address, mac_address, os_info, app_version) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
         params![id, username, action_type, action, module, detail_val, computer_name, ip_address, mac_address, os_info, app_version],
-    );
+    ) {
+        eprintln!("记录操作日志失败: {}", e);
+    }
 }
 
+/// 将数据库行映射为OperationLog
 fn row_to_operation_log(row: &Row) -> Result<OperationLog, rusqlite::Error> {
     Ok(OperationLog {
         id: row.get(0)?,
@@ -69,12 +101,22 @@ fn row_to_operation_log(row: &Row) -> Result<OperationLog, rusqlite::Error> {
     })
 }
 
-#[tauri::command]
-pub fn get_operation_logs(db: State<'_, DbState>, token: String, params: GetOperationLogsParams) -> Result<GetOperationLogsResult, String> {
-    let conn = db.lock().map_err(|e| format!("数据库锁获取失败: {}", e))?;
-    let conn = conn.as_ref().ok_or("数据库未初始化")?;
+// ========== 业务逻辑函数（Tauri命令和服务端模式共用） ==========
 
-    let ctx = verify_and_get_context(conn, &token)?;
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct DeleteOperationLogsParams {
+    pub ids: Vec<String>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct CleanOperationLogsParams {
+    pub start_date: String,
+    pub end_date: String,
+}
+
+/// 获取操作日志列表业务逻辑（分页+筛选）
+pub fn get_operation_logs_logic(conn: &rusqlite::Connection, secret: &[u8], token: &str, params: GetOperationLogsParams) -> Result<GetOperationLogsResult, String> {
+    let ctx = verify_and_get_context(conn, token, secret)?;
     ctx.require_permission("system_log")?;
 
     let page = params.page.unwrap_or(1).max(1);
@@ -144,27 +186,24 @@ pub fn get_operation_logs(db: State<'_, DbState>, token: String, params: GetOper
     let items: Vec<OperationLog> = stmt
         .query_map(query_params.as_slice(), |row| row_to_operation_log(row))
         .map_err(|e| translate_db_error(e))?
-        .filter_map(|r| r.ok())
+        .filter_map(|r| r.map_err(|e| eprintln!("数据库行解析警告: {}", e)).ok())
         .collect();
 
     Ok(GetOperationLogsResult { items, total })
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct DeleteOperationLogsParams {
-    pub ids: Vec<String>,
-}
-
-#[tauri::command]
-pub fn delete_operation_logs(db: State<'_, DbState>, token: String, params: DeleteOperationLogsParams) -> Result<serde_json::Value, String> {
-    let conn = db.lock().map_err(|e| format!("数据库锁获取失败: {}", e))?;
-    let conn = conn.as_ref().ok_or("数据库未初始化")?;
-
-    let ctx = verify_and_get_context(conn, &token)?;
+/// 批量删除操作日志业务逻辑（限制最多1000条）
+pub fn delete_operation_logs_logic(conn: &rusqlite::Connection, secret: &[u8], token: &str, params: DeleteOperationLogsParams) -> Result<serde_json::Value, String> {
+    let ctx = verify_and_get_context(conn, token, secret)?;
     ctx.require_permission("system_log:delete")?;
 
     if params.ids.is_empty() {
         return Ok(serde_json::json!({ "deleted_count": 0 }));
+    }
+
+    // 批量删除上限检查
+    if params.ids.len() > DELETE_BATCH_LIMIT {
+        return Err(format!("单次删除数量不能超过{}条", DELETE_BATCH_LIMIT));
     }
 
     let placeholders: Vec<&str> = params.ids.iter().map(|_| "?").collect();
@@ -176,21 +215,51 @@ pub fn delete_operation_logs(db: State<'_, DbState>, token: String, params: Dele
     Ok(serde_json::json!({ "deleted_count": deleted }))
 }
 
+/// 按日期范围清理操作日志业务逻辑
+pub fn clean_operation_logs_logic(conn: &rusqlite::Connection, secret: &[u8], token: &str, params: CleanOperationLogsParams) -> Result<serde_json::Value, String> {
+    let ctx = verify_and_get_context(conn, token, secret)?;
+    ctx.require_permission("system_log:delete")?;
+
+    let end_with_time = format!("{} 23:59:59", params.end_date);
+    let deleted = conn.execute(
+        "DELETE FROM operation_logs WHERE created_at >= ?1 AND created_at <= ?2",
+        params![params.start_date, end_with_time],
+    ).map_err(|e| translate_db_error(e))?;
+
+    Ok(serde_json::json!({ "deleted_count": deleted }))
+}
+
+// ========== Tauri命令（薄包装，调用_logic函数） ==========
+
+/// 获取操作日志列表（分页+筛选）
+#[tauri::command]
+pub fn get_operation_logs(db: State<'_, DbState>, token_secret: State<'_, TokenSecret>, token: String, params: GetOperationLogsParams) -> Result<GetOperationLogsResult, String> {
+    let conn = crate::database::get_conn_ref(&db)?;
+    get_operation_logs_logic(&conn, &token_secret, &token, params)
+}
+
+/// 批量删除操作日志（限制最多1000条）
+#[tauri::command]
+pub fn delete_operation_logs(db: State<'_, DbState>, token_secret: State<'_, TokenSecret>, token: String, params: DeleteOperationLogsParams) -> Result<serde_json::Value, String> {
+    let conn = crate::database::get_conn_ref(&db)?;
+    delete_operation_logs_logic(&conn, &token_secret, &token, params)
+}
+
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct RecordPageViewParams {
     pub page_name: String,
     pub module: String,
 }
 
+/// 记录页面访问日志
 #[tauri::command]
-pub fn record_page_view(db: State<'_, DbState>, token: String, params: RecordPageViewParams) -> Result<(), String> {
-    let conn = db.lock().map_err(|e| format!("数据库锁获取失败: {}", e))?;
-    let conn = conn.as_ref().ok_or("数据库未初始化")?;
+pub fn record_page_view(db: State<'_, DbState>, token_secret: State<'_, TokenSecret>, token: String, params: RecordPageViewParams) -> Result<(), String> {
+    let conn = crate::database::get_conn_ref(&db)?;
 
-    let ctx = verify_and_get_context(conn, &token)?;
+    let ctx = verify_and_get_context(&conn, &token, &token_secret)?;
 
     record_operation_log(
-        conn,
+        &conn,
         &ctx.username,
         "view",
         &format!("打开{}", params.page_name),
@@ -201,25 +270,41 @@ pub fn record_page_view(db: State<'_, DbState>, token: String, params: RecordPag
     Ok(())
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct CleanOperationLogsParams {
-    pub start_date: String,
-    pub end_date: String,
+/// 按日期范围清理操作日志
+#[tauri::command]
+pub fn clean_operation_logs(db: State<'_, DbState>, token_secret: State<'_, TokenSecret>, token: String, params: CleanOperationLogsParams) -> Result<serde_json::Value, String> {
+    let conn = crate::database::get_conn_ref(&db)?;
+    clean_operation_logs_logic(&conn, &token_secret, &token, params)
 }
 
-#[tauri::command]
-pub fn clean_operation_logs(db: State<'_, DbState>, token: String, params: CleanOperationLogsParams) -> Result<serde_json::Value, String> {
-    let conn = db.lock().map_err(|e| format!("数据库锁获取失败: {}", e))?;
-    let conn = conn.as_ref().ok_or("数据库未初始化")?;
+// ========== 服务端模式内部函数（不依赖Tauri State） ==========
 
-    let ctx = verify_and_get_context(conn, &token)?;
-    ctx.require_permission("system_log:delete")?;
+/// 服务端模式：获取操作日志列表
+#[cfg(feature = "server")]
+pub fn get_operation_logs_inner(conn: &rusqlite::Connection, secret: &[u8], args: &serde_json::Value) -> Result<serde_json::Value, String> {
+    let params: GetOperationLogsParams = serde_json::from_value(args.clone()).map_err(|e| format!("参数解析失败: {}", e))?;
+    let result = get_operation_logs_logic(conn, secret, &crate::error_util::arg_str(args, "token"), params)?;
+    serde_json::to_value(result).map_err(|e| format!("序列化失败: {}", e))
+}
 
-    let end_with_time = format!("{} 23:59:59", params.end_date);
-    let deleted = conn.execute(
-        "DELETE FROM operation_logs WHERE created_at >= ?1 AND created_at <= ?2",
-        params![params.start_date, end_with_time],
-    ).map_err(|e| translate_db_error(e))?;
+/// 服务端模式：批量删除操作日志
+#[cfg(feature = "server")]
+pub fn delete_operation_logs_inner(conn: &rusqlite::Connection, secret: &[u8], args: &serde_json::Value) -> Result<serde_json::Value, String> {
+    let params: DeleteOperationLogsParams = serde_json::from_value(args.clone()).map_err(|e| format!("参数解析失败: {}", e))?;
+    delete_operation_logs_logic(conn, secret, &crate::error_util::arg_str(args, "token"), params)
+}
 
-    Ok(serde_json::json!({ "deleted_count": deleted }))
+/// 服务端模式：按日期范围清理操作日志
+#[cfg(feature = "server")]
+pub fn clean_operation_logs_inner(conn: &rusqlite::Connection, secret: &[u8], args: &serde_json::Value) -> Result<serde_json::Value, String> {
+    let params: CleanOperationLogsParams = serde_json::from_value(args.clone()).map_err(|e| format!("参数解析失败: {}", e))?;
+    clean_operation_logs_logic(conn, secret, &crate::error_util::arg_str(args, "token"), params)
+}
+
+/// 服务端模式：记录页面访问日志
+#[cfg(feature = "server")]
+pub fn record_page_view_inner(conn: &rusqlite::Connection, secret: &[u8], args: &serde_json::Value) -> Result<serde_json::Value, String> {
+    let ctx = verify_and_get_context(conn, &crate::error_util::arg_str(args, "token"), secret)?;
+    record_operation_log(conn, &ctx.username, "view", &format!("打开{}", crate::error_util::arg_str(args, "page_name")), &crate::error_util::arg_str(args, "module"), None);
+    Ok(serde_json::json!({"success": true}))
 }

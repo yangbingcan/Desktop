@@ -7,6 +7,18 @@ export const routePermissionMap: Record<string, string> = {
   '/settings': 'settings',
 }
 
+/** 判断用户是否有权限访问指定路由（默认拒绝未配置权限的路由） */
+export function hasPermissionForRoute(pathname: string, permissions: string[], isSuperAdmin: boolean): boolean {
+  if (isSuperAdmin) return true
+  if (pathname === '/dashboard') return true
+  for (const [prefix, permModule] of Object.entries(routePermissionMap)) {
+    if (pathname.startsWith(prefix)) {
+      return permissions.some(p => p === permModule || p.startsWith(permModule + ':'))
+    }
+  }
+  return false
+}
+
 /** 15种操作类型定义 */
 export const PERMISSION_ACTIONS = [
   { key: 'view', label: '查看' },

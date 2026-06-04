@@ -1,6 +1,6 @@
 /** @file 角色服务 - 角色CRUD、权限管理 */
-import { invokeCommand } from './api'
-import { useAuthStore } from '../stores/authStore'
+import { invokeCommand, getToken } from './api'
+import type { RoleBrief } from './userService'
 
 export interface RoleItem {
   id: string
@@ -19,10 +19,6 @@ export interface PermissionItem {
   module: string
   module_label: string
   action: string
-}
-
-function getToken(): string {
-  return useAuthStore.getState().token || ''
 }
 
 export async function getRoles(keyword?: string): Promise<RoleItem[]> {
@@ -58,7 +54,4 @@ export async function getRoleOptions(): Promise<RoleBrief[]> {
   return invokeCommand<RoleBrief[]>('get_role_options', { token: getToken() })
 }
 
-export interface RoleBrief {
-  id: string
-  name: string
-}
+

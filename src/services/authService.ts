@@ -1,29 +1,21 @@
 /** @file 认证服务 - 登录、用户信息 */
-import { invokeCommand } from './api'
-import { useAuthStore } from '../stores/authStore'
-import type { RoleBrief } from './userService'
+import { invokeCommand, getToken } from './api'
+import type { UserInfo } from '../stores/authStore'
 
 interface LoginResponse {
   token: string
-  user: {
-    id: string
-    username: string
-    real_name: string
-    phone: string
-    email: string | null
-    avatar: string
-    status: number
-    permissions: string[]
-    roles: RoleBrief[]
-    is_super_admin: boolean
-  }
+  user: UserInfo
 }
 
 export async function login(username: string, password: string): Promise<LoginResponse> {
   return invokeCommand<LoginResponse>('login', { username, password })
 }
 
-export async function getCurrentUser() {
-  const token = useAuthStore.getState().token
-  return invokeCommand('get_current_user', { token })
+export async function getCurrentUser(): Promise<UserInfo> {
+  return invokeCommand<UserInfo>('get_current_user', { token: getToken() })
+}
+
+/** 修改当前用户密码 */
+export async function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
+  return invokeCommand('update_password', { token: getToken(), old_password: oldPassword, new_password: newPassword })
 }

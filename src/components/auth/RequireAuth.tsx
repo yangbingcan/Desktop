@@ -1,22 +1,14 @@
-/** @file 认证守卫 - 保护需要登录的路由，检查菜单权限 */
+/** @file 认证守卫 - 保护需要登录的路由，检查菜单权限，首次登录强制修改密码 */
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from 'antd'
+import { useState } from 'react'
 import { useAuthStore } from '../../stores/authStore'
-import { routePermissionMap } from '../../services/permissionMap'
+import { hasPermissionForRoute } from '../../services/permissionMap'
+import PasswordModal from '../layout/titlebar/PasswordModal'
+import AppLayout from '../layout/AppLayout'
 
 interface RequireAuthProps {
   children: React.ReactNode
-}
-
-function hasRoutePermission(pathname: string, permissions: string[], isSuperAdmin: boolean): boolean {
-  if (isSuperAdmin) return true
-  if (pathname === '/dashboard') return true
-  for (const [prefix, permModule] of Object.entries(routePermissionMap)) {
-    if (pathname.startsWith(prefix)) {
-      return permissions.some(p => p === permModule || p.startsWith(permModule + ':'))
-    }
-  }
-  return true
 }
 
 export default function RequireAuth({ children }: RequireAuthProps) {
@@ -24,12 +16,28 @@ export default function RequireAuth({ children }: RequireAuthProps) {
   const user = useAuthStore((s) => s.user)
   const location = useLocation()
   const navigate = useNavigate()
+  const [passwordModalOpen, setPasswordModalOpen] = useState(true)
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (user && !hasRoutePermission(location.pathname, user.permissions, user.is_super_admin)) {
+  // 首次登录强制修改密码（包裹在AppLayout中，避免孤立弹窗无布局）
+  if (user?.must_change_password) {
+    return (
+      <AppLayout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+          <PasswordModal
+            open={passwordModalOpen}
+            onClose={() => setPasswordModalOpen(false)}
+            forceChange
+          />
+        </div>
+      </AppLayout>
+    )
+  }
+
+  if (user && !hasPermissionForRoute(location.pathname, user.permissions, user.is_super_admin)) {
     return (
       <div className="flex items-center justify-center h-full" style={{ color: 'var(--gl-text-secondary)' }}>
         <div className="text-center">
@@ -37,7 +45,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
           <div className="text-lg">无权限访问此页面</div>
           <div className="text-sm mt-2" style={{ color: 'var(--gl-text-tertiary)' }}>请联系管理员分配相应权限</div>
           <Button type="primary" className="mt-4" onClick={() => navigate('/dashboard')}>
-            返回仪表盘
+            返回工作台
           </Button>
         </div>
       </div>

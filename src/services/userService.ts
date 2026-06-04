@@ -1,10 +1,10 @@
 /** @file 用户服务 - 用户CRUD、状态管理、密码重置 */
-import { invokeCommand } from './api'
-import { useAuthStore } from '../stores/authStore'
+import { invokeCommand, getToken } from './api'
 
 export interface RoleBrief {
   id: string
   name: string
+  is_system: boolean
 }
 
 export interface UserItem {
@@ -23,10 +23,6 @@ export interface UserItem {
 export interface GetUsersResult {
   items: UserItem[]
   total: number
-}
-
-function getToken(): string {
-  return useAuthStore.getState().token || ''
 }
 
 export async function getUsers(params: {

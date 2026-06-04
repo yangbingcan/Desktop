@@ -16,13 +16,15 @@ import { useTabStore } from '../../../stores/tabStore'
 import { useTheme } from '../../../hooks/useTheme'
 import { login } from '../../../services/authService'
 import {
-  getStoredPassword,
-  storePassword,
-  clearStoredPassword,
+  storeToken,
+  clearStoredToken,
   getStoredRemember,
   setStoredRemember,
   getLastUsername,
   setLastUsername,
+  getStoredPassword,
+  storePassword,
+  clearStoredPassword,
 } from '../../../utils/rememberPassword'
 
 const SCATTER_DOTS = [
@@ -52,41 +54,48 @@ export default function LoginPage() {
   const appWindow = useMemo(() => getCurrentWindow(), [])
 
   const lastUsername = getLastUsername()
-  const lastRemember = getStoredRemember()
-  const storedPassword = lastUsername ? getStoredPassword(lastUsername) : ''
 
   const [form] = Form.useForm()
 
   useEffect(() => {
+    // 恢复上次登录的用户名和"记住密码"勾选状态
     if (lastUsername) {
-      form.setFieldsValue({ username: lastUsername })
-      if (storedPassword) {
-        form.setFieldsValue({ password: storedPassword, remember: true })
-      } else {
-        form.setFieldsValue({ remember: lastRemember })
+      const remembered = getStoredRemember()
+      form.setFieldsValue({
+        username: lastUsername,
+        remember: remembered,
+      })
+      // 如果勾选了"记住密码"，填充密码
+      if (remembered) {
+        const password = getStoredPassword(lastUsername)
+        if (password) {
+          form.setFieldsValue({ password })
+        }
       }
     }
-  }, [form, lastUsername, storedPassword, lastRemember])
+  }, [form, lastUsername])
 
   const handleMinimize = () => {
-    appWindow.minimize().catch(() => {})
+    appWindow.minimize().catch((e) => console.error('窗口最小化失败:', e))
   }
   const handleClose = () => {
-    appWindow.close().catch(() => {})
+    appWindow.close().catch((e) => console.error('窗口关闭失败:', e))
   }
 
   const onFinish = async (values: { username: string; password: string; remember: boolean }) => {
     setLoading(true)
     try {
       const result = await login(values.username, values.password)
-      resetTabs()
       setLogin(result.token, result.user)
+      resetTabs()
       setLastUsername(values.username)
 
       if (values.remember) {
+        await storeToken(values.username, result.token)
         storePassword(values.username, values.password)
         setStoredRemember(true)
       } else {
+        clearStoredToken(values.username)
         clearStoredPassword(values.username)
         setStoredRemember(false)
       }
@@ -264,27 +273,24 @@ export default function LoginPage() {
                   height: 44,
                   fontWeight: 600,
                   fontSize: 15,
-                  background: '#1677FF',
+                  background: 'var(--gl-primary)',
                   border: 'none',
-                  boxShadow: '0 4px 14px rgba(22, 119, 255, 0.25)',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#4096FF'
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 119, 255, 0.35)'
+                  e.currentTarget.style.background = 'var(--gl-primary-hover)'
                   e.currentTarget.style.transform = 'translateY(-1px)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#1677FF'
-                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(22, 119, 255, 0.25)'
+                  e.currentTarget.style.background = 'var(--gl-primary)'
                   e.currentTarget.style.transform = 'translateY(0)'
                 }}
                 onMouseDown={(e) => {
-                  e.currentTarget.style.background = '#0958D9'
+                  e.currentTarget.style.background = 'var(--gl-primary-active)'
                   e.currentTarget.style.transform = 'translateY(0) scale(0.98)'
                 }}
                 onMouseUp={(e) => {
-                  e.currentTarget.style.background = '#4096FF'
+                  e.currentTarget.style.background = 'var(--gl-primary-hover)'
                   e.currentTarget.style.transform = 'translateY(-1px)'
                 }}
               >

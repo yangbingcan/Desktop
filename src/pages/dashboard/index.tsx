@@ -1,4 +1,4 @@
-/** @file 仪表盘 v4.0 - 基础仪表盘，待低代码重新规划后扩展 */
+/** @file 工作台 - 基础工作台，待低代码重新规划后扩展 */
 import { useNavigate } from 'react-router-dom'
 import {
   SafetyOutlined,

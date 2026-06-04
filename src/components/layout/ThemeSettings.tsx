@@ -180,6 +180,9 @@ export default function ThemeSettings() {
           style={{ borderRadius: 'var(--gl-radius-md)', width: 120 }}
         />
       </SettingRow>
+      <div className="text-[11px] mt-[-8px] mb-3" style={{ color: 'var(--gl-text-tertiary)' }}>
+        快捷键功能开发中
+      </div>
 
       <Divider style={{ margin: '12px 0 16px', borderColor: 'var(--gl-border-light)' }} />
 

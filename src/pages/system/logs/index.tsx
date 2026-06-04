@@ -19,6 +19,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { usePermission } from '../../../hooks/usePermission'
+import { useDebouncedCallback } from '../../../hooks/useDebounce'
 import {
   deleteOperationLogs,
   getOperationLogs,
@@ -60,6 +61,12 @@ export default function SystemLogsPage() {
   const [actionTypeFilter, setActionTypeFilter] = useState<string | undefined>(undefined)
   const [moduleFilter, setModuleFilter] = useState<string | undefined>(undefined)
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
+
+  /* 搜索防抖：输入时延迟触发API请求 */
+  const debouncedSetKeyword = useDebouncedCallback((val: string) => {
+    setKeyword(val)
+    setPage(1)
+  }, 300)
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([])
 
@@ -193,6 +200,7 @@ export default function SystemLogsPage() {
             placeholder="搜索操作人"
             allowClear
             style={{ width: 180 }}
+            onChange={(e) => debouncedSetKeyword(e.target.value)}
             onSearch={(val) => { setKeyword(val); setPage(1) }}
           />
           <Select
@@ -213,8 +221,8 @@ export default function SystemLogsPage() {
           />
           <DatePicker.RangePicker
             style={{ width: 260 }}
-            value={dateRange as any}
-            onChange={(val) => { setDateRange(val as any); setPage(1) }}
+            value={dateRange as [dayjs.Dayjs, dayjs.Dayjs] | undefined}
+            onChange={(val) => { setDateRange(val as [dayjs.Dayjs | null, dayjs.Dayjs | null] | null); setPage(1) }}
           />
           <Button icon={<ReloadOutlined />} onClick={fetchLogs}>
             刷新

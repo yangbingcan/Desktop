@@ -1,11 +1,59 @@
-/** @file 数据库管理 - SQLite初始化、连接管理、版本化迁移 */
+//! 数据库管理 - SQLite初始化、连接管理、版本化迁移
 
 use rusqlite::Connection;
 use std::sync::Mutex;
 
+/// 数据库状态：Mutex包装的可选Connection
 pub type DbState = Mutex<Option<Connection>>;
 
+/// Token签名密钥类型，在应用启动时随机生成
+pub type TokenSecret = Vec<u8>;
+
+/// 获取数据库连接引用，直接返回可解引用的ConnRef，无需手动unwrap
+/// 通过Deref实现自动解引用为&Connection，使用时需以&conn形式传参
+pub struct ConnRef<'a> {
+    guard: std::sync::MutexGuard<'a, Option<Connection>>,
+}
+
+impl<'a> std::ops::Deref for ConnRef<'a> {
+    type Target = Connection;
+    fn deref(&self) -> &Self::Target {
+        self.guard.as_ref().unwrap()
+    }
+}
+
+/// 获取数据库连接引用，直接返回可解引用的ConnRef，无需手动unwrap
+pub fn get_conn_ref<'a>(db: &'a DbState) -> Result<ConnRef<'a>, String> {
+    let guard = db.lock().map_err(|e| format!("数据库锁获取失败: {}", e))?;
+    if guard.is_none() {
+        return Err("数据库未初始化".to_string());
+    }
+    Ok(ConnRef { guard })
+}
+
 pub fn init_database(db_path: &str) -> Result<Connection, String> {
+    // 一次性清理：删除旧数据库重建（密码哈希从SHA-256迁移到bcrypt）
+    // 重建后新数据库版本为8，此条件不再触发
+    if std::path::Path::new(db_path).exists() {
+        let conn_check = Connection::open(db_path).ok();
+        if let Some(conn) = conn_check {
+            let version: i32 = conn
+                .pragma_query_value(None, "user_version", |r| r.get(0))
+                .unwrap_or(0);
+            drop(conn);
+            // 旧数据库（版本号小于8），删除重建
+            if version < 8 {
+                println!("检测到旧版本数据库(v{})，将重建数据库", version);
+                if let Err(e) = std::fs::remove_file(db_path) {
+                    return Err(format!("删除旧数据库失败，请手动删除后重启: {}", e));
+                }
+                // -shm和-wal文件可能不存在，忽略错误
+                let _ = std::fs::remove_file(format!("{}-shm", db_path));
+                let _ = std::fs::remove_file(format!("{}-wal", db_path));
+            }
+        }
+    }
+
     let conn = Connection::open(db_path).map_err(|e| format!("打开数据库失败: {}", e))?;
 
     conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON;")
@@ -16,7 +64,7 @@ pub fn init_database(db_path: &str) -> Result<Connection, String> {
     Ok(conn)
 }
 
-fn migrate(conn: &Connection) -> Result<(), String> {
+pub fn migrate(conn: &Connection) -> Result<(), String> {
     let version: i32 = conn
         .pragma_query_value(None, "user_version", |r| r.get(0))
         .unwrap_or(0);
@@ -30,8 +78,16 @@ fn migrate(conn: &Connection) -> Result<(), String> {
     if version < 3 {
         migrate_v3(conn)?;
     }
+    // 注意：v4-v7版本号在早期开发中被推高但未实际执行迁移，
+    // 因此直接跳到v8处理补全逻辑，详见migrate_v8注释
     if version < 8 {
         migrate_v8(conn)?;
+    }
+    if version < 9 {
+        migrate_v9(conn)?;
+    }
+    if version < 10 {
+        migrate_v10(conn)?;
     }
 
     Ok(())
@@ -50,6 +106,7 @@ fn migrate_v1(conn: &Connection) -> Result<(), String> {
             email TEXT,
             avatar TEXT DEFAULT '',
             status INTEGER NOT NULL DEFAULT 1,
+            must_change_password INTEGER NOT NULL DEFAULT 0,
             last_login_at TEXT,
             created_at TEXT DEFAULT (datetime('now', 'localtime')),
             updated_at TEXT DEFAULT (datetime('now', 'localtime'))
@@ -80,11 +137,21 @@ fn migrate_v1(conn: &Connection) -> Result<(), String> {
     ).map_err(|e| format!("v1迁移失败: {}", e))?;
 
     let admin_id = uuid::Uuid::new_v4().to_string();
-    let hashed_pwd = crate::auth::hash_password("admin123");
+    // 生成随机默认密码，首次登录后强制修改
+    let default_password = generate_random_password();
+    let hashed_pwd = crate::auth::hash_password(&default_password).expect("默认密码哈希失败");
     tx.execute(
-        "INSERT INTO users (id, username, password_hash, real_name, status) VALUES (?1, ?2, ?3, '系统管理员', 1)",
+        "INSERT INTO users (id, username, password_hash, real_name, status, must_change_password) VALUES (?1, ?2, ?3, '系统管理员', 1, 1)",
         rusqlite::params![admin_id, "admin", hashed_pwd],
     ).map_err(|e| format!("创建默认用户失败: {}", e))?;
+
+    // 将默认密码输出到控制台，管理员首次启动时可见
+    println!("============================================");
+    println!("  管用GL 初始管理员账号信息");
+    println!("  用户名: admin");
+    println!("  密码: {}", default_password);
+    println!("  首次登录后必须修改密码");
+    println!("============================================");
 
     let perms = ["dashboard", "permission", "user_manage", "settings"];
     for perm in perms {
@@ -228,6 +295,55 @@ fn migrate_v8(conn: &Connection) -> Result<(), String> {
     Ok(())
 }
 
+/// v9: 添加用户密码版本字段，用于Token主动注销
+fn migrate_v9(conn: &Connection) -> Result<(), String> {
+    let existing_cols = get_table_columns(conn, "users");
+    if !existing_cols.contains(&"password_version".to_string()) {
+        conn.execute_batch(
+            "ALTER TABLE users ADD COLUMN password_version INTEGER NOT NULL DEFAULT 1;"
+        ).map_err(|e| format!("v9迁移失败(添加password_version列): {}", e))?;
+    }
+    conn.pragma_update(None, "user_version", 9).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// v10: 添加must_change_password字段，支持首次登录强制修改密码
+fn migrate_v10(conn: &Connection) -> Result<(), String> {
+    let existing_cols = get_table_columns(conn, "users");
+    if !existing_cols.contains(&"must_change_password".to_string()) {
+        conn.execute_batch(
+            "ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0;"
+        ).map_err(|e| format!("v10迁移失败(添加must_change_password列): {}", e))?;
+    }
+    conn.pragma_update(None, "user_version", 10).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// 生成8位随机密码（包含大小写字母和数字）
+pub fn generate_random_password() -> String {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let uppercase = b"ABCDEFGHJKLMNPQRSTUVWXYZ"; // 25个大写（去掉I）
+    let lowercase = b"abcdefghjkmnpqrstuvwxyz";   // 21个小写（去掉l）
+    let digits = b"23456789";                     // 8个数字
+    // 确保至少1个大写、1个小写、1个数字
+    let mut chars: Vec<u8> = Vec::new();
+    chars.push(uppercase[rng.gen_range(0..uppercase.len())]);
+    chars.push(lowercase[rng.gen_range(0..lowercase.len())]);
+    chars.push(digits[rng.gen_range(0..digits.len())]);
+    // 剩余5位随机
+    let all_chars: Vec<u8> = uppercase.iter().chain(lowercase.iter()).chain(digits.iter()).copied().collect();
+    for _ in 0..5 {
+        chars.push(all_chars[rng.gen_range(0..all_chars.len())]);
+    }
+    // 打乱顺序
+    for i in (1..chars.len()).rev() {
+        let j = rng.gen_range(0..=i);
+        chars.swap(i, j);
+    }
+    String::from_utf8(chars).unwrap_or_else(|_| "Admin@123".to_string())
+}
+
 fn get_table_columns(conn: &rusqlite::Connection, table: &str) -> Vec<String> {
     let sql = format!("PRAGMA table_info({})", table);
     let mut stmt = match conn.prepare(&sql) {
@@ -236,6 +352,8 @@ fn get_table_columns(conn: &rusqlite::Connection, table: &str) -> Vec<String> {
     };
     stmt.query_map([], |row| row.get::<_, String>(1))
         .ok()
-        .map(|rows| rows.filter_map(|r| r.ok()).collect())
+        .map(|rows| rows.filter_map(|r| r.map_err(|e| eprintln!("数据库行解析警告: {}", e)).ok()).collect())
         .unwrap_or_default()
 }
+
+

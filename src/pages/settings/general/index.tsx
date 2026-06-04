@@ -30,6 +30,7 @@ import { convertFileSrc } from '@tauri-apps/api/core'
 import dayjs from 'dayjs'
 import { getStorageInfo, getSystemConfig, getSystemInfo, saveSystemConfig, uploadCompanyLogo, backupDatabase, restoreDatabase } from '../../../services/systemConfigService'
 import { cleanOperationLogs } from '../../../services/operationLogService'
+import { handleFormSubmitError } from '../../../utils/errorHandler'
 
 const APP_ICON = '/icon.png'
 
@@ -115,8 +116,7 @@ function CompanyInfoTab() {
       setInitialValues({ ...initialValues, ...configs })
       message.success('保存成功')
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'errorFields' in err) return
-      message.error('保存失败')
+      handleFormSubmitError(err)
     } finally {
       setSaving(false)
     }
@@ -173,7 +173,7 @@ function CompanyInfoTab() {
               )}
             </div>
             <span className="text-[11px]" style={{ color: 'var(--gl-text-tertiary)' }}>
-              支持 JPG/PNG/SVG，不超过2MB
+              支持 JPG/PNG/SVG，不超过5MB
             </span>
           </div>
 
@@ -222,7 +222,7 @@ function DataManagerTab() {
     try {
       const info = await getStorageInfo()
       setStorageInfo(info)
-    } catch { /* ignore */ }
+    } catch { /* 存储信息加载失败不阻塞 */ }
   }, [])
 
   useEffect(() => { fetchStorageInfo() }, [fetchStorageInfo])
@@ -418,7 +418,10 @@ function AboutSystemTab() {
   } | null>(null)
 
   useEffect(() => {
-    getSystemInfo().then(setSystemInfo).catch(() => {})
+    getSystemInfo().then(setSystemInfo).catch((err) => {
+      console.error('获取系统信息失败:', err)
+      message.error('获取系统信息失败')
+    })
   }, [])
 
   const copyToClipboard = (text: string) => {

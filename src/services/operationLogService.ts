@@ -1,6 +1,5 @@
 /** @file 操作日志服务 - 日志查询、删除、清理 */
-import { invokeCommand } from './api'
-import { useAuthStore } from '../stores/authStore'
+import { invokeCommand, getToken } from './api'
 
 export interface OperationLogItem {
   id: string
@@ -20,10 +19,6 @@ export interface OperationLogItem {
 export interface GetOperationLogsResult {
   items: OperationLogItem[]
   total: number
-}
-
-function getToken(): string {
-  return useAuthStore.getState().token || ''
 }
 
 export async function getOperationLogs(params: {

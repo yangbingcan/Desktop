@@ -1,10 +1,5 @@
 /** @file 系统配置服务 - 公司信息CRUD、备份恢复、系统信息查询 */
-import { invokeCommand } from './api'
-import { useAuthStore } from '../stores/authStore'
-
-function getToken(): string {
-  return useAuthStore.getState().token || ''
-}
+import { invokeCommand, getToken } from './api'
 
 export async function getSystemConfig(keys: string[]): Promise<Record<string, string>> {
   const result = await invokeCommand<{ configs: Record<string, string> }>('get_system_config', { token: getToken(), keys })

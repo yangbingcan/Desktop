@@ -23,7 +23,7 @@ interface TabState {
 }
 
 const STORAGE_KEY = 'gl-tabs'
-const HOME_TAB: Tab = { key: '/dashboard', title: '仪表盘', icon: 'DashboardOutlined', closable: false }
+const HOME_TAB: Tab = { key: '/dashboard', title: '工作台', icon: 'DashboardOutlined', closable: false }
 
 function loadTabs(): { tabs: Tab[]; activeKey: string } {
   try {

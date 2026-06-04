@@ -1,29 +1,6 @@
-/** @file 数据模型定义 - 用户权限管理相关结构体 */
+//! 数据模型定义 - 用户权限管理相关结构体
 
 use serde::{Deserialize, Serialize};
-
-#[allow(dead_code)]
-#[derive(Debug, Serialize, Deserialize)]
-pub struct User {
-    pub id: String,
-    pub username: String,
-    pub password_hash: String,
-    pub real_name: String,
-    pub phone: String,
-    pub email: Option<String>,
-    pub avatar: String,
-    pub status: i32,
-    pub last_login_at: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
-}
-
-#[allow(dead_code)]
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LoginRequest {
-    pub username: String,
-    pub password: String,
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoginResponse {
@@ -44,6 +21,8 @@ pub struct UserInfo {
     pub roles: Vec<RoleBrief>,
     #[serde(default)]
     pub is_super_admin: bool,
+    #[serde(default)]
+    pub must_change_password: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -64,6 +43,8 @@ pub struct UserItem {
     pub roles: Vec<RoleBrief>,
     pub last_login_at: Option<String>,
     pub created_at: String,
+    #[serde(default)]
+    pub must_change_password: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -87,7 +68,8 @@ pub struct PermissionItem {
     pub action: String,
 }
 
-#[allow(dead_code)]
+/// RPC请求结构体，仅服务端模式使用
+#[cfg(feature = "server")]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RpcRequest {
     pub cmd: String,
@@ -98,7 +80,8 @@ pub struct RpcRequest {
     pub real_name: String,
 }
 
-#[allow(dead_code)]
+/// RPC响应结构体，仅服务端模式使用
+#[cfg(feature = "server")]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RpcResponse {
     pub ok: bool,
@@ -107,7 +90,7 @@ pub struct RpcResponse {
     pub error: String,
 }
 
-#[allow(dead_code)]
+#[cfg(feature = "server")]
 impl RpcResponse {
     pub fn success(data: serde_json::Value) -> Self {
         RpcResponse { ok: true, data, error: String::new() }
@@ -118,7 +101,6 @@ impl RpcResponse {
     }
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OperationLog {
     pub id: String,
