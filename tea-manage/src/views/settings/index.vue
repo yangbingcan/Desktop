@@ -147,7 +147,7 @@ const message = useMessage()
 const settingsStore = useSettingsStore()
 
 // v0.5.5 修复：从常量同步版本号，避免显示过期的 v0.1.0
-const appVersion = ref('0.5.5')
+const appVersion = ref('0.6.0')
 
 const shopSettings = reactive({
     shopName: '茶易管',
