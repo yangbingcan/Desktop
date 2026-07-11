@@ -1,0 +1,154 @@
+[
+  {
+    "materialId": "mat_common_soft_gradient",
+    "type": "image",
+    "category": "common",
+    "templateId": "",
+    "fileId": "cloud://replace-required/common/soft-gradient.webp",
+    "url": "",
+    "name": "柔和渐变背景",
+    "format": "webp",
+    "size": 0,
+    "duration": 0,
+    "tags": ["background", "common"],
+    "copyright": {
+      "source": "commercial_ai_generated",
+      "license": "platform_internal_template_asset",
+      "statement": "AI 生成可商用素材，发布前可替换为品牌自有图片。"
+    },
+    "enabled": true
+  },
+  {
+    "materialId": "mat_common_calm_music",
+    "type": "audio",
+    "category": "common",
+    "templateId": "",
+    "fileId": "cloud://replace-required/common/calm-music.mp3",
+    "url": "",
+    "name": "轻氛围音乐",
+    "format": "mp3",
+    "size": 0,
+    "duration": 90,
+    "tags": ["music", "calm"],
+    "copyright": {
+      "source": "commercial_ai_generated",
+      "license": "platform_internal_template_asset",
+      "statement": "AI 生成可商用音乐，管理员可在素材库替换。"
+    },
+    "enabled": true
+  },
+  {
+    "materialId": "mat_single_trial_hero",
+    "type": "image",
+    "category": "template",
+    "templateId": "single_trial",
+    "fileId": "cloud://replace-required/single-trial/hero.webp",
+    "url": "",
+    "name": "体验课首屏背景",
+    "format": "webp",
+    "size": 0,
+    "duration": 0,
+    "tags": ["single_trial", "hero"],
+    "copyright": {
+      "source": "commercial_ai_generated",
+      "license": "platform_internal_template_asset",
+      "statement": "AI 生成可商用模板图，建议上线前替换为门店真实环境图。"
+    },
+    "enabled": true
+  },
+  {
+    "materialId": "mat_series_course_grid",
+    "type": "image",
+    "category": "template",
+    "templateId": "series_course",
+    "fileId": "cloud://replace-required/series-course/grid.webp",
+    "url": "",
+    "name": "系列课课程拼图",
+    "format": "webp",
+    "size": 0,
+    "duration": 0,
+    "tags": ["series_course", "course"],
+    "copyright": {
+      "source": "commercial_ai_generated",
+      "license": "platform_internal_template_asset",
+      "statement": "AI 生成可商用模板图，可替换为课程实拍。"
+    },
+    "enabled": true
+  },
+  {
+    "materialId": "mat_camp_hero",
+    "type": "image",
+    "category": "template",
+    "templateId": "camp",
+    "fileId": "cloud://replace-required/camp/hero.webp",
+    "url": "",
+    "name": "训练营氛围背景",
+    "format": "webp",
+    "size": 0,
+    "duration": 0,
+    "tags": ["camp", "hero"],
+    "copyright": {
+      "source": "commercial_ai_generated",
+      "license": "platform_internal_template_asset",
+      "statement": "AI 生成可商用模板图，可替换为训练营学员照。"
+    },
+    "enabled": true
+  },
+  {
+    "materialId": "mat_group_buy_hero",
+    "type": "image",
+    "category": "template",
+    "templateId": "group_buy",
+    "fileId": "cloud://replace-required/group-buy/hero.webp",
+    "url": "",
+    "name": "团购拼团首屏背景",
+    "format": "webp",
+    "size": 0,
+    "duration": 0,
+    "tags": ["group_buy", "team"],
+    "copyright": {
+      "source": "commercial_ai_generated",
+      "license": "platform_internal_template_asset",
+      "statement": "AI 生成可商用模板图，可替换为多人同行活动照。"
+    },
+    "enabled": true
+  },
+  {
+    "materialId": "mat_store_opening_hero",
+    "type": "image",
+    "category": "template",
+    "templateId": "store_opening",
+    "fileId": "cloud://replace-required/store-opening/hero.webp",
+    "url": "",
+    "name": "门店开业首屏背景",
+    "format": "webp",
+    "size": 0,
+    "duration": 0,
+    "tags": ["store_opening", "store"],
+    "copyright": {
+      "source": "commercial_ai_generated",
+      "license": "platform_internal_template_asset",
+      "statement": "AI 生成可商用模板图，建议替换为新店实拍。"
+    },
+    "enabled": true
+  },
+  {
+    "materialId": "mat_festival_hero",
+    "type": "image",
+    "category": "template",
+    "templateId": "festival",
+    "fileId": "cloud://replace-required/festival/hero.webp",
+    "url": "",
+    "name": "节日营销首屏背景",
+    "format": "webp",
+    "size": 0,
+    "duration": 0,
+    "tags": ["festival", "hero"],
+    "copyright": {
+      "source": "commercial_ai_generated",
+      "license": "platform_internal_template_asset",
+      "statement": "AI 生成可商用模板图，建议替换为节日活动实拍。"
+    },
+    "enabled": true
+  }
+]

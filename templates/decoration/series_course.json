@@ -1,0 +1,161 @@
+{
+  "templateId": "series_course",
+  "name": "系列课",
+  "scenario": "series_course",
+  "coverImage": "cloud://replace-required/series-course/grid.webp",
+  "summary": "适合多节课或阶段式课程，强调课程体系、学习路径和持续报名。",
+  "materials": [
+    { "materialId": "mat_series_course_grid", "role": "course_grid" },
+    { "materialId": "mat_common_soft_gradient", "role": "background" }
+  ],
+  "tradeRecommendations": [
+    { "type": "package", "message": "建议配置系列课套餐，并在套餐说明中写清课时数和有效期。" }
+  ],
+  "previewData": {
+    "title": "12节哈他瑜伽系列课",
+    "startTime": "2026-07-20 19:00",
+    "endTime": "2026-09-10 20:30",
+    "signupDeadline": "2026-07-18 23:59",
+    "location": "梵音瑜伽学院·西城区金融街7号",
+    "instructor": "陈默老师（RYT-500认证）",
+    "maxParticipants": 15,
+    "virtualViewCount": 562,
+    "virtualSignupCount": 8,
+    "coverImage": "",
+    "packages": [
+      { "name": "系列课全程", "price": "1299", "originalPrice": "1999", "type": "single", "content": ["12节系统课程", "专属教材一份", "结业证书", "缺课可补1次"] }
+    ],
+    "redPacketConfig": { "enabled": true, "signupAmount": 5, "inviteAmount": 10, "rankAmount": 30, "rankCount": 3 },
+    "componentPreview": {
+      "image_ad": { "content": { "mode": "single", "images": ["preview://series-course-banner"] } },
+      "rich_text": { "content": { "html": "<h3>课程体系</h3><p>12节系统课程，从基础到进阶，循序渐进掌握哈他瑜伽核心体式。</p><ul><li>第1-4节：基础体式与呼吸法</li><li>第5-8节：中级体式与串联</li><li>第9-12节：进阶体式与冥想</li></ul>" } },
+      "magic_image": { "content": { "layout": "2x2", "items": [{ "image": "preview://course-1", "title": "基础体式" }, { "image": "preview://course-2", "title": "呼吸法" }, { "image": "preview://course-3", "title": "串联练习" }, { "image": "preview://course-4", "title": "冥想放松" }] } },
+      "image_nav": { "content": { "columns": 4, "items": [{ "title": "课程大纲", "icon": "" }, { "title": "师资介绍", "icon": "" }, { "title": "学员评价", "icon": "" }, { "title": "常见问题", "icon": "" }] } },
+      "video": { "content": { "src": "preview://series-course-video", "poster": "preview://series-course-poster", "autoplay": false } }
+    }
+  },
+  "enabled": true,
+  "sort": 2,
+  "version": 1,
+  "layout": {
+    "version": 2,
+    "showHeader": true,
+    "globalStyle": {
+      "themeColor": "#335C81",
+      "accentColor": "#C49A6C",
+      "pageBg": { "type": "color", "color": "#F5F7FA" },
+      "cardRadius": 8,
+      "componentGap": 12,
+      "fontScale": "normal",
+      "buttonStyle": "solid"
+    },
+    "floating": {
+      "music": { "enabled": false, "position": "rightTop", "defaultPlay": false },
+      "danmaku": { "enabled": true, "position": "rightTop", "defaultOn": false },
+      "toolGroup": { "enabled": true, "position": "leftMiddle", "actions": ["share", "customer_service", "back_to_top"] },
+      "benefitButton": { "enabled": "auto", "position": "rightMiddle" }
+    },
+    "components": [
+      {
+        "id": "series_title",
+        "type": "title",
+        "enabled": true,
+        "order": 1,
+        "config": {
+          "content": { "title": "{{activityName}}", "subtitle": "系统学习 · 稳定进阶 · 小班跟练" },
+          "style": { "background": "#FFFFFF", "textColor": "#203346", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "series_nav",
+        "type": "image_nav",
+        "enabled": true,
+        "order": 2,
+        "config": {
+          "content": {
+            "columns": 4,
+            "items": [
+              { "title": "课程安排", "icon": "" },
+              { "title": "适合人群", "icon": "" },
+              { "title": "老师介绍", "icon": "" },
+              { "title": "报名须知", "icon": "" }
+            ]
+          },
+          "style": { "background": "#FFFFFF", "textColor": "#203346", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "view_detail" }
+        }
+      },
+      {
+        "id": "series_magic",
+        "type": "magic_image",
+        "enabled": true,
+        "order": 3,
+        "config": {
+          "content": {
+            "layout": "three",
+            "items": [
+              { "image": "cloud://replace-required/series-course/grid.webp", "title": "基础建立" },
+              { "image": "cloud://replace-required/series-course/grid.webp", "title": "体态改善" },
+              { "image": "cloud://replace-required/series-course/grid.webp", "title": "持续练习" }
+            ]
+          },
+          "style": { "background": "#FFFFFF", "textColor": "#203346", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "view_detail" }
+        }
+      },
+      {
+        "id": "series_info",
+        "type": "activity_info",
+        "enabled": true,
+        "order": 4,
+        "config": {
+          "content": { "title": "课程信息" },
+          "style": { "background": "#FFFFFF", "textColor": "#203346", "borderRadius": 10 },
+          "data": { "fields": ["time", "deadline", "location", "instructor", "quota"] },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "series_trade",
+        "type": "trade_showcase",
+        "enabled": true,
+        "order": 5,
+        "config": {
+          "content": { "title": "选择系列课套餐" },
+          "style": { "background": "#FFFFFF", "textColor": "#203346", "borderRadius": 10 },
+          "data": { "source": "packages", "packageIds": [] },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "series_text",
+        "type": "text",
+        "enabled": true,
+        "order": 6,
+        "config": {
+          "content": { "text": "报名后请按门店通知完成排课，若需请假或调整课次，请提前联系老师。" },
+          "style": { "background": "#EEF2F5", "textColor": "#455A64", "borderRadius": 8 },
+          "data": {},
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+
+        "id": "series_bottom",
+        "type": "bottom_signup_bar",
+        "enabled": true,
+        "order": 99,
+        "config": {
+          "content": { "buttonText": "立即报名系列课" },
+          "style": { "background": "#335C81", "textColor": "#FFFFFF", "buttonColor": "#C49A6C" },
+          "data": { "source": "packages" },
+          "behavior": { "action": "signup" }
+        }
+      }
+    ]
+  }
+}

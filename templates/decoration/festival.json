@@ -1,0 +1,170 @@
+{
+  "templateId": "festival",
+  "name": "节日营销",
+  "scenario": "festival",
+  "coverImage": "cloud://replace-required/festival/hero.webp",
+  "summary": "适合节日促销活动，红金色调，喜庆热烈，节日氛围浓厚。",
+  "materials": [
+    { "materialId": "mat_festival_hero", "role": "hero" },
+    { "materialId": "mat_common_calm_music", "role": "music" }
+  ],
+  "tradeRecommendations": [
+    { "type": "package", "message": "建议配置节日限定套餐，突出限时优惠和节日专属权益。" },
+    { "type": "coupon", "message": "建议开启红包或优惠券规则，提高节日裂变转化。" }
+  ],
+  "previewData": {
+    "title": "七夕瑜伽·浪漫双人课",
+    "startTime": "2026-08-09 19:00",
+    "endTime": "2026-08-09 20:30",
+    "signupDeadline": "2026-08-08 23:59",
+    "location": "花间瑜伽·朝阳区望京SOHO T3",
+    "instructor": "苏婉清老师",
+    "maxParticipants": 16,
+    "virtualViewCount": 5632,
+    "virtualSignupCount": 13,
+    "coverImage": "",
+    "packages": [
+      { "name": "双人浪漫套餐", "price": "168", "originalPrice": "256", "type": "team", "content": ["双人瑜伽1次", "玫瑰花束1束", "双人下午茶"] },
+      { "name": "单人体验", "price": "88", "type": "single", "content": ["90分钟瑜伽课", "鲜花1束"] }
+    ],
+    "redPacketConfig": { "enabled": true, "signupAmount": 8, "inviteAmount": 18, "rankAmount": 52, "rankCount": 3 },
+    "componentPreview": {
+      "image_ad": { "content": { "mode": "single", "images": ["preview://festival-banner"] } },
+      "notice": { "content": { "mode": "scroll", "title": "节日特惠", "text": "七夕浪漫双人瑜伽，限时优惠，名额有限！" } },
+      "rich_text": { "content": { "html": "<h3>七夕浪漫双人瑜伽</h3><p>和心爱的TA一起，在瑜伽中感受彼此的呼吸与节奏，度过一个难忘的七夕之夜。</p><h3>活动亮点</h3><ul><li><strong>双人瑜伽</strong>：专业导师指导双人配合体式</li><li><strong>浪漫布置</strong>：鲜花、蜡烛、星空灯营造氛围</li><li><strong>专业拍摄</strong>：赠送双人瑜伽写真1组</li><li><strong>甜蜜茶歇</strong>：活动后享双人下午茶</li></ul>" } },
+      "video": { "content": { "src": "preview://festival-video", "poster": "preview://festival-poster", "autoplay": false } }
+    }
+  },
+  "enabled": true,
+  "sort": 6,
+  "version": 1,
+  "layout": {
+    "version": 2,
+    "showHeader": true,
+    "globalStyle": {
+      "themeColor": "#C41E3A",
+      "accentColor": "#FFD700",
+      "pageBg": { "type": "color", "color": "#FFF8F0" },
+      "cardRadius": 8,
+      "componentGap": 12,
+      "fontScale": "normal",
+      "buttonStyle": "solid"
+    },
+    "floating": {
+      "music": { "enabled": true, "position": "rightTop", "defaultPlay": false },
+      "danmaku": { "enabled": true, "position": "rightTop", "defaultOn": false },
+      "toolGroup": { "enabled": true, "position": "leftMiddle", "actions": ["share", "customer_service", "back_to_top"] },
+      "benefitButton": { "enabled": "auto", "position": "rightMiddle" }
+    },
+    "components": [
+      {
+        "id": "festival_title",
+        "type": "title",
+        "enabled": true,
+        "order": 1,
+        "config": {
+          "content": { "title": "{{activityName}}", "subtitle": "节日特惠 · 限时专享 · 名额有限" },
+          "style": { "background": "#FFFFFF", "textColor": "#8B0000", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "festival_countdown",
+        "type": "countdown",
+        "enabled": true,
+        "order": 2,
+        "config": {
+          "content": { "title": "优惠倒计时" },
+          "style": { "background": "#C41E3A", "textColor": "#FFFFFF", "borderRadius": 12 },
+          "data": { "target": "signupDeadline", "endAction": "text", "endText": "节日优惠已结束" },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "festival_quota",
+        "type": "quota_reminder",
+        "enabled": true,
+        "order": 3,
+        "config": {
+          "content": { "title": "名额有限" },
+          "style": { "background": "#FFFFFF", "textColor": "#8B0000", "borderRadius": 10 },
+          "data": { "modes": ["remaining", "signup_count", "progress"], "warningThreshold": 10 },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "festival_grid",
+        "type": "data_grid",
+        "enabled": true,
+        "order": 4,
+        "config": {
+          "content": { "title": "活动热度" },
+          "style": { "background": "#FFFFFF", "textColor": "#8B0000", "borderRadius": 10 },
+          "data": { "columns": 3, "rows": 1, "items": ["signup_count", "remaining", "views"] },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "festival_notice",
+        "type": "notice",
+        "enabled": true,
+        "order": 5,
+        "config": {
+          "content": { "mode": "scroll", "title": "节日特惠", "text": "节日限定优惠，名额有限，先到先得！" },
+          "style": { "background": "#FFE8DD", "textColor": "#8B0000", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "view_detail" }
+        }
+      },
+      {
+        "id": "festival_trade",
+        "type": "trade_showcase",
+        "enabled": true,
+        "order": 6,
+        "config": {
+          "content": { "title": "节日限定套餐" },
+          "style": { "background": "#FFFFFF", "textColor": "#8B0000", "borderRadius": 10 },
+          "data": { "source": "packages", "packageIds": [] },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "festival_rank",
+        "type": "redpacket_rank",
+        "enabled": true,
+        "order": 7,
+        "config": {
+          "content": { "title": "红包排行", "ruleText": "报名即可获得节日红包" },
+          "style": { "background": "#FFFFFF", "textColor": "#8B0000", "borderRadius": 10 },
+          "data": { "rankType": "total", "limit": 3 },
+          "behavior": { "action": "claim_redpacket" }
+        }
+      },
+      {
+        "id": "festival_recent",
+        "type": "recent_signup",
+        "enabled": true,
+        "order": 8,
+        "config": {
+          "content": { "title": "最近报名" },
+          "style": { "background": "#FFFFFF", "textColor": "#8B0000", "borderRadius": 10 },
+          "data": { "mode": "avatar_scroll", "fillWithVirtual": true, "count": 8 },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "festival_bottom",
+        "type": "bottom_signup_bar",
+        "enabled": true,
+        "order": 99,
+        "config": {
+          "content": { "buttonText": "立即抢购" },
+          "style": { "background": "#C41E3A", "textColor": "#FFFFFF", "buttonColor": "#FFD700" },
+          "data": { "source": "packages" },
+          "behavior": { "action": "signup" }
+        }
+      }
+    ]
+  }
+}

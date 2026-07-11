@@ -1,0 +1,169 @@
+{
+  "templateId": "store_opening",
+  "name": "门店开业",
+  "scenario": "store_opening",
+  "coverImage": "cloud://replace-required/store-opening/hero.webp",
+  "summary": "适合新店开业、门店体验和到店转化，突出门店信息、开业福利和地图导航。",
+  "materials": [
+    { "materialId": "mat_store_opening_hero", "role": "hero" },
+    { "materialId": "mat_common_soft_gradient", "role": "background" }
+  ],
+  "tradeRecommendations": [
+    { "type": "package", "message": "建议配置开业体验套餐或到店福利套餐。" },
+    { "type": "coupon", "message": "如有红包/优惠券规则，可作为右侧福利入口承接。" }
+  ],
+  "previewData": {
+    "title": "新店开业·到店免费体验",
+    "startTime": "2026-07-28 09:00",
+    "endTime": "2026-07-28 20:00",
+    "signupDeadline": "2026-07-27 23:59",
+    "location": "悠然瑜伽新店·通州区新华西街58号",
+    "instructor": "刘静怡老师",
+    "maxParticipants": 40,
+    "virtualViewCount": 2156,
+    "virtualSignupCount": 28,
+    "coverImage": "",
+    "packages": [
+      { "name": "到店体验", "price": "0", "type": "single", "content": ["免费体验1节课", "专业体测1次", "新店专属礼包"] },
+      { "name": "开业特惠卡", "price": "199", "originalPrice": "599", "type": "single", "content": ["月卡5次课", "私教体验1次", "有效期30天"] }
+    ],
+    "redPacketConfig": { "enabled": true, "signupAmount": 5, "inviteAmount": 10, "rankAmount": 30, "rankCount": 3 },
+    "componentPreview": {
+      "image_ad": { "content": { "mode": "single", "images": ["preview://store-opening-banner"] } },
+      "map": { "content": { "latitude": 39.9025, "longitude": 116.6618, "name": "悠然瑜伽新店", "address": "北京市通州区新华西街58号", "phone": "010-66668888" } },
+      "store_info": { "content": { "phone": "010-66668888", "qrcode": "" } },
+      "rich_text": { "content": { "html": "<h3>新店福利</h3><ul><li>到店免费体验1节瑜伽课</li><li>专业体测1次，定制训练方案</li><li>开业期间充值享8折优惠</li><li>推荐好友各得1节免费课</li></ul>" } },
+      "image_nav": { "content": { "columns": 4, "items": [{ "title": "到店导航", "icon": "" }, { "title": "课程预约", "icon": "" }, { "title": "教练介绍", "icon": "" }, { "title": "联系客服", "icon": "" }] } },
+      "video": { "content": { "src": "preview://store-opening-video", "poster": "preview://store-opening-poster", "autoplay": false } }
+    }
+  },
+  "enabled": true,
+  "sort": 5,
+  "version": 1,
+  "layout": {
+    "version": 2,
+    "showHeader": true,
+    "globalStyle": {
+      "themeColor": "#1E6F68",
+      "accentColor": "#E7B75F",
+      "pageBg": { "type": "color", "color": "#F2F8F7" },
+      "cardRadius": 8,
+      "componentGap": 12,
+      "fontScale": "normal",
+      "buttonStyle": "solid"
+    },
+    "floating": {
+      "music": { "enabled": false, "position": "rightTop", "defaultPlay": false },
+      "danmaku": { "enabled": true, "position": "rightTop", "defaultOn": false },
+      "toolGroup": { "enabled": true, "position": "leftMiddle", "actions": ["share", "customer_service", "map_navigation", "back_to_top"] },
+      "benefitButton": { "enabled": "auto", "position": "rightMiddle" }
+    },
+    "components": [
+      {
+        "id": "store_title",
+        "type": "title",
+        "enabled": true,
+        "order": 1,
+        "config": {
+          "content": { "title": "{{activityName}}", "subtitle": "新店开业 · 到店体验 · 限时福利" },
+          "style": { "background": "#FFFFFF", "textColor": "#143C38", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "store_notice",
+        "type": "notice",
+        "enabled": true,
+        "order": 2,
+        "config": {
+          "content": { "mode": "scroll", "title": "开业福利", "text": "到店体验名额有限，报名后请按门店通知到店核销。" },
+          "style": { "background": "#E4F2EF", "textColor": "#1E6F68", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "view_detail" }
+        }
+      },
+      {
+        "id": "store_info",
+        "type": "store_info",
+        "enabled": true,
+        "order": 3,
+        "config": {
+          "content": { "phone": "", "qrcode": "" },
+          "style": { "background": "#FFFFFF", "textColor": "#143C38", "borderRadius": 10 },
+          "data": { "fields": ["location", "phone", "navigation"] },
+          "behavior": { "action": "map_navigation" }
+        }
+      },
+      {
+        "id": "store_grid",
+        "type": "data_grid",
+        "enabled": true,
+        "order": 4,
+        "config": {
+          "content": { "title": "开业热度" },
+          "style": { "background": "#FFFFFF", "textColor": "#143C38", "borderRadius": 10 },
+          "data": { "columns": 3, "rows": 1, "items": ["signup_count", "remaining", "views"] },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "store_image_nav",
+        "type": "image_nav",
+        "enabled": true,
+        "order": 5,
+        "config": {
+          "content": {
+            "columns": 4,
+            "items": [
+              { "title": "门店环境", "icon": "" },
+              { "title": "老师团队", "icon": "" },
+              { "title": "开业福利", "icon": "" },
+              { "title": "到店路线", "icon": "" }
+            ]
+          },
+          "style": { "background": "#FFFFFF", "textColor": "#143C38", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "view_detail" }
+        }
+      },
+      {
+        "id": "store_trade",
+        "type": "trade_showcase",
+        "enabled": true,
+        "order": 6,
+        "config": {
+          "content": { "title": "开业体验套餐" },
+          "style": { "background": "#FFFFFF", "textColor": "#143C38", "borderRadius": 10 },
+          "data": { "source": "packages", "packageIds": [] },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "store_recent",
+        "type": "recent_signup",
+        "enabled": true,
+        "order": 7,
+        "config": {
+          "content": { "title": "到店预约动态" },
+          "style": { "background": "#FFFFFF", "textColor": "#143C38", "borderRadius": 10 },
+          "data": { "mode": "avatar_scroll", "fillWithVirtual": true, "count": 8 },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+
+        "id": "store_bottom",
+        "type": "bottom_signup_bar",
+        "enabled": true,
+        "order": 99,
+        "config": {
+          "content": { "buttonText": "预约到店体验" },
+          "style": { "background": "#1E6F68", "textColor": "#FFFFFF", "buttonColor": "#E7B75F" },
+          "data": { "source": "packages" },
+          "behavior": { "action": "signup" }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,752 @@
+/**
+ * @file 茶易管全局基础样式
+ * @description v0.5.0 - 基础重置 + 滚动条 + 毛玻璃 + 过渡 + 动效 + 工具类
+ * @change v0.5.0 强化：双层内容背景、毛玻璃通用类、指示线/竖条弹性动画
+ */
+
+/* ==================== 基础重置 ==================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  height: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  font-family: var(--tea-font-family) !important;
+  font-size: var(--tea-font-size-base) !important;
+  color: var(--tea-text-primary) !important;
+  /* v0.5.5 修复：使用实色背景，避免主题切换时半透明叠加产生"遮罩"视觉效果 */
+  background: var(--tea-content-bg-solid) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background var(--tea-transition-normal), color var(--tea-transition-normal);
+}
+
+a {
+  color: var(--tea-primary);
+  text-decoration: none;
+  transition: color var(--tea-transition-fast);
+}
+
+a:hover {
+  color: var(--tea-primary-hover);
+}
+
+/* ==================== 滚动条 ==================== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+  transition: background var(--tea-transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.tea-scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+/* ==================== Naive UI 主题适配 ==================== */
+.n-config-provider,
+.n-message-provider {
+  height: 100%;
+}
+
+/* ==================== 工具类 - 毛玻璃 ==================== */
+.tea-glass {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.tea-glass-light {
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+/* ==================== 工具类 - 过渡 ==================== */
+.tea-transition-fast {
+  transition: background var(--tea-transition-fast), color var(--tea-transition-fast), transform var(--tea-transition-fast);
+}
+
+.tea-transition-normal {
+  transition: background var(--tea-transition-normal), color var(--tea-transition-normal), border-color var(--tea-transition-normal);
+}
+
+/* ==================== 工具类 - 动画 ==================== */
+.tea-fade-in {
+  animation: teaFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes teaFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tea-fade-in-fast {
+  animation: teaFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tea-slide-in-right {
+  animation: teaSlideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes teaSlideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.tea-scale-in {
+  animation: teaScaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes teaScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.tea-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.tea-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  animation: teaShimmer 3s 1s ease-in-out infinite;
+}
+
+@keyframes teaShimmer {
+  0% { left: -100%; }
+  30% { left: 100%; }
+  100% { left: 100%; }
+}
+
+/* ==================== v0.5.0 弹性进入动画 ==================== */
+
+/* 标签栏指示线缩放进入 */
+@keyframes teaIndicatorIn {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+/* 侧栏竖条弹性进入 */
+@keyframes teaBarIn {
+  0% { transform: scaleY(0); opacity: 0; }
+  60% { transform: scaleY(1.15); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+/* 模态装饰光带散开 */
+@keyframes teaAccentGlow {
+  0% { transform: scaleX(0); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+
+/* 渐变光晕脉冲（dashboard hero 装饰） */
+@keyframes teaPulseGlow {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.05); }
+}
+
+/* ==================== 工具类 - 标签栏遮罩 ==================== */
+.tea-mask-left,
+.tea-mask-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tea-mask-left {
+  left: 0;
+  background: linear-gradient(to right, var(--tea-titlebar-bg), transparent);
+}
+
+.tea-mask-right {
+  right: 0;
+  background: linear-gradient(to left, var(--tea-titlebar-bg), transparent);
+}
+
+.tea-mask-visible {
+  opacity: 1;
+}
+
+/* ==================== 工具类 - 侧栏激活指示 ==================== */
+.tea-sider-item-active {
+  position: relative;
+}
+
+.tea-sider-item-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--tea-primary);
+  box-shadow: 0 0 8px var(--tea-primary-supply);
+  transform-origin: center;
+  animation: teaBarIn 0.3s var(--tea-spring);
+  transition: background var(--tea-transition-fast), box-shadow var(--tea-transition-fast);
+}
+
+/* ==================== 工具类 - 标题栏图标按钮 ==================== */
+.tea-titlebar-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--tea-radius-md);
+  cursor: pointer;
+  color: var(--tea-titlebar-text-secondary);
+  transition: background var(--tea-transition-fast), color var(--tea-transition-fast), transform var(--tea-transition-fast);
+  flex-shrink: 0;
+}
+
+.tea-titlebar-icon-btn:hover {
+  background: var(--tea-primary-supply);
+  color: var(--tea-titlebar-text);
+}
+
+.tea-titlebar-icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* ==================== 工具类 - 侧栏按钮 ==================== */
+.tea-sider-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: var(--tea-radius-md);
+  cursor: pointer;
+  color: var(--tea-sider-text-secondary);
+  transition: background var(--tea-transition-fast), color var(--tea-transition-fast), transform var(--tea-transition-fast);
+  font-size: 13px;
+  user-select: none;
+}
+
+.tea-sider-btn:hover {
+  background: var(--tea-sider-item-hover);
+  color: var(--tea-sider-text);
+  transform: translateX(2px) translateY(-1px);
+}
+
+.tea-sider-btn:active {
+  transform: scale(0.97) translateX(2px);
+}
+
+.tea-sider-btn-active {
+  background: var(--tea-sider-item-active-bg);
+  color: var(--tea-primary) !important;
+  font-weight: 600;
+}
+
+/* ==================== 工具类 - 标签栏标签 ==================== */
+.tea-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--tea-tab-height);
+  padding: 0 12px;
+  border-radius: var(--tea-radius-sm);
+  cursor: pointer;
+  color: var(--tea-tab-text);
+  font-size: 13px;
+  font-weight: 400;
+  position: relative;
+  user-select: none;
+  transition: background var(--tea-transition-fast), color var(--tea-transition-fast);
+  max-width: 180px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.tea-tab:hover {
+  background: var(--tea-primary-supply);
+  color: var(--tea-tab-text-active);
+}
+
+.tea-tab-active {
+  background: var(--tea-tab-bg-active);
+  color: var(--tea-tab-text-active) !important;
+  font-weight: 600;
+}
+
+.tea-tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--tea-primary);
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 0 8px var(--tea-primary-supply);
+  transform-origin: center;
+  animation: teaIndicatorIn 0.3s var(--tea-spring);
+}
+
+.tea-tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+
+.tea-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: var(--tea-text-tertiary);
+  font-size: 10px;
+  flex-shrink: 0;
+  transition: background var(--tea-transition-fast), color var(--tea-transition-fast);
+}
+
+.tea-tab-close:hover {
+  background: var(--tea-tab-close-hover-bg);
+  color: var(--tea-tab-close-hover-color);
+}
+
+.tea-tab-drag-over {
+  border-left: 2px solid var(--tea-primary);
+}
+
+/* ==================== 工具类 - 侧栏分组标题 ==================== */
+.tea-sider-section {
+  padding: 6px 12px 4px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tea-sider-section::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--tea-border), transparent);
+}
+
+.tea-sider-section-text {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--tea-sider-section-title);
+}
+
+/* ==================== 工具类 - 侧栏搜索 ==================== */
+.tea-sider-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--tea-search-height);
+  margin: 0 12px 8px;
+  padding: 0 10px;
+  background: var(--tea-sider-search-bg);
+  border: 1px solid var(--tea-sider-search-border);
+  border-radius: var(--tea-radius-md);
+  color: var(--tea-sider-text-tertiary);
+  transition: border-color var(--tea-transition-fast);
+}
+
+.tea-sider-search:focus-within {
+  border-color: var(--tea-primary);
+}
+
+.tea-sider-search input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--tea-sider-text);
+  font-size: 13px;
+}
+
+.tea-sider-search input::placeholder {
+  color: var(--tea-sider-text-tertiary);
+}
+
+/* ==================== 工具类 - 浮窗 ==================== */
+.tea-float-popup {
+  position: fixed;
+  z-index: 999;
+  min-width: 180px;
+  padding: 4px;
+  background: var(--tea-bg-elevated);
+  border: 1px solid var(--tea-border);
+  border-radius: var(--tea-radius-lg);
+  box-shadow: var(--tea-shadow-float);
+  backdrop-filter: var(--tea-blur-md);
+  -webkit-backdrop-filter: var(--tea-blur-md);
+}
+
+/* ==================== v0.5.0 工具类 - 毛玻璃卡片 ==================== */
+.tea-card {
+  background: var(--tea-card-bg);
+  backdrop-filter: var(--tea-card-blur);
+  -webkit-backdrop-filter: var(--tea-card-blur);
+  border: 1px solid var(--tea-card-border);
+  border-radius: var(--tea-radius-lg);
+  box-shadow: var(--tea-shadow-card);
+  transition:
+    box-shadow var(--tea-transition-normal),
+    transform var(--tea-transition-normal),
+    border-color var(--tea-transition-normal);
+}
+
+.tea-card-hoverable {
+  cursor: pointer;
+}
+
+.tea-card-hoverable:hover {
+  box-shadow: var(--tea-shadow-card-hover);
+  border-color: var(--tea-primary-supply);
+  transform: var(--tea-hover-lift-md);
+}
+
+.tea-card-hoverable:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ==================== 动画 - 减少动画偏好 ==================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==================== v0.5.2 全局紧凑化 + 主题适配兜底 ==================== */
+/* 覆盖 UnoCSS 默认 p-6 (24px) → 12px 16px，统一全站紧凑度 */
+.p-6 {
+  padding: 12px 16px !important;
+}
+
+/* 覆盖 UnoCSS 默认 mb-4/mb-6，避免过度间距 */
+.tea-page > .mb-4:first-child,
+.tea-page > div > .mb-4:first-child {
+  margin-bottom: 12px !important;
+}
+
+.tea-page .mb-4 {
+  margin-bottom: 12px !important;
+}
+
+.tea-page .mb-6 {
+  margin-bottom: 12px !important;
+}
+
+/* 页面标题统一字号 */
+.tea-page h1,
+.tea-page .text-xl {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: var(--tea-content-1) !important;
+  margin: 0 !important;
+}
+
+/* 弹窗内部紧凑化 */
+.n-modal .n-card-header {
+  padding: 10px 16px !important;
+}
+
+.n-modal .n-card__content {
+  padding: 14px 16px !important;
+}
+
+.n-modal .n-card-footer {
+  padding: 10px 16px !important;
+}
+
+/* 全局 - 通用白色背景兜底为卡片背景（防止深色模式白底） */
+.bg-white,
+[class*='bg-white'] {
+  background: var(--tea-surface-2) !important;
+}
+
+/* 全局 - 通用文本色兜底（防止深色模式白字）
+   排除规则：白字在深色/渐变背景上时合理（dashboard-hero），不能被替换 */
+.dashboard-hero [style*='color: #ffffff'],
+.dashboard-hero [style*='color: white'],
+.dashboard-hero-meta [style*='color: #ffffff'],
+.dashboard-hero-meta [style*='color: white'],
+.dashboard-hero-btn [style*='color: #ffffff'],
+.dashboard-hero-btn [style*='color: white'],
+.dashboard-hero [style*='color: rgba(255'],
+.dashboard-hero-meta [style*='color: rgba(255'],
+.dashboard-hero-btn [style*='color: rgba(255'] {
+  /* DashboardHero 内的白色文字保留 - 渐变背景必须白字 */
+  color: inherit;
+}
+
+[style*='color: white']:not(.dashboard-hero *):not(.dashboard-hero-meta *):not(.dashboard-hero-btn *),
+[style*='color: #fff']:not(.dashboard-hero *):not(.dashboard-hero-meta *):not(.dashboard-hero-btn *),
+[style*='color: #FFF']:not(.dashboard-hero *):not(.dashboard-hero-meta *):not(.dashboard-hero-btn *),
+[style*='color: #ffffff']:not(.dashboard-hero *):not(.dashboard-hero-meta *):not(.dashboard-hero-btn *) {
+  color: var(--tea-content-1) !important;
+}
+
+[style*='color: #5B4636'] {
+  color: var(--tea-content-1) !important;
+}
+
+[style*='color: #6B5B4B'] {
+  color: var(--tea-content-2) !important;
+}
+
+[style*='color: #8B7B6B'] {
+  color: var(--tea-content-3) !important;
+}
+
+[style*='color: #A89B8C'] {
+  color: var(--tea-content-4) !important;
+}
+
+[style*='color: #C4B8A8'] {
+  color: var(--tea-content-5) !important;
+}
+
+[style*='color: #C4956A'] {
+  color: var(--tea-primary) !important;
+}
+
+[style*='color: #D4838A'] {
+  color: var(--tea-content-danger) !important;
+}
+
+[style*='color: #6B9E78'] {
+  color: var(--tea-content-success) !important;
+}
+
+[style*='color: #C9823A'] {
+  color: var(--tea-content-warning) !important;
+}
+
+/* ==================== v0.5.3 全局背景白底兜底强化 ==================== */
+/* 防止任何 scoped 样式硬编码的 #FFFFFF / #FAFAFA / rgb(255,255,255) 在深色模式下造成白底 */
+
+/* 直接覆盖硬编码白色背景 */
+[data-theme='dark'] [style*='background: #FFF'],
+[data-theme='dark'] [style*='background:#FFF'],
+[data-theme='dark'] [style*='background: #fff'],
+[data-theme='dark'] [style*='background:#fff'],
+[data-theme='dark'] [style*='background-color: #FFF'],
+[data-theme='dark'] [style*='background-color: #fff'],
+[data-theme='dark'] [style*='background: white'],
+[data-theme='dark'] [style*='background: rgb(255'],
+[data-theme='dark'] [style*='background-color: rgb(255'],
+[data-theme='dark'] [style*='background: rgba(255, 255, 255'] {
+  background: var(--tea-surface-2) !important;
+  background-color: var(--tea-surface-2) !important;
+}
+
+/* 浅色模式下硬编码白底保留（因为浅色模式背景就是白色） */
+[style*='background: #FFF'],
+[style*='background:#FFF'],
+[style*='background: #fff'],
+[style*='background:#fff'],
+[style*='background-color: #FFF'],
+[style*='background-color: #fff'] {
+  background-color: var(--tea-surface-2) !important;
+}
+
+/* ==================== v0.5.3 文字背景同色终极防御 ==================== */
+/* 在浅色模式下，如果元素有 var(--tea-primary) 背景，文字必须用反色 */
+/* v0.5.5 第四轮修复：排除 ghost/ghost-type/tea-btn-text，避免覆盖 ghost 和 text 按钮的对应色文字 */
+/* 根因：原规则 .n-button--primary-type 强制白色，覆盖了 .tea-btn-text 的茶金色和 ghost 按钮的主色文字 */
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+.n-tag--primary-type,
+.n-tag--primary-type * {
+  color: var(--tea-content-inverse) !important;
+}
+
+/* 演示数据卡片 - 内嵌 alert 文字保护（统一用 type=info 风格，由 n-overrides.css 接管）*/
+
+/* 任何 primary 主色背景 - 文字反色 */
+[style*='background: var(--tea-primary)'],
+[style*='background-color: var(--tea-primary)'],
+.bg-primary,
+.tea-primary-bg {
+  color: var(--tea-content-inverse) !important;
+}
+[style*='background: var(--tea-primary)'] *,
+[style*='background-color: var(--tea-primary)'] *,
+.bg-primary *,
+.tea-primary-bg * {
+  color: var(--tea-content-inverse) !important;
+}
+
+/* ==================== v0.5.5 全局紧凑页面布局工具类 ==================== */
+/* 参考 ProductList.vue 设计，提取为全局共享，避免每个视图重复定义 */
+.tea-page {
+  padding: 12px 16px;
+  background: transparent;
+  min-height: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.page-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--tea-content-1);
+  margin: 0;
+}
+
+.filter-card {
+  margin-bottom: 12px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-input {
+  width: 240px;
+}
+
+.filter-select {
+  width: 160px;
+}
+
+.table-card {
+  margin-bottom: 12px;
+}
+
+/* 紧凑间距工具 - 替代旧的 p-6/mb-4/text-xl */
+.compact-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.font-bold {
+  font-weight: 600;
+}
+
+.text-base {
+  font-size: 14px;
+}
+
+.text-sm {
+  font-size: 13px;
+}
+
+.gap-2 {
+  gap: 8px;
+}
+
+.mt-4 {
+  margin-top: 12px;
+}
+
+.ml-2 {
+  margin-left: 8px;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.flex {
+  display: flex;
+}
+
+/* v0.5.5 补充：通用文字相关工具类 */
+.font-medium {
+  font-weight: 500;
+  color: var(--tea-content-1);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-xs {
+  font-size: 12px;
+}
+
+.text-light {
+  color: var(--tea-content-3);
+  font-size: 13px;
+}
+
+/* 边框工具 - 用于打印模板预览 */
+.border-t {
+  border-top: 1px solid var(--tea-line-1);
+}
+
+.border-b {
+  border-bottom: 1px solid var(--tea-line-1);
+}
+
+.border-dashed {
+  border-style: dashed;
+}
+
+.py-2 {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}

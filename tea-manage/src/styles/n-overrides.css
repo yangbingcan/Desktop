@@ -1,0 +1,3450 @@
+/**
+ * @file Naive UI 组件全局美化覆盖
+ * @description v0.5.0 - 毛玻璃、装饰光带、下划线输入框、按钮动效
+ * @design 仿 JXC 模式：纯 CSS 覆盖，类名 + !important 抗版本升级
+ * @note 此文件必须晚于 variables.css / globals.css 引入，否则变量未生效
+ */
+
+/* ==================== 1. 弹窗（modal） ==================== */
+
+/* 1.1 容器层级 */
+.n-modal-container { z-index: 4000; }
+
+/* 1.2 遮罩 - v0.5.5 终极修复：防止 applyToDOM 样式重算中断 opacity 过渡 */
+/* @根因 修改 <html> 的 data-theme/data-primary 等属性触发样式重算，
+   会在抽屉/弹窗关闭的 fadeInTransition 过渡期间中断 opacity 过渡，
+   导致 mask 停留在中间状态造成视觉残留 */
+/* @方案 JS 层面延迟 applyToDOM（双 rAF） + CSS 层面：
+   1. will-change 提升合成层
+   2. 显式 transition 声明确保过渡不被中断
+   3. 安全网：leave-to 阶段强制 opacity:0 + 不可交互 */
+.n-drawer-mask,
+.n-modal-mask {
+  will-change: opacity;
+  /* 显式声明过渡，防止样式重算时 transition 属性丢失 */
+  transition: opacity 0.25s ease, background-color 0.25s ease, visibility 0s linear 0.25s !important;
+}
+
+[data-theme='dark'] .n-drawer-mask,
+[data-theme='dark'] .n-modal-mask {
+  /* 深色模式下使用更深的遮罩 */
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
+/* 安全网 1：离开过渡完成态强制 opacity:0 + 不可交互 */
+.fade-in-transition-leave-to.n-drawer-mask,
+.fade-in-transition-leave-to.n-modal-mask {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* 安全网 2：完全离开后（leave-active 结束）也保持隐藏 */
+.fade-in-transition-leave-active.n-drawer-mask,
+.fade-in-transition-leave-active.n-modal-mask {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 1.3 弹窗主体 - 毛玻璃 + 圆角 + 边框 */
+.n-modal .n-card,
+.n-modal-content {
+  background: var(--tea-modal-bg) !important;
+  backdrop-filter: var(--tea-modal-blur) !important;
+  -webkit-backdrop-filter: var(--tea-modal-blur) !important;
+  border: 1px solid var(--tea-card-border) !important;
+  border-radius: var(--tea-radius-xl) !important;
+  box-shadow: var(--tea-shadow-float) !important;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 1.4 顶部装饰光带 - 主色渐变 + 散开动画 */
+.n-modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--tea-primary) 20%,
+    var(--tea-primary-hover) 50%,
+    var(--tea-primary) 80%,
+    transparent
+  );
+  animation: teaAccentGlow 2s ease-out forwards;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 1.5 光带下方柔光散开 */
+.n-modal-content::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 10%;
+  right: 10%;
+  height: 12px;
+  background: linear-gradient(180deg, var(--tea-primary-supply), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 1.6 头部 / 标题 / 关闭 */
+.n-modal-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--tea-border) !important;
+  padding: 12px 20px !important;
+}
+
+.n-modal__title {
+  font-weight: 600 !important;
+  font-size: 15px !important;
+}
+
+.n-modal-header__close {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: var(--tea-radius-md) !important;
+  transition: all var(--tea-transition-fast) !important;
+  top: 10px !important;
+  right: 12px !important;
+}
+
+.n-modal-header__close:hover {
+  background: var(--tea-hover-bg) !important;
+}
+
+.n-modal-header__close:active {
+  transform: scale(0.92);
+}
+
+/* 1.7 body / footer */
+.n-modal-body {
+  padding: 16px 20px !important;
+}
+
+.n-modal-footer {
+  padding: 10px 20px !important;
+  background: transparent !important;
+  border-top: 1px solid var(--tea-border-light) !important;
+}
+
+/* 1.8 弹窗内输入框 - 下划线风格 */
+.n-modal .n-input,
+.n-modal .n-input-wrapper,
+.n-modal .n-input__input-el,
+.n-modal .n-base-selection,
+.n-modal .n-base-selection-input__content,
+.n-modal textarea {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1.5px solid var(--tea-border) !important;
+  border-radius: 0 !important;
+  transition: border-color 0.3s var(--tea-transition-normal) !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+}
+
+.n-modal .n-input:not(.n-input--disabled):hover,
+.n-modal .n-base-selection:not(.n-base-selection--disabled):hover {
+  border-bottom-color: var(--tea-primary-hover) !important;
+}
+
+.n-modal .n-input:focus,
+.n-modal .n-input--focus,
+.n-modal .n-base-selection--focus {
+  border-bottom: 1.5px solid var(--tea-primary) !important;
+  box-shadow: 0 1px 0 0 var(--tea-primary-supply) !important;
+}
+
+.n-modal .n-input--disabled,
+.n-modal .n-input--disabled .n-input__input-el,
+.n-modal .n-base-selection--disabled {
+  border-bottom-style: dashed !important;
+  color: var(--tea-text-tertiary) !important;
+}
+
+/* 1.9 进入退出 - 改写为 opacity-only（避免 transform 缩放与卡片错位） */
+.n-modal .n-zoom-enter,
+.n-modal .n-zoom-leave {
+  transform: none !important;
+}
+
+.n-modal .n-zoom-enter-active {
+  transition: opacity 0.2s ease-out !important;
+}
+
+.n-modal .n-zoom-leave-active {
+  transition: opacity 0.15s ease-in !important;
+}
+
+/* ==================== 2. 抽屉（drawer） ==================== */
+
+.n-drawer {
+  --n-color: var(--tea-drawer-bg) !important;
+}
+
+.n-drawer .n-drawer-container {
+  background: var(--tea-drawer-bg) !important;
+  backdrop-filter: var(--tea-drawer-blur) !important;
+  -webkit-backdrop-filter: var(--tea-drawer-blur) !important;
+  border-left: 1px solid var(--tea-card-border) !important;
+}
+
+.n-drawer-header {
+  border-bottom: 1px solid var(--tea-border) !important;
+  padding: 12px 20px !important;
+}
+
+.n-drawer-body {
+  padding: 16px 20px !important;
+}
+
+.n-drawer-mask {
+  /* v0.5.5 移除自定义覆盖，完全交给 Naive UI 原生 fadeInTransition + --invisible 类控制 */
+}
+
+/* ==================== 3. 下拉（dropdown） ==================== */
+
+.n-dropdown-menu,
+.n-dropdown-option {
+  background: var(--tea-overlay-bg) !important;
+  backdrop-filter: var(--tea-overlay-blur) !important;
+  -webkit-backdrop-filter: var(--tea-overlay-blur) !important;
+  border: 1px solid var(--tea-card-border) !important;
+  box-shadow: var(--tea-shadow-float) !important;
+}
+
+.n-dropdown-option-body {
+  backdrop-filter: var(--tea-overlay-blur) !important;
+  -webkit-backdrop-filter: var(--tea-overlay-blur) !important;
+  color: var(--tea-text-primary) !important;  /* v0.5.1 修复深色模式右键不清晰：明确文字色 */
+}
+
+.n-dropdown-option:hover {
+  background: var(--tea-hover-bg) !important;
+  color: var(--tea-primary) !important;  /* v0.5.1 hover 时主色高亮 */
+}
+
+.n-dropdown-option-body__prefix,
+.n-dropdown-option-body__suffix {
+  color: var(--tea-text-secondary) !important;
+}
+
+/* v0.5.1 深色模式增强：dropdown 边框/对比度优化 */
+[data-theme='dark'] .n-dropdown-menu,
+[data-theme='dark'] .n-dropdown-option {
+  background: rgba(30, 25, 20, 0.92) !important;
+  border-color: rgba(196, 149, 106, 0.25) !important;
+}
+
+[data-theme='dark'] .n-dropdown-option:hover {
+  background: rgba(196, 149, 106, 0.18) !important;
+  color: var(--tea-primary) !important;
+}
+
+/* ==================== 4. 消息（message）+ 通知（notification） ==================== */
+
+.n-message-notice-content {
+  background: var(--tea-overlay-bg) !important;
+  backdrop-filter: blur(12px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+  border: 1px solid var(--tea-card-border) !important;
+  border-radius: var(--tea-radius-md) !important;
+  box-shadow: var(--tea-shadow-md) !important;
+}
+
+.n-notification-main {
+  background: var(--tea-overlay-bg) !important;
+  backdrop-filter: var(--tea-overlay-blur) !important;
+  -webkit-backdrop-filter: var(--tea-overlay-blur) !important;
+  border: 1px solid var(--tea-card-border) !important;
+  border-radius: var(--tea-radius-lg) !important;
+  box-shadow: var(--tea-shadow-float) !important;
+}
+
+.n-notification-main__header {
+  border-bottom: 1px solid var(--tea-border) !important;
+}
+
+/* ==================== 5. 卡片（card） ==================== */
+
+.n-card {
+  background: var(--tea-card-bg) !important;
+  backdrop-filter: var(--tea-card-blur) !important;
+  -webkit-backdrop-filter: var(--tea-card-blur) !important;
+  border: 1px solid var(--tea-card-border) !important;
+  border-radius: var(--tea-radius-lg) !important;
+  box-shadow: var(--tea-shadow-card) !important;
+  transition: box-shadow var(--tea-transition-normal), transform var(--tea-transition-normal), border-color var(--tea-transition-normal) !important;
+  overflow: hidden;
+}
+
+.n-card.n-card--hoverable:hover {
+  box-shadow: var(--tea-shadow-card-hover) !important;
+  border-color: var(--tea-primary-supply) !important;
+  transform: var(--tea-hover-lift-md);
+}
+
+.n-card-header {
+  border-bottom: 1px solid var(--tea-border-light) !important;
+  padding: 12px 16px !important;
+}
+
+.n-card__content {
+  padding: 16px !important;
+}
+
+.n-card-header__main {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+/* ==================== 6. 按钮（button） ==================== */
+
+.n-button {
+  border-radius: var(--tea-radius-md) !important;
+  transition: all var(--tea-transition-fast) !important;
+  font-weight: 500 !important;
+}
+
+/* ==================== v0.5.5 重大修复：区分 text/ghost/regular 按钮 ==================== */
+/* 根因：Naive UI 的 text:true 按钮没有独立 CSS 类名，与 regular 共享 class */
+/* 方案：regular 用 :not() 排除 ghost 和 tea-btn-text；text 按钮用 .tea-btn-text 自定义类处理 */
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  background: var(--tea-primary) !important;
+  border-color: var(--tea-primary) !important;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02) !important;
+}
+
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):hover {
+  background: var(--tea-primary-hover) !important;
+  border-color: var(--tea-primary-hover) !important;
+  transform: var(--tea-hover-lift-sm);
+  box-shadow: 0 4px 12px var(--tea-primary-supply) !important;
+}
+
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):active {
+  background: var(--tea-primary-active) !important;
+  transform: scale(0.97);
+}
+
+/* Text 模式按钮 - 透明背景 + 主色文字，自适应深浅色主题 */
+.tea-btn-text {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--tea-primary) !important;
+  box-shadow: none !important;
+}
+.tea-btn-text:hover:not(.n-button--disabled) {
+  background: var(--tea-primary-supply) !important;
+  border-color: transparent !important;
+  color: var(--tea-primary-hover) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.tea-btn-text:active:not(.n-button--disabled) {
+  background: color-mix(in srgb, var(--tea-primary-supply), black 5%) !important;
+  transform: none !important;
+}
+/* Text 模式下 error 类型按钮 */
+.tea-btn-text.n-button--error-type {
+  background: transparent !important;
+  color: var(--tea-error) !important;
+}
+.tea-btn-text.n-button--error-type:hover:not(.n-button--disabled) {
+  background: var(--tea-error-bg, rgba(255, 77, 79, 0.12)) !important;
+  color: var(--tea-error) !important;
+}
+/* 深色模式 text 按钮 */
+[data-theme='dark'] .tea-btn-text {
+  background: transparent !important;
+  color: var(--tea-primary) !important;
+}
+[data-theme='dark'] .tea-btn-text:hover:not(.n-button--disabled) {
+  background: var(--tea-primary-supply) !important;
+  color: var(--tea-primary-hover) !important;
+}
+[data-theme='dark'] .tea-btn-text.n-button--error-type {
+  background: transparent !important;
+  color: var(--tea-error) !important;
+}
+[data-theme='dark'] .tea-btn-text.n-button--error-type:hover:not(.n-button--disabled) {
+  background: var(--tea-error-bg, rgba(255, 77, 79, 0.12)) !important;
+  color: var(--tea-error) !important;
+}
+
+/* 通用按钮动效 */
+.n-button:active:not(.n-button--disabled) {
+  transform: scale(0.97);
+}
+
+.n-button:hover:not(.n-button--disabled):not(.n-button--primary-type) {
+  border-color: var(--tea-primary) !important;
+  color: var(--tea-primary) !important;
+}
+
+.n-button--primary-type:hover:not(.n-button--disabled):not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  color: var(--tea-content-inverse) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* v0.5.5 全面适配：error / warning / success / info 类型按钮背景色 + 深色模式 */
+/* @fix 给所有 regular 规则添加 :not(.n-button--ghost):not(.n-button--ghost-type) 排除，
+   防止覆盖 ghost 按钮的透明背景 + 对应色文字 */
+.n-button--error-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  background: var(--tea-error) !important;
+  border-color: var(--tea-error) !important;
+  color: #FFFFFF !important;
+}
+.n-button--error-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):hover:not(.n-button--disabled) {
+  background: #FF7875 !important;
+  border-color: #FF7875 !important;
+  color: #FFFFFF !important;
+  transform: var(--tea-hover-lift-sm);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.25) !important;
+}
+.n-button--error-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):active:not(.n-button--disabled) {
+  background: #D9363E !important;
+  transform: scale(0.97);
+}
+
+.n-button--warning-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  background: var(--tea-warning) !important;
+  border-color: var(--tea-warning) !important;
+  color: #FFFFFF !important;
+}
+.n-button--warning-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):hover:not(.n-button--disabled) {
+  background: #FFC53D !important;
+  border-color: #FFC53D !important;
+  color: #FFFFFF !important;
+  transform: var(--tea-hover-lift-sm);
+  box-shadow: 0 4px 12px rgba(250, 173, 20, 0.25) !important;
+}
+.n-button--warning-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):active:not(.n-button--disabled) {
+  background: #D48806 !important;
+  transform: scale(0.97);
+}
+
+.n-button--success-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  background: var(--tea-success) !important;
+  border-color: var(--tea-success) !important;
+  color: #FFFFFF !important;
+}
+.n-button--success-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):hover:not(.n-button--disabled) {
+  background: #73D13D !important;
+  border-color: #73D13D !important;
+  color: #FFFFFF !important;
+  transform: var(--tea-hover-lift-sm);
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.25) !important;
+}
+.n-button--success-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):active:not(.n-button--disabled) {
+  background: #389E0D !important;
+  transform: scale(0.97);
+}
+
+.n-button--info-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  background: var(--tea-info) !important;
+  border-color: var(--tea-info) !important;
+  color: #FFFFFF !important;
+}
+.n-button--info-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):hover:not(.n-button--disabled) {
+  background: #40A9FF !important;
+  border-color: #40A9FF !important;
+  color: #FFFFFF !important;
+  transform: var(--tea-hover-lift-sm);
+  box-shadow: 0 4px 12px rgba(22, 119, 255, 0.25) !important;
+}
+.n-button--info-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):active:not(.n-button--disabled) {
+  background: #096DD9 !important;
+  transform: scale(0.97);
+}
+
+/* v0.5.5 ghost 按钮（透明背景，hover 时显示对应类型淡色背景） */
+.n-button--ghost.n-button--error-type {
+  background: transparent !important;
+  border-color: var(--tea-error) !important;
+  color: var(--tea-error) !important;
+}
+.n-button--ghost.n-button--error-type:hover:not(.n-button--disabled) {
+  background: rgba(255, 77, 79, 0.12) !important;
+  border-color: var(--tea-error) !important;
+  color: var(--tea-error) !important;
+}
+.n-button--ghost.n-button--primary-type,
+.n-button--ghost-type.n-button--primary-type {
+  background: transparent !important;
+  border-color: var(--tea-primary) !important;
+  color: var(--tea-primary) !important;
+}
+.n-button--ghost.n-button--primary-type:hover:not(.n-button--disabled),
+.n-button--ghost-type.n-button--primary-type:hover:not(.n-button--disabled) {
+  background: var(--tea-primary-supply) !important;
+  color: var(--tea-primary-hover) !important;
+}
+.n-button--ghost.n-button--warning-type,
+.n-button--ghost-type.n-button--warning-type {
+  background: transparent !important;
+  border-color: var(--tea-warning) !important;
+  color: var(--tea-warning) !important;
+}
+.n-button--ghost.n-button--warning-type:hover:not(.n-button--disabled),
+.n-button--ghost-type.n-button--warning-type:hover:not(.n-button--disabled) {
+  background: rgba(250, 173, 20, 0.12) !important;
+  color: var(--tea-warning) !important;
+}
+.n-button--ghost.n-button--success-type,
+.n-button--ghost-type.n-button--success-type {
+  background: transparent !important;
+  border-color: var(--tea-success) !important;
+  color: var(--tea-success) !important;
+}
+.n-button--ghost.n-button--success-type:hover:not(.n-button--disabled),
+.n-button--ghost-type.n-button--success-type:hover:not(.n-button--disabled) {
+  background: rgba(82, 196, 26, 0.12) !important;
+  color: var(--tea-success) !important;
+}
+.n-button--ghost.n-button--info-type,
+.n-button--ghost-type.n-button--info-type {
+  background: transparent !important;
+  border-color: var(--tea-info) !important;
+  color: var(--tea-info) !important;
+}
+.n-button--ghost.n-button--info-type:hover:not(.n-button--disabled),
+.n-button--ghost-type.n-button--info-type:hover:not(.n-button--disabled) {
+  background: rgba(22, 119, 255, 0.12) !important;
+  color: var(--tea-info) !important;
+}
+.n-button--ghost.n-button--error-type,
+.n-button--ghost-type.n-button--error-type {
+  background: transparent !important;
+  border-color: var(--tea-error) !important;
+  color: var(--tea-error) !important;
+}
+.n-button--ghost.n-button--error-type:hover:not(.n-button--disabled),
+.n-button--ghost-type.n-button--error-type:hover:not(.n-button--disabled) {
+  background: rgba(255, 77, 79, 0.12) !important;
+  color: var(--tea-error) !important;
+}
+.n-button--ghost:not(.n-button--primary-type):not(.n-button--error-type):not(.n-button--warning-type):not(.n-button--success-type):not(.n-button--info-type),
+.n-button--ghost-type:not(.n-button--primary-type):not(.n-button--error-type):not(.n-button--warning-type):not(.n-button--success-type):not(.n-button--info-type) {
+  background: transparent !important;
+  border-color: var(--tea-border-strong) !important;
+  color: var(--tea-text-primary) !important;
+}
+.n-button--ghost:not(.n-button--primary-type):not(.n-button--error-type):not(.n-button--warning-type):not(.n-button--success-type):not(.n-button--info-type):hover:not(.n-button--disabled),
+.n-button--ghost-type:not(.n-button--primary-type):not(.n-button--error-type):not(.n-button--warning-type):not(.n-button--success-type):not(.n-button--info-type):hover:not(.n-button--disabled) {
+  background: var(--tea-hover-bg) !important;
+  border-color: var(--tea-primary) !important;
+  color: var(--tea-primary) !important;
+}
+
+/* v0.5.5 text 按钮（无背景无边框，hover 时淡色背景） */
+.n-button--text-type {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--tea-primary) !important;
+}
+.n-button--text-type:hover:not(.n-button--disabled) {
+  background: var(--tea-primary-supply) !important;
+  color: var(--tea-primary-hover) !important;
+}
+.n-button--text-type.n-button--error-type,
+.n-button--text-type[class*="error"] {
+  color: var(--tea-error) !important;
+}
+.n-button--text-type.n-button--error-type:hover:not(.n-button--disabled),
+.n-button--text-type[class*="error"]:hover:not(.n-button--disabled) {
+  background: rgba(255, 77, 79, 0.12) !important;
+  color: var(--tea-error) !important;
+}
+
+/* v0.5.5 深色模式下按钮统一适配 */
+[data-theme='dark'] .n-button--default-type,
+[data-theme='dark'] .n-button:not([class*="--primary-type"]):not([class*="--error-type"]):not([class*="--warning-type"]):not([class*="--success-type"]):not([class*="--info-type"]):not([class*="--text-type"]):not([class*="--ghost"]) {
+  background: var(--tea-surface-2) !important;
+  border-color: var(--tea-border) !important;
+  color: var(--tea-text-primary) !important;
+}
+[data-theme='dark'] .n-button--default-type:hover:not(.n-button--disabled),
+[data-theme='dark'] .n-button:not([class*="--primary-type"]):not([class*="--error-type"]):not([class*="--warning-type"]):not([class*="--success-type"]):not([class*="--info-type"]):not([class*="--text-type"]):not([class*="--ghost"]):hover:not(.n-button--disabled) {
+  background: var(--tea-surface-3) !important;
+  border-color: var(--tea-primary) !important;
+  color: var(--tea-primary) !important;
+}
+[data-theme='dark'] .n-button--ghost {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+[data-theme='dark'] .n-button--ghost:hover:not(.n-button--disabled) {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme='dark'] .n-button--text-type {
+  background: transparent !important;
+}
+
+/* ==================== 7. 标签 / 分段 / 开关 / 分页 ==================== */
+
+.n-tag {
+  border-radius: var(--tea-radius-sm) !important;
+  font-size: var(--tea-font-size-xs) !important;
+}
+
+.n-tag--primary-type {
+  background: var(--tea-primary-supply) !important;
+  color: var(--tea-primary) !important;
+  border-color: var(--tea-primary-supply) !important;
+}
+
+.n-segmented {
+  border-radius: var(--tea-radius-md) !important;
+  background: var(--tea-hover-bg) !important;
+  padding: 2px !important;
+}
+
+.n-segmented-item--selected {
+  background: var(--tea-card-bg) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-radius: var(--tea-radius-sm) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+  color: var(--tea-primary) !important;
+  font-weight: 600;
+}
+
+.n-switch--active {
+  background: var(--tea-primary) !important;
+}
+
+.n-pagination-item {
+  border-radius: var(--tea-radius-sm) !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  transition: all var(--tea-transition-fast) !important;
+}
+
+.n-pagination-item--active {
+  border-color: var(--tea-primary) !important;
+  color: var(--tea-primary) !important;
+}
+
+/* ==================== 8. 表格（table） ==================== */
+
+.n-data-table .n-data-table-th {
+  background: var(--tea-hover-bg) !important;
+  font-weight: 600 !important;
+  color: var(--tea-text-secondary) !important;
+  border-bottom: 1px solid var(--tea-border) !important;
+}
+
+[data-theme='dark'] .n-data-table .n-data-table-th {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.n-data-table-td {
+  border-bottom: 1px solid var(--tea-border-light) !important;
+  transition: background var(--tea-transition-fast) !important;
+}
+
+.n-data-table-tr:hover .n-data-table-td {
+  background: var(--tea-hover-bg) !important;
+}
+
+.n-data-table .n-data-table-wrapper {
+  border-radius: var(--tea-radius-lg) !important;
+  overflow: hidden;
+}
+
+/* ==================== 9. 提示（tooltip）/ 气泡（popover） ==================== */
+
+.n-tooltip .n-tooltip__arrow,
+.n-popover__arrow {
+  display: none !important;
+}
+
+.n-tooltip-inner {
+  background: var(--tea-overlay-bg) !important;
+  backdrop-filter: blur(8px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+  border-radius: var(--tea-radius-sm) !important;
+  color: var(--tea-text-primary) !important;
+  font-size: 12px !important;
+  padding: 6px 10px !important;
+  box-shadow: var(--tea-shadow-md) !important;
+}
+
+.n-popover {
+  background: var(--tea-overlay-bg) !important;
+  backdrop-filter: var(--tea-overlay-blur) !important;
+  -webkit-backdrop-filter: var(--tea-overlay-blur) !important;
+  border: 1px solid var(--tea-card-border) !important;
+  border-radius: var(--tea-radius-lg) !important;
+  box-shadow: var(--tea-shadow-float) !important;
+}
+
+/* ==================== 10. 表单（form） ==================== */
+
+.n-form-item .n-form-item-feedback-wrapper {
+  min-height: 18px !important;
+  font-size: 12px !important;
+}
+
+.n-form-item .n-form-item-label {
+  font-size: var(--tea-font-size-base) !important;
+  color: var(--tea-text-secondary) !important;
+  padding-bottom: 4px !important;
+}
+
+/* ==================== 11. 通用滚动条 Naive 容器 ==================== */
+
+.n-scrollbar-container,
+.n-virtual-list {
+  scrollbar-width: thin;
+}
+
+/* ==================== 12. 选择器（select）下拉浮层 ==================== */
+
+.n-base-selection-menu,
+.n-select-menu {
+  background: var(--tea-overlay-bg) !important;
+  backdrop-filter: var(--tea-overlay-blur) !important;
+  -webkit-backdrop-filter: var(--tea-overlay-blur) !important;
+  border: 1px solid var(--tea-card-border) !important;
+  border-radius: var(--tea-radius-md) !important;
+  box-shadow: var(--tea-shadow-float) !important;
+}
+
+/* ==================== 13. 复选框 / 单选 / 开关 ==================== */
+
+.n-checkbox--checked .n-checkbox-box,
+.n-radio--checked .n-radio-button {
+  background: var(--tea-primary) !important;
+  border-color: var(--tea-primary) !important;
+}
+
+.n-checkbox-box:hover,
+.n-radio-button:hover {
+  border-color: var(--tea-primary-hover) !important;
+}
+
+/* ==================== 14. 日期选择器 ==================== */
+
+.n-date-panel,
+.n-popselect-menu {
+  background: var(--tea-overlay-bg) !important;
+  backdrop-filter: var(--tea-overlay-blur) !important;
+  -webkit-backdrop-filter: var(--tea-overlay-blur) !important;
+  border: 1px solid var(--tea-card-border) !important;
+  border-radius: var(--tea-radius-md) !important;
+  box-shadow: var(--tea-shadow-float) !important;
+}
+
+/* ==================== 14.5 紧凑化页面布局 ==================== */
+/* v0.5.2 减少页内空白和多余 padding，让数据更突出 */
+
+/* 页面头 - 紧凑化 */
+.page-header {
+  margin-bottom: 12px !important;
+  gap: 12px !important;
+}
+
+/* 筛选卡片 - 紧凑化 */
+.filter-card {
+  margin-bottom: 12px !important;
+}
+.filter-card .n-card__content {
+  padding: 10px 16px !important;
+}
+
+/* 表格上方间距 - 紧凑化 */
+.tea-page .n-card + .n-card {
+  margin-top: 12px;
+}
+
+/* 通用页面内容容器 - 紧凑化内边距 */
+.tea-page {
+  padding: 12px 16px !important;
+}
+.tea-page .n-card {
+  border-radius: var(--tea-radius-md) !important;
+}
+.tea-page .n-card-header {
+  padding: 10px 14px !important;
+}
+.tea-page .n-card__content {
+  padding: 14px !important;
+}
+.tea-page .page-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: var(--tea-content-1) !important;
+  margin: 0 !important;
+}
+.tea-page .n-data-table .n-data-table-th {
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+  font-weight: 600 !important;
+}
+.tea-page .n-data-table .n-data-table-td {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+}
+
+/* ==================== 15. 减少动效偏好 ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .n-modal-content::before,
+  .n-modal-content::after {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ==================== 16. v0.5.2 语义文字色工具类 ==================== */
+/* 替换各处的 Tailwind 颜色类（text-green-600 / text-red-600 / text-gray-500 等） */
+.text-primary {
+  color: var(--tea-primary) !important;
+}
+.text-success {
+  color: var(--tea-content-success) !important;
+  font-weight: 600;
+}
+.text-danger {
+  color: var(--tea-content-danger) !important;
+  font-weight: 600;
+}
+.text-warning {
+  color: var(--tea-content-warning) !important;
+  font-weight: 600;
+}
+.text-light {
+  color: var(--tea-content-3) !important;
+}
+.text-muted {
+  color: var(--tea-content-4) !important;
+}
+.text-disabled {
+  color: var(--tea-content-5) !important;
+}
+
+/* ==================== 17. v0.5.2 全局暗色模式适配 - 销售页等硬编码样式 ==================== */
+/* 由于销售页/部分业务页使用 <style scoped> 且硬编码颜色，
+   用更高优先级选择器 + !important 在深色模式下覆盖 */
+
+/* 销售页 - 页面骨架 */
+[data-theme='dark'] .sales-page {
+  background: var(--tea-surface-1) !important;
+}
+[data-theme='dark'] .sales-left {
+  border-right-color: var(--tea-line-1) !important;
+}
+[data-theme='dark'] .sales-right {
+  background: var(--tea-surface-1) !important;
+  border-left-color: var(--tea-line-1) !important;
+}
+
+/* 销售页 - 按钮 */
+[data-theme='dark'] .member-btn {
+  background: var(--tea-surface-active) !important;
+  color: var(--tea-primary) !important;
+  border-color: var(--tea-line-active) !important;
+}
+[data-theme='dark'] .member-btn:hover {
+  background: var(--tea-surface-hover) !important;
+}
+
+/* 销售页 - 分类标签 */
+[data-theme='dark'] .category-tab {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-content-2) !important;
+  border-color: var(--tea-line-1) !important;
+}
+[data-theme='dark'] .category-tab:hover {
+  color: var(--tea-primary) !important;
+}
+[data-theme='dark'] .category-tab--active {
+  background: var(--tea-primary) !important;
+  color: var(--tea-content-inverse) !important;
+  border-color: var(--tea-primary) !important;
+}
+
+/* 销售页 - 商品卡片 */
+[data-theme='dark'] .product-card {
+  background: var(--tea-surface-2) !important;
+  border-color: var(--tea-line-1) !important;
+}
+[data-theme='dark'] .product-card:hover {
+  border-color: var(--tea-primary) !important;
+}
+[data-theme='dark'] .product-card-name,
+[data-theme='dark'] .product-name {
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] .product-card-price,
+[data-theme='dark'] .product-price {
+  color: var(--tea-primary) !important;
+}
+[data-theme='dark'] .product-card-stock,
+[data-theme='dark'] .product-stock {
+  color: var(--tea-content-3) !important;
+}
+
+/* 销售页 - 购物车 */
+[data-theme='dark'] .cart-section,
+[data-theme='dark'] .cart-list,
+[data-theme='dark'] .cart-items,
+[data-theme='dark'] .cart-item {
+  background: var(--tea-surface-2) !important;
+  border-color: var(--tea-line-1) !important;
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] .cart-item:hover {
+  background: var(--tea-surface-3) !important;
+}
+[data-theme='dark'] .cart-empty,
+[data-theme='dark'] .empty-cart {
+  color: var(--tea-content-3) !important;
+}
+[data-theme='dark'] .cart-summary,
+[data-theme='dark'] .summary-section {
+  background: var(--tea-surface-3) !important;
+  border-color: var(--tea-line-1) !important;
+}
+[data-theme='dark'] .summary-label,
+[data-theme='dark'] .summary-row span:first-child {
+  color: var(--tea-content-2) !important;
+}
+[data-theme='dark'] .summary-value,
+[data-theme='dark'] .summary-amount {
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] .summary-total,
+[data-theme='dark'] .total-amount {
+  color: var(--tea-primary) !important;
+}
+
+/* 销售页 - 数量步进器 */
+[data-theme='dark'] .quantity-control,
+[data-theme='dark'] .qty-control,
+[data-theme='dark'] .qty-btn {
+  background: var(--tea-surface-3) !important;
+  border-color: var(--tea-line-1) !important;
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] .qty-btn:hover {
+  background: var(--tea-surface-hover) !important;
+  color: var(--tea-primary) !important;
+}
+[data-theme='dark'] .qty-input,
+[data-theme='dark'] .quantity-input {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* 销售页 - 按钮组 */
+[data-theme='dark'] .checkout-btn,
+[data-theme='dark'] .submit-btn,
+[data-theme='dark'] .action-btn {
+  background: var(--tea-primary) !important;
+  color: var(--tea-content-inverse) !important;
+  border-color: var(--tea-primary) !important;
+}
+[data-theme='dark'] .action-btn--secondary,
+[data-theme='dark'] .secondary-btn {
+  background: var(--tea-surface-3) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* 销售页 - 单位选择/挂单弹窗 */
+[data-theme='dark'] .unit-option,
+[data-theme='dark'] .pending-order-item {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+[data-theme='dark'] .unit-option:hover,
+[data-theme='dark'] .pending-order-item:hover {
+  background: var(--tea-surface-hover) !important;
+  border-color: var(--tea-primary) !important;
+}
+
+/* 通用表格 - 深色模式 */
+/* v0.5.4 修复：td 使用实色 surface-2 替代 transparent，避免横向滚动时 sticky 固定列穿透显示下层 */
+[data-theme='dark'] .n-data-table .n-data-table-td,
+[data-theme='dark'] .n-data-table .n-data-table-tr .n-data-table-td {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-td {
+  background: var(--tea-surface-hover) !important;
+}
+
+/* 通用 - 描述列表深色模式 */
+[data-theme='dark'] .n-descriptions .n-descriptions-table-content {
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] .n-descriptions-item-label {
+  color: var(--tea-content-2) !important;
+}
+[data-theme='dark'] .n-descriptions-item-value {
+  color: var(--tea-content-1) !important;
+}
+
+/* 通用 - 空状态 */
+[data-theme='dark'] .n-empty .n-empty__description {
+  color: var(--tea-content-3) !important;
+}
+
+/* 通用 - 标签（深色下稍亮） */
+[data-theme='dark'] .n-tag {
+  border-color: transparent !important;
+}
+
+/* 通用 - 卡片标题 */
+[data-theme='dark'] .n-card-header__main {
+  color: var(--tea-content-1) !important;
+}
+
+/* 通用 - 统计数字 */
+[data-theme='dark'] .n-statistic .n-statistic-value__value,
+[data-theme='dark'] .n-statistic .n-statistic-value__prefix,
+[data-theme='dark'] .n-statistic .n-statistic-value__suffix {
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] .n-statistic .n-statistic__label {
+  color: var(--tea-content-3) !important;
+}
+
+/* 通用 - 表单 */
+[data-theme='dark'] .n-form-item .n-form-item-label .n-form-item-label__text {
+  color: var(--tea-content-2) !important;
+}
+[data-theme='dark'] .n-input__placeholder,
+[data-theme='dark'] .n-base-selection-placeholder {
+  color: var(--tea-content-4) !important;
+}
+
+/* 通用 - tabs 标签 */
+[data-theme='dark'] .n-tabs .n-tabs-tab {
+  color: var(--tea-content-2) !important;
+}
+[data-theme='dark'] .n-tabs .n-tabs-tab--active {
+  color: var(--tea-primary) !important;
+}
+
+/* 通用 - n-data-table 内文本 */
+[data-theme='dark'] .n-data-table .n-data-table-td .n-button {
+  color: var(--tea-content-1) !important;
+}
+
+/* 浅色模式 - 文字色 token 覆盖（确保浅色下文字色正确） */
+.text-success {
+  color: var(--tea-content-success) !important;
+}
+.text-warning {
+  color: var(--tea-content-warning) !important;
+}
+.text-danger {
+  color: var(--tea-content-danger) !important;
+}
+
+/* ==================== v0.5.2 通用深色模式兜底 ==================== */
+/* 防止 scoped 样式硬编码 #FFFFFF 在深色模式下出现白底 */
+[data-theme='dark'] .n-card,
+[data-theme='dark'] .n-data-table,
+[data-theme='dark'] .n-descriptions,
+[data-theme='dark'] .n-form,
+[data-theme='dark'] .n-input,
+[data-theme='dark'] .n-base-selection,
+[data-theme='dark'] .n-tabs,
+[data-theme='dark'] .n-tab-pane,
+[data-theme='dark'] .n-collapse,
+[data-theme='dark'] .n-collapse-item,
+[data-theme='dark'] .n-collapse-item__header-main,
+[data-theme='dark'] .n-list,
+[data-theme='dark'] .n-list-item,
+[data-theme='dark'] .n-popconfirm {
+  background: transparent !important;
+}
+
+[data-theme='dark'] .n-card__content,
+[data-theme='dark'] .n-card-header {
+  background: transparent !important;
+}
+
+/* 深色模式 - 通用 input/select 文字色 */
+[data-theme='dark'] .n-input__input-el,
+[data-theme='dark'] .n-base-selection-input__content,
+[data-theme='dark'] .n-input__textarea-el,
+[data-theme='dark'] .n-input-number-suffix,
+[data-theme='dark'] .n-input-number-prefix {
+  color: var(--tea-content-1) !important;
+}
+
+/* 深色模式 - 描述列表 */
+[data-theme='dark'] .n-descriptions-table-content {
+  color: var(--tea-content-1) !important;
+  background: transparent !important;
+}
+
+[data-theme='dark'] .n-descriptions-item-label,
+[data-theme='dark'] .n-descriptions-item-value {
+  color: var(--tea-content-1) !important;
+  background: transparent !important;
+}
+
+/* 深色模式 - tabs 内容区 */
+[data-theme='dark'] .n-tab-pane {
+  color: var(--tea-content-1) !important;
+}
+
+/* 深色模式 - 表单标签 */
+[data-theme='dark'] .n-form-item-label,
+[data-theme='dark'] .n-form-item .n-form-item-label__text {
+  color: var(--tea-content-2) !important;
+}
+
+/* 深色模式 - 分页 */
+[data-theme='dark'] .n-pagination-item,
+[data-theme='dark'] .n-pagination-item:hover {
+  background: transparent !important;
+  color: var(--tea-content-2) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-pagination-item--active,
+[data-theme='dark'] .n-pagination-item--active:hover {
+  background: var(--tea-primary-supply) !important;
+  color: var(--tea-primary) !important;
+  border-color: var(--tea-primary) !important;
+}
+
+/* 深色模式 - alert */
+[data-theme='dark'] .n-alert {
+  background: var(--tea-surface-3) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* 深色模式 - 抽屉/弹窗/选择器 兜底 */
+[data-theme='dark'] .n-drawer,
+[data-theme='dark'] .n-modal,
+[data-theme='dark'] .n-base-selection-menu,
+[data-theme='dark'] .n-dropdown-menu {
+  color: var(--tea-content-1) !important;
+}
+
+/* 深色模式 - 表格内文本（覆盖硬编码色） */
+[data-theme='dark'] .n-data-table-td,
+[data-theme='dark'] .n-data-table-td *,
+[data-theme='dark'] .n-data-table-th {
+  color: var(--tea-content-1) !important;
+}
+
+[data-theme='dark'] .n-data-table-td [class*='text-'] {
+  color: inherit !important;
+}
+
+/* 浅色模式 - 表格内文本兜底 */
+.n-data-table-td {
+  color: var(--tea-content-1);
+}
+
+/* 通用 - 修复部分组件的硬编码边框 */
+[data-theme='dark'] .n-card,
+[data-theme='dark'] .n-input,
+[data-theme='dark'] .n-base-selection,
+[data-theme='dark'] .n-button {
+  border-color: var(--tea-line-1) !important;
+}
+
+/* ==================== v0.5.2 增强：深色模式全组件兜底 ==================== */
+/* 防止 scoped 样式硬编码的 #FFFFFF / rgba 背景在深色模式下造成白底 */
+
+/* 通用白底兜底：所有页面根容器 */
+[data-theme='dark'] .tea-page,
+[data-theme='dark'] .p-6,
+[data-theme='dark'] .p-4,
+[data-theme='dark'] .p-5,
+[data-theme='dark'] .p-2 {
+  background: transparent !important;
+}
+
+/* n-data-table 兜底 - 修复 td 内部文本被覆盖 */
+/* v0.5.4 修复：td/th 使用实色 surface-2，避免 sticky 固定列穿透 */
+[data-theme='dark'] .n-data-table .n-data-table-td,
+[data-theme='dark'] .n-data-table-td,
+[data-theme='dark'] .n-data-table .n-data-table-th,
+[data-theme='dark'] .n-data-table-th {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-content-1) !important;
+}
+
+/* n-data-table 斑马纹 - 暗色下用 surface-3 */
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-td,
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-td--last-row {
+  background: var(--tea-surface-3) !important;
+}
+
+/* n-card 内嵌内容兜底 */
+[data-theme='dark'] .n-card__content,
+[data-theme='dark'] .n-card__content *,
+[data-theme='dark'] .n-card-header,
+[data-theme='dark'] .n-card-header * {
+  color: var(--tea-content-1) !important;
+}
+
+/* n-alert 暗色模式 - 不同类型用对应暗色背景 */
+[data-theme='dark'] .n-alert--default-type,
+[data-theme='dark'] .n-alert {
+  background: var(--tea-surface-3) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-alert--info-type {
+  background: var(--tea-accent-info-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-accent-info) !important;
+}
+
+[data-theme='dark'] .n-alert--success-type {
+  background: var(--tea-accent-success-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-accent-success) !important;
+}
+
+[data-theme='dark'] .n-alert--warning-type {
+  background: var(--tea-accent-warning-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-accent-warning) !important;
+}
+
+[data-theme='dark'] .n-alert--error-type {
+  background: var(--tea-accent-danger-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-accent-danger) !important;
+}
+
+/* n-drawer 暗色模式 */
+/* v0.5.5 第四轮修复：移除独立的 .n-drawer-container 选择器，避免抽屉关闭后空容器残留背景色造成遮罩 */
+/* 根因：抽屉关闭时 Naive UI 卸载 .n-drawer 但 .n-drawer-container 可能延迟卸载，
+   此时 [data-theme='dark'] .n-drawer-container 仍会匹配空容器并赋予 #1F1812 全屏背景，造成视觉遮罩残留 */
+[data-theme='dark'] .n-drawer,
+[data-theme='dark'] .n-drawer .n-drawer-container,
+[data-theme='dark'] .n-drawer-content {
+  background: var(--tea-drawer-bg) !important;
+  color: var(--tea-content-1) !important;
+}
+
+/* v0.5.5 第四轮修复：安全网 - 空的 drawer/modal container 立即隐藏，防止残留 */
+.n-drawer-container:empty,
+.n-modal-container:empty {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+[data-theme='dark'] .n-drawer-header {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+  border-bottom-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-drawer-body {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+}
+
+/* n-modal 暗色模式 - 全覆盖 */
+[data-theme='dark'] .n-modal,
+[data-theme='dark'] .n-modal .n-card,
+[data-theme='dark'] .n-modal-content,
+[data-theme='dark'] .n-modal-body,
+[data-theme='dark'] .n-modal-header,
+[data-theme='dark'] .n-modal-footer {
+  background: var(--tea-modal-bg) !important;
+  color: var(--tea-content-1) !important;
+}
+
+[data-theme='dark'] .n-modal-header {
+  border-bottom-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-modal-footer {
+  border-top-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-modal__title,
+[data-theme='dark'] .n-card-header__main {
+  color: var(--tea-content-1) !important;
+}
+
+/* 弹窗内 n-alert */
+[data-theme='dark'] .n-modal .n-alert,
+[data-theme='dark'] .n-drawer .n-alert {
+  background: var(--tea-surface-3) !important;
+  color: var(--tea-content-1) !important;
+}
+
+/* 弹窗/抽屉内 n-form */
+[data-theme='dark'] .n-modal .n-form-item .n-form-item-label__text,
+[data-theme='dark'] .n-drawer .n-form-item .n-form-item-label__text {
+  color: var(--tea-content-2) !important;
+}
+
+/* 弹窗/抽屉内 n-input / n-select 文字色 */
+[data-theme='dark'] .n-modal .n-input__input-el,
+[data-theme='dark'] .n-modal .n-base-selection-input__content,
+[data-theme='dark'] .n-drawer .n-input__input-el,
+[data-theme='dark'] .n-drawer .n-base-selection-input__content,
+[data-theme='dark'] .n-modal .n-input__textarea-el,
+[data-theme='dark'] .n-drawer .n-input__textarea-el {
+  color: var(--tea-content-1) !important;
+}
+
+/* n-tabs 暗色模式 - 完整覆盖 */
+[data-theme='dark'] .n-tabs,
+[data-theme='dark'] .n-tabs .n-tabs-nav,
+[data-theme='dark'] .n-tabs .n-tabs-nav-scroll-wrapper,
+[data-theme='dark'] .n-tabs .n-tabs-tab {
+  background: transparent !important;
+}
+
+[data-theme='dark'] .n-tabs .n-tabs-tab {
+  color: var(--tea-content-2) !important;
+}
+
+[data-theme='dark'] .n-tabs .n-tabs-tab:hover {
+  color: var(--tea-primary) !important;
+}
+
+[data-theme='dark'] .n-tabs .n-tabs-tab--active {
+  color: var(--tea-primary) !important;
+}
+
+[data-theme='dark'] .n-tab-pane {
+  color: var(--tea-content-1) !important;
+  background: transparent !important;
+}
+
+/* n-collapse 暗色模式 */
+[data-theme='dark'] .n-collapse,
+[data-theme='dark'] .n-collapse-item {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-collapse-item__header {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+}
+
+[data-theme='dark'] .n-collapse-item__content {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+}
+
+/* n-descriptions 暗色模式 - 完整覆盖 */
+[data-theme='dark'] .n-descriptions,
+[data-theme='dark'] .n-descriptions-table,
+[data-theme='dark'] .n-descriptions-table-content,
+[data-theme='dark'] .n-descriptions-table-row {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-descriptions-item-label {
+  background: var(--tea-surface-3) !important;
+  color: var(--tea-content-2) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-descriptions-item-value {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* n-form 暗色模式 */
+[data-theme='dark'] .n-form,
+[data-theme='dark'] .n-form-item,
+[data-theme='dark'] .n-form-item-blank {
+  background: transparent !important;
+}
+
+[data-theme='dark'] .n-form-item .n-form-item-label__text {
+  color: var(--tea-content-2) !important;
+}
+
+/* n-divider 暗色模式 */
+[data-theme='dark'] .n-divider {
+  color: var(--tea-content-2) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* n-spin 暗色模式 */
+[data-theme='dark'] .n-spin,
+[data-theme='dark'] .n-spin-container {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+}
+
+/* n-empty 暗色模式 */
+[data-theme='dark'] .n-empty,
+[data-theme='dark'] .n-empty__description,
+[data-theme='dark'] .n-empty__icon {
+  color: var(--tea-content-3) !important;
+}
+
+/* n-radio / n-checkbox 暗色模式 */
+[data-theme='dark'] .n-radio,
+[data-theme='dark'] .n-radio__label,
+[data-theme='dark'] .n-checkbox,
+[data-theme='dark'] .n-checkbox__label {
+  color: var(--tea-content-1) !important;
+}
+
+[data-theme='dark'] .n-checkbox-box,
+[data-theme='dark'] .n-radio-button {
+  background: var(--tea-surface-2) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-checkbox--checked .n-checkbox-box,
+[data-theme='dark'] .n-radio--checked .n-radio-button {
+  background: var(--tea-primary) !important;
+  border-color: var(--tea-primary) !important;
+}
+
+/* n-switch 暗色模式 */
+[data-theme='dark'] .n-switch {
+  background: var(--tea-surface-3) !important;
+}
+
+[data-theme='dark'] .n-switch--active {
+  background: var(--tea-primary) !important;
+}
+
+/* n-pagination 暗色模式 - 增强 */
+[data-theme='dark'] .n-pagination,
+[data-theme='dark'] .n-pagination-item,
+[data-theme='dark'] .n-pagination-item:hover,
+[data-theme='dark'] .n-pagination .n-pagination-item-icon,
+[data-theme='dark'] .n-pagination .n-pagination-item--button {
+  background: transparent !important;
+  color: var(--tea-content-2) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-pagination-item--active,
+[data-theme='dark'] .n-pagination-item--active:hover {
+  background: var(--tea-primary-supply) !important;
+  color: var(--tea-primary) !important;
+  border-color: var(--tea-primary) !important;
+}
+
+[data-theme='dark'] .n-pagination-quick-jumper input {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* n-tag 暗色模式 - 完整覆盖 */
+[data-theme='dark'] .n-tag {
+  background: var(--tea-surface-3) !important;
+  color: var(--tea-content-2) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-tag--default-type,
+[data-theme='dark'] .n-tag--primary-type {
+  background: var(--tea-primary-supply) !important;
+  color: var(--tea-primary) !important;
+  border-color: transparent !important;
+}
+
+[data-theme='dark'] .n-tag--success-type {
+  background: var(--tea-accent-success-bg) !important;
+  color: var(--tea-accent-success) !important;
+  border-color: transparent !important;
+}
+
+[data-theme='dark'] .n-tag--warning-type {
+  background: var(--tea-accent-warning-bg) !important;
+  color: var(--tea-accent-warning) !important;
+  border-color: transparent !important;
+}
+
+[data-theme='dark'] .n-tag--error-type {
+  background: var(--tea-accent-danger-bg) !important;
+  color: var(--tea-accent-danger) !important;
+  border-color: transparent !important;
+}
+
+[data-theme='dark'] .n-tag--info-type {
+  background: var(--tea-accent-info-bg) !important;
+  color: var(--tea-accent-info) !important;
+  border-color: transparent !important;
+}
+
+/* n-button 暗色模式 - 增强 */
+[data-theme='dark'] .n-button:not(.n-button--primary-type):not(.n-button--error-type):not(.n-button--warning-type) {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-button:not(.n-button--primary-type):not(.n-button--error-type):not(.n-button--warning-type):hover {
+  background: var(--tea-hover-bg) !important;
+  color: var(--tea-primary) !important;
+  border-color: var(--tea-primary) !important;
+}
+
+/* v0.5.5 第四轮修复：排除 .tea-btn-text，避免覆盖 .tea-btn-text 的 var(--tea-primary) */
+[data-theme='dark'] .n-button--text-type:not(.tea-btn-text) {
+  background: transparent !important;
+  color: var(--tea-content-2) !important;
+}
+
+[data-theme='dark'] .n-button--text-type:not(.tea-btn-text):hover {
+  color: var(--tea-primary) !important;
+}
+
+/* n-statistic 暗色模式 */
+[data-theme='dark'] .n-statistic,
+[data-theme='dark'] .n-statistic__label,
+[data-theme='dark'] .n-statistic-value,
+[data-theme='dark'] .n-statistic-value__value,
+[data-theme='dark'] .n-statistic-value__prefix,
+[data-theme='dark'] .n-statistic-value__suffix {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+}
+
+[data-theme='dark'] .n-statistic__label {
+  color: var(--tea-content-3) !important;
+}
+
+/* n-input / n-select 暗色模式 - 完整覆盖 */
+[data-theme='dark'] .n-input,
+[data-theme='dark'] .n-input-wrapper,
+[data-theme='dark'] .n-input__input-el,
+[data-theme='dark'] .n-input__textarea-el,
+[data-theme='dark'] .n-base-selection,
+[data-theme='dark'] .n-base-selection-input__content {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-input--focus,
+[data-theme='dark'] .n-base-selection--focus {
+  border-color: var(--tea-primary) !important;
+  box-shadow: 0 0 0 2px var(--tea-primary-supply) !important;
+}
+
+[data-theme='dark'] .n-input__placeholder,
+[data-theme='dark'] .n-base-selection-placeholder {
+  color: var(--tea-content-4) !important;
+}
+
+[data-theme='dark'] .n-input__input-el::placeholder,
+[data-theme='dark'] .n-input__textarea-el::placeholder {
+  color: var(--tea-content-4) !important;
+}
+
+/* n-input-number 暗色模式 */
+[data-theme='dark'] .n-input-number,
+[data-theme='dark'] .n-input-number-suffix,
+[data-theme='dark'] .n-input-number-prefix {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-content-1) !important;
+}
+
+[data-theme='dark'] .n-input-number-suffix__icon,
+[data-theme='dark'] .n-input-number-prefix__icon {
+  color: var(--tea-content-3) !important;
+}
+
+[data-theme='dark'] .n-input-number-suffix__button,
+[data-theme='dark'] .n-input-number-prefix__button {
+  background: var(--tea-surface-3) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-input-number-suffix__button:hover,
+[data-theme='dark'] .n-input-number-prefix__button:hover {
+  background: var(--tea-surface-hover) !important;
+  color: var(--tea-primary) !important;
+}
+
+/* n-date-picker 暗色模式 */
+[data-theme='dark'] .n-date-picker,
+[data-theme='dark'] .n-date-picker-input input {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-date-panel,
+[data-theme='dark'] .n-date-panel-date,
+[data-theme='dark'] .n-popselect-menu {
+  background: var(--tea-overlay-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* n-select 下拉菜单 */
+[data-theme='dark'] .n-base-selection-menu,
+[data-theme='dark'] .n-select-menu,
+[data-theme='dark'] .n-base-selection-overlay {
+  background: var(--tea-overlay-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-base-selection-option,
+[data-theme='dark'] .n-select-option {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+}
+
+[data-theme='dark'] .n-base-selection-option:hover,
+[data-theme='dark'] .n-select-option:hover,
+[data-theme='dark'] .n-base-selection-option--pending,
+[data-theme='dark'] .n-base-selection-option--active {
+  background: var(--tea-surface-hover) !important;
+  color: var(--tea-primary) !important;
+}
+
+[data-theme='dark'] .n-base-selection-option--selected,
+[data-theme='dark'] .n-select-option--selected {
+  background: var(--tea-primary-supply) !important;
+  color: var(--tea-primary) !important;
+  font-weight: 600;
+}
+
+/* n-popover 暗色模式 */
+[data-theme='dark'] .n-popover,
+[data-theme='dark'] .n-popover__content {
+  background: var(--tea-overlay-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* n-tooltip 暗色模式 */
+[data-theme='dark'] .n-tooltip,
+[data-theme='dark'] .n-tooltip-inner {
+  background: var(--tea-overlay-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* n-dropdown 暗色模式 */
+[data-theme='dark'] .n-dropdown-menu,
+[data-theme='dark'] .n-dropdown-option {
+  background: var(--tea-overlay-bg) !important;
+  color: var(--tea-content-1) !important;
+}
+
+[data-theme='dark'] .n-dropdown-option:hover {
+  background: var(--tea-surface-hover) !important;
+  color: var(--tea-primary) !important;
+}
+
+/* n-message 暗色模式 */
+[data-theme='dark'] .n-message,
+[data-theme='dark'] .n-message__content,
+[data-theme='dark'] .n-message-notice-content {
+  background: var(--tea-overlay-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* n-notification 暗色模式 */
+[data-theme='dark'] .n-notification,
+[data-theme='dark'] .n-notification-main,
+[data-theme='dark'] .n-notification-main__header,
+[data-theme='dark'] .n-notification-main__content,
+[data-theme='dark'] .n-notification-main__footer {
+  background: var(--tea-overlay-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* n-list 暗色模式 */
+[data-theme='dark'] .n-list,
+[data-theme='dark'] .n-list-item,
+[data-theme='dark'] .n-list-item__main,
+[data-theme='dark'] .n-list-item__prefix,
+[data-theme='dark'] .n-list-item__suffix {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-list-item:hover {
+  background: var(--tea-hover-bg) !important;
+}
+
+/* n-card 内嵌统计数字（如 dashboard 统计卡） */
+[data-theme='dark'] .n-card__content .n-statistic,
+[data-theme='dark'] .n-card__content .n-statistic-value,
+[data-theme='dark'] .n-card__content .n-statistic__label {
+  color: var(--tea-content-1) !important;
+}
+
+[data-theme='dark'] .n-card__content .n-statistic__label {
+  color: var(--tea-content-3) !important;
+}
+
+/* n-popconfirm 暗色模式 */
+[data-theme='dark'] .n-popconfirm {
+  background: var(--tea-overlay-bg) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* n-segmented 暗色模式 */
+[data-theme='dark'] .n-segmented {
+  background: var(--tea-surface-3) !important;
+}
+
+[data-theme='dark'] .n-segmented-item {
+  background: transparent !important;
+  color: var(--tea-content-2) !important;
+}
+
+[data-theme='dark'] .n-segmented-item--selected {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-primary) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* n-layout / n-layout-content 暗色模式 */
+[data-theme='dark'] .n-layout,
+[data-theme='dark'] .n-layout-content,
+[data-theme='dark'] .n-layout-scroll-container {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+}
+
+/* 修复 NSpin 内 Spin 文字色 */
+[data-theme='dark'] .n-spin__description {
+  color: var(--tea-content-2) !important;
+}
+
+/* 修复 dropdown option body */
+[data-theme='dark'] .n-dropdown-option-body,
+[data-theme='dark'] .n-dropdown-option-body__prefix,
+[data-theme='dark'] .n-dropdown-option-body__suffix {
+  background: transparent !important;
+  color: var(--tea-content-1) !important;
+}
+
+/* 修复 n-button 内部 icon 文字色 */
+[data-theme='dark'] .n-button__content,
+[data-theme='dark'] .n-button__icon {
+  color: inherit !important;
+}
+
+/* 修复 NIcon 包裹的图标色 */
+[data-theme='dark'] .n-icon {
+  color: var(--tea-content-1);
+}
+
+[data-theme='dark'] .n-icon-slot,
+[data-theme='dark'] .n-icon__slot {
+  color: inherit;
+}
+
+/* 修复 n-radio-group */
+[data-theme='dark'] .n-radio-group {
+  background: transparent !important;
+}
+
+/* 修复 n-checkbox-group */
+[data-theme='dark'] .n-checkbox-group {
+  background: transparent !important;
+}
+
+/* 修复 n-data-table 滚动条 */
+[data-theme='dark'] .n-data-table .n-data-table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme='dark'] .n-data-table .n-data-table-wrapper::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+/* 修复 data-table 行 hover */
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-td {
+  background: var(--tea-surface-hover) !important;
+  color: var(--tea-primary) !important;
+}
+
+/* 修复 data-table 选中行 */
+[data-theme='dark'] .n-data-table .n-data-table-tr--selected .n-data-table-td {
+  background: var(--tea-primary-supply) !important;
+  color: var(--tea-content-1) !important;
+}
+
+/* 修复 data-table 展开行 */
+[data-theme='dark'] .n-data-table .n-data-table-tr.n-data-table-tr--expanded .n-data-table-td {
+  background: var(--tea-surface-3) !important;
+}
+
+/* 修复 n-tabs 标签页底部条 */
+[data-theme='dark'] .n-tabs .n-tabs-bar {
+  background: var(--tea-primary) !important;
+}
+
+/* 修复 n-tabs-nav 底部分割线 */
+[data-theme='dark'] .n-tabs .n-tabs-nav::after {
+  background-color: var(--tea-line-1) !important;
+}
+
+/* 修复 n-tabs 标签页激活线 */
+[data-theme='dark'] .n-tabs .n-tabs-tab::before {
+  background-color: var(--tea-primary) !important;
+}
+
+/* 修复 n-spin 占位 */
+[data-theme='dark'] .n-spin-content {
+  background: transparent !important;
+}
+
+/* 修复 n-button 内部文字不被覆盖 */
+[data-theme='dark'] .n-button__text {
+  color: inherit !important;
+}
+
+/* ==================== v0.5.2 紧凑化页面布局强化 ==================== */
+.tea-page .n-card {
+  margin-bottom: 12px;
+}
+
+.tea-page .n-card:last-child {
+  margin-bottom: 0;
+}
+
+.tea-page .n-data-table {
+  font-size: 13px !important;
+}
+
+.tea-page .n-data-table .n-data-table-th {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  background: var(--tea-surface-3) !important;
+  padding: 8px 12px !important;
+}
+
+.tea-page .n-data-table .n-data-table-td {
+  padding: 7px 12px !important;
+  font-size: 13px !important;
+}
+
+.tea-page .n-data-table .n-data-table-tr:hover .n-data-table-td {
+  background: var(--tea-surface-active) !important;
+}
+
+/* 紧凑化 - 弹窗内表格 */
+.n-modal .n-data-table .n-data-table-th,
+.n-modal .n-data-table .n-data-table-td {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+}
+
+/* 紧凑化 - form 间距 */
+.n-form-item {
+  margin-bottom: 12px !important;
+}
+
+.n-form-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* 紧凑化 - 描述列表 */
+.n-descriptions .n-descriptions-table-content {
+  padding: 8px 12px !important;
+}
+
+.n-descriptions-item-label {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+}
+
+.n-descriptions-item-value {
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 通用间距工具类 ==================== */
+/* 处理各页面中硬编码的 p-6 / p-4 / p-5 / mb-4 / mb-6 等类，
+   统一缩小内边距/外边距以提升数据密度 */
+
+/* 页面内边距紧凑化 */
+.p-6 {
+  padding: 12px 16px !important;
+}
+.p-5 {
+  padding: 10px 14px !important;
+}
+.p-4 {
+  padding: 8px 12px !important;
+}
+.p-3 {
+  padding: 6px 10px !important;
+}
+.p-2 {
+  padding: 4px 8px !important;
+}
+
+/* 页面外边距紧凑化 */
+.mb-6 {
+  margin-bottom: 12px !important;
+}
+.mb-4 {
+  margin-bottom: 10px !important;
+}
+.mb-3 {
+  margin-bottom: 8px !important;
+}
+.mb-2 {
+  margin-bottom: 6px !important;
+}
+.mt-6 {
+  margin-top: 12px !important;
+}
+.mt-4 {
+  margin-top: 10px !important;
+}
+.mt-3 {
+  margin-top: 8px !important;
+}
+.mt-2 {
+  margin-top: 6px !important;
+}
+
+/* 标题尺寸紧凑化 */
+.text-2xl {
+  font-size: 18px !important;
+  font-weight: 700;
+}
+.text-xl {
+  font-size: 16px !important;
+  font-weight: 700;
+  color: var(--tea-content-1) !important;
+}
+.text-lg {
+  font-size: 15px !important;
+  font-weight: 600;
+}
+.text-sm {
+  font-size: 12px !important;
+}
+.text-xs {
+  font-size: 11px !important;
+}
+
+/* py-* 纵向内边距 */
+.py-8 {
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+}
+.py-6 {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+.py-4 {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+/* 通用 flex 工具类 */
+.flex-between {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+.flex-center {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+.flex {
+  display: flex !important;
+}
+.gap-2 {
+  gap: 6px !important;
+}
+.gap-3 {
+  gap: 8px !important;
+}
+.gap-4 {
+  gap: 10px !important;
+}
+.gap-6 {
+  gap: 12px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 弹窗/抽屉 ==================== */
+.n-modal-body {
+  padding: 14px 18px !important;
+}
+
+.n-drawer-body {
+  padding: 14px 18px !important;
+}
+
+.n-modal .n-card-header,
+.n-drawer .n-drawer-header {
+  padding: 10px 18px !important;
+}
+
+.n-modal .n-card__content,
+.n-drawer .n-drawer-content {
+  padding: 14px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - n-form ==================== */
+.n-form-item {
+  margin-bottom: 10px !important;
+}
+
+.n-form-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+.n-form-item .n-form-item-feedback-wrapper {
+  min-height: 16px !important;
+  font-size: 12px !important;
+  padding-top: 2px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 按钮 ==================== */
+.n-button {
+  padding: 0 14px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-size: 13px !important;
+}
+
+.n-button--small-type {
+  height: 24px !important;
+  line-height: 24px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+}
+
+.n-button--large-type {
+  height: 36px !important;
+  line-height: 36px !important;
+  padding: 0 18px !important;
+  font-size: 14px !important;
+}
+
+.n-button + .n-button {
+  margin-left: 6px;
+}
+
+/* ==================== v0.5.2 紧凑化 - 输入框 / 选择器 ==================== */
+.n-input,
+.n-base-selection,
+.n-input-number {
+  min-height: 30px !important;
+  font-size: 13px !important;
+}
+
+.n-input .n-input__input-el,
+.n-base-selection .n-base-selection-input__content,
+.n-input-number .n-input-number-suffix,
+.n-input-number .n-input-number-prefix {
+  font-size: 13px !important;
+}
+
+.n-input--small,
+.n-base-selection--small,
+.n-input-number--small {
+  min-height: 24px !important;
+  font-size: 12px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 标签 ==================== */
+.n-tag {
+  font-size: 11px !important;
+  padding: 0 7px !important;
+  height: 20px !important;
+  line-height: 20px !important;
+}
+
+.n-tag--small {
+  height: 18px !important;
+  line-height: 18px !important;
+  padding: 0 6px !important;
+  font-size: 10px !important;
+}
+
+.n-tag--large {
+  height: 24px !important;
+  line-height: 24px !important;
+  padding: 0 9px !important;
+  font-size: 12px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 描述列表 ==================== */
+.n-descriptions {
+  font-size: 12px !important;
+}
+
+.n-descriptions .n-descriptions-table-content {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+}
+
+.n-descriptions-item-label {
+  padding: 5px 10px !important;
+  font-size: 11px !important;
+  min-width: 80px;
+}
+
+.n-descriptions-item-value {
+  padding: 5px 10px !important;
+  font-size: 13px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 弹窗/抽屉 header ==================== */
+.n-modal .n-card-header,
+.n-drawer .n-drawer-header {
+  padding: 10px 18px !important;
+  min-height: 40px !important;
+}
+
+.n-modal__title,
+.n-drawer-header__title {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 分页 ==================== */
+.n-pagination {
+  font-size: 12px !important;
+  padding: 6px 0 !important;
+}
+
+.n-pagination-item {
+  min-width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  font-size: 12px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 空状态 ==================== */
+.n-empty {
+  padding: 24px 0 !important;
+}
+
+.n-empty__icon {
+  font-size: 36px !important;
+}
+
+.n-empty__description {
+  font-size: 12px !important;
+  margin-top: 6px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - divider ==================== */
+.n-divider {
+  margin: 12px 0 !important;
+  font-size: 13px !important;
+  color: var(--tea-content-2) !important;
+}
+
+.n-divider:not(.n-divider--vertical) {
+  margin: 10px 0 !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 警告/通知 ==================== */
+.n-alert {
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  border-radius: var(--tea-radius-sm) !important;
+}
+
+.n-alert__icon {
+  font-size: 16px !important;
+  margin-right: 8px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 时间线 / 步骤 ==================== */
+.n-timeline-item {
+  padding-bottom: 12px !important;
+}
+
+.n-timeline-item-content {
+  font-size: 12px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 菜单 ==================== */
+.n-menu-item-content {
+  padding: 0 12px !important;
+  font-size: 13px !important;
+}
+
+.n-menu-item-content--selected,
+.n-menu-item-content:hover {
+  font-size: 13px !important;
+}
+
+/* ==================== v0.5.2 紧凑化 - 通用卡片 ==================== */
+.n-card {
+  border-radius: var(--tea-radius-md) !important;
+}
+
+.tea-card,
+.n-card {
+  font-size: 13px;
+}
+
+/* ==================== v0.5.2 对比度保护 - 防止文字背景同色 ==================== */
+
+/* placeholder 颜色 - 浅色模式 */
+.n-input__placeholder,
+.n-base-selection-placeholder,
+.n-input-number-placeholder {
+  color: var(--tea-content-4) !important;
+  opacity: 1 !important;
+}
+
+[data-theme='dark'] .n-input__placeholder,
+[data-theme='dark'] .n-base-selection-placeholder,
+[data-theme='dark'] .n-input-number-placeholder {
+  color: var(--tea-content-4) !important;
+  opacity: 1 !important;
+}
+
+/* disabled 状态 - 浅色模式（强制可见） */
+.n-button--disabled,
+.n-button--disabled-type,
+.n-button--disabled:hover {
+  color: var(--tea-content-5) !important;
+  opacity: 0.65 !important;
+}
+
+[data-theme='dark'] .n-button--disabled,
+[data-theme='dark'] .n-button--disabled-type,
+[data-theme='dark'] .n-button--disabled:hover {
+  color: var(--tea-content-4) !important;
+  opacity: 0.6 !important;
+}
+
+/* n-input disabled - 强制可见 */
+.n-input--disabled,
+.n-base-selection--disabled,
+.n-input-number--disabled {
+  color: var(--tea-content-5) !important;
+  background: var(--tea-surface-3) !important;
+  opacity: 1 !important;
+}
+
+[data-theme='dark'] .n-input--disabled,
+[data-theme='dark'] .n-base-selection--disabled,
+[data-theme='dark'] .n-input-number--disabled {
+  color: var(--tea-content-4) !important;
+  background: var(--tea-surface-3) !important;
+  opacity: 1 !important;
+}
+
+/* 主按钮激活态文字对比度（避免同色） */
+/* @fix 排除 ghost 和 tea-btn-text */
+.n-button--primary-type:active:not(.n-button--disabled):not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  color: var(--tea-content-inverse) !important;
+}
+
+/* n-tabs tab 文字 - 浅色模式强制对比度（防止激活态 primary 文字在某些背景下同色） */
+.n-tabs .n-tabs-tab {
+  color: var(--tea-content-2) !important;
+}
+
+.n-tabs .n-tabs-tab:hover {
+  color: var(--tea-primary-hover) !important;
+}
+
+.n-tabs .n-tabs-tab--active {
+  color: var(--tea-primary) !important;
+}
+
+/* n-tag 在浅色模式下文字 vs 背景对比度保护 */
+.n-tag--default-type,
+.n-tag:not(.n-tag--success-type):not(.n-tag--info-type):not(.n-tag--warning-type):not(.n-tag--error-type) {
+  color: var(--tea-content-1) !important;
+  background: var(--tea-surface-3) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+[data-theme='dark'] .n-tag--default-type,
+[data-theme='dark'] .n-tag:not(.n-tag--success-type):not(.n-tag--info-type):not(.n-tag--warning-type):not(.n-tag--error-type) {
+  color: var(--tea-content-1) !important;
+  background: var(--tea-surface-3) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* 主色文字 - 防止在主色背景上同色（hover/focus/active 状态） */
+/* v0.5.5 第四轮修复：排除 ghost/ghost-type/tea-btn-text，避免覆盖 ghost 和 text 按钮的对应色文字 */
+/* 根因：原规则强制白色，覆盖了 .tea-btn-text 的茶金色（同特异性后定义胜出）和 ghost 按钮的主色文字 */
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):focus,
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):focus-visible {
+  color: var(--tea-content-inverse) !important;
+}
+
+/* n-radio / n-checkbox 选中态 - 强制对比度 */
+.n-radio--checked .n-radio__label,
+.n-checkbox--checked .n-checkbox__label {
+  color: var(--tea-content-1) !important;
+  font-weight: 500;
+}
+
+/* 文字 vs 主色同色保护（任何文字 hover 时） */
+.n-menu-item-content:hover,
+.n-menu-item-content--selected {
+  color: var(--tea-primary) !important;
+}
+
+.n-menu-item-content--selected:hover {
+  color: var(--tea-primary-hover) !important;
+}
+
+/* ==================== v0.5.3 抽屉/弹窗遮罩 - 关闭后立即消失 ==================== */
+
+/* 抽屉/弹窗遮罩过渡 */
+.n-drawer-mask,
+.n-modal-mask {
+  transition: opacity 0.2s ease, background 0.2s ease, visibility 0s linear 0.2s !important;
+}
+
+/* v0.5.4 第三轮修复：移除"基于 --show 类强制隐藏"的规则
+ * 原规则基于错误的类名假设（n-modal--show / n-modal-container--show /
+ * n-modal-mask--show），实际 Naive UI 在显示过程中不会添加这些类，
+ * 导致 :not() 始终命中、强制 display:none，过渡无法完成，弹窗永远不可见。
+ * 关闭后的清理交给 Naive UI 内部的 transition 机制即可。
+ */
+
+/* 抽屉内滚动优化 */
+.n-drawer .n-drawer-body,
+.n-modal .n-modal-body {
+  overflow-y: auto !important;
+  scrollbar-gutter: stable;
+}
+
+/* ==================== v0.5.3 文字背景对比度终极保护 ==================== */
+/* 防止任何主色文字落在主色背景上造成同色不可见 */
+
+/* 1. 主色文字 - 在主色背景容器内必须用反色 */
+.n-tag--primary-type,
+.n-button--primary-type,
+.n-card.n-card--hoverable:hover,
+.demo-data-card {
+  /* 避免被强制覆盖导致文字同色 */
+}
+
+/* 2. 全局禁用任何元素文字与背景同色 */
+[data-theme='dark'] .text-primary {
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] .text-primary::before {
+  content: '';
+  display: inline-block;
+}
+
+/* 3. n-alert 文字对比度 - 浅色模式确保 */
+.n-alert {
+  color: var(--tea-content-1) !important;
+}
+.n-alert--info-type {
+  color: var(--tea-content-info, #3D7AB8) !important;
+}
+.n-alert--success-type {
+  color: var(--tea-content-success) !important;
+}
+.n-alert--warning-type {
+  color: var(--tea-content-warning) !important;
+}
+.n-alert--error-type {
+  color: var(--tea-content-danger) !important;
+}
+
+/* 4. n-tag 文字对比度 - 浅色模式 */
+.n-tag--default-type,
+.n-tag:not(.n-tag--success-type):not(.n-tag--info-type):not(.n-tag--warning-type):not(.n-tag--error-type):not(.n-tag--primary-type) {
+  color: var(--tea-content-1) !important;
+}
+
+.n-tag--primary-type {
+  color: var(--tea-primary) !important;
+}
+.n-tag--success-type {
+  color: var(--tea-content-success) !important;
+}
+.n-tag--info-type {
+  color: var(--tea-content-info, #3D7AB8) !important;
+}
+.n-tag--warning-type {
+  color: var(--tea-content-warning) !important;
+}
+.n-tag--error-type {
+  color: var(--tea-content-danger) !important;
+}
+
+/* 5. n-button 文字对比度 - 浅色模式（非主色按钮文字用 content-1） */
+/* @fix 排除 ghost 和 tea-btn-text，避免覆盖 ghost 按钮的对应色文字 */
+.n-button:not(.n-button--primary-type):not(.n-button--error-type):not(.n-button--warning-type):not(.n-button--info-type):not(.n-button--success-type):not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  color: var(--tea-content-1) !important;
+}
+
+/* regular primary 按钮文字白色 */
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  color: var(--tea-content-inverse) !important;
+}
+.n-button--info-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  color: var(--tea-content-inverse) !important;
+}
+.n-button--success-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  color: var(--tea-content-inverse) !important;
+}
+.n-button--warning-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  color: var(--tea-content-inverse) !important;
+}
+.n-button--error-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  color: var(--tea-content-inverse) !important;
+}
+
+/* v0.5.5 第四轮修复：排除 .tea-btn-text，避免覆盖 .tea-btn-text 的 var(--tea-primary) */
+/* 根因：原规则 color: var(--tea-content-2) 同特异性覆盖了 .tea-btn-text 的 var(--tea-primary)，
+   导致"查看"按钮文字色变成深棕而非茶金 */
+.n-button--text-type:not(.tea-btn-text):not(.n-button--error-type) {
+  color: var(--tea-content-2) !important;
+}
+
+/* 6. 描述列表 - label/value 文字对比度 */
+.n-descriptions-item-label {
+  color: var(--tea-content-2) !important;
+}
+.n-descriptions-item-value {
+  color: var(--tea-content-1) !important;
+}
+
+/* 7. 表格内文字对比度 */
+.n-data-table-td,
+.n-data-table-th {
+  color: var(--tea-content-1) !important;
+}
+
+/* 8. 表单 label 文字对比度 */
+.n-form-item .n-form-item-label__text {
+  color: var(--tea-content-2) !important;
+}
+
+/* 9. input/select 占位符 */
+.n-input__placeholder,
+.n-base-selection-placeholder {
+  color: var(--tea-content-4) !important;
+  opacity: 1 !important;
+}
+
+/* 10. 数字统计 */
+.n-statistic__label {
+  color: var(--tea-content-3) !important;
+}
+.n-statistic-value__value {
+  color: var(--tea-content-1) !important;
+}
+
+/* 11. dropdown option */
+.n-dropdown-option {
+  color: var(--tea-content-1) !important;
+}
+
+/* 12. popselect / select menu option */
+.n-base-selection-option,
+.n-select-option {
+  color: var(--tea-content-1) !important;
+}
+
+/* 13. tabs 标签 */
+.n-tabs .n-tabs-tab {
+  color: var(--tea-content-2) !important;
+}
+.n-tabs .n-tabs-tab--active {
+  color: var(--tea-primary) !important;
+}
+
+/* 14. pagination 文字 */
+.n-pagination-item {
+  color: var(--tea-content-2) !important;
+}
+.n-pagination-item--active {
+  color: var(--tea-primary) !important;
+}
+
+/* 15. menu item 文字 */
+.n-menu-item-content {
+  color: var(--tea-content-2) !important;
+}
+.n-menu-item-content--selected {
+  color: var(--tea-primary) !important;
+}
+
+/* 16. segmented item 文字 */
+.n-segmented-item {
+  color: var(--tea-content-2) !important;
+}
+.n-segmented-item--selected {
+  color: var(--tea-primary) !important;
+}
+
+/* 17. switch 文字 */
+.n-switch {
+  color: var(--tea-content-1) !important;
+}
+
+/* 18. checkbox/radio label 文字 */
+.n-checkbox__label,
+.n-radio__label {
+  color: var(--tea-content-1) !important;
+}
+
+/* 19. modal/drawer 标题 */
+.n-modal__title,
+.n-drawer-header__title {
+  color: var(--tea-content-1) !important;
+}
+
+/* 20. empty 描述 */
+.n-empty__description {
+  color: var(--tea-content-3) !important;
+}
+
+/* 21. timeline / steps */
+.n-timeline-item-content {
+  color: var(--tea-content-1) !important;
+}
+
+/* 22. collapse header */
+.n-collapse-item__header-main {
+  color: var(--tea-content-1) !important;
+}
+
+/* 23. divider 文字 */
+.n-divider {
+  color: var(--tea-content-2) !important;
+}
+
+/* 24. spin 描述 */
+.n-spin__description {
+  color: var(--tea-content-2) !important;
+}
+
+/* 25. popconfirm 内容 */
+.n-popconfirm__body {
+  color: var(--tea-content-1) !important;
+}
+
+/* 26. list item 文字 */
+.n-list-item__main {
+  color: var(--tea-content-1) !important;
+}
+
+/* 27. card header 标题 */
+.n-card-header__main {
+  color: var(--tea-content-1) !important;
+}
+
+/* 28. message 文字 */
+.n-message__content {
+  color: var(--tea-content-1) !important;
+}
+
+/* 29. notification 文字 */
+.n-notification-main__content {
+  color: var(--tea-content-1) !important;
+}
+
+/* 30. tooltip 文字 */
+.n-tooltip-inner {
+  color: var(--tea-content-1) !important;
+}
+
+/* ==================== v0.5.3 文字/背景同色终极保护（用户强调 3 次）==================== */
+
+/* 浅色模式 - n-tag 各类型文字加深（避免柔色字 + 浅色底同色） */
+.n-tag--success-type,
+.n-tag--warning-type,
+.n-tag--error-type,
+.n-tag--info-type {
+  color: var(--tea-content-1) !important;
+  font-weight: 600 !important;
+}
+.n-tag--success-type {
+  background: rgba(91, 140, 90, 0.18) !important;
+  color: var(--tea-content-success) !important;
+}
+.n-tag--info-type {
+  background: rgba(61, 122, 184, 0.18) !important;
+  color: var(--tea-content-info, #3D7AB8) !important;
+}
+.n-tag--warning-type {
+  background: rgba(201, 122, 43, 0.18) !important;
+  color: var(--tea-content-warning) !important;
+}
+.n-tag--error-type {
+  background: rgba(194, 90, 96, 0.18) !important;
+  color: var(--tea-content-danger) !important;
+}
+
+/* 主色按钮在深色模式下 - 文字用亮色（深色下 inverse 是深棕色，与 primary 茶金同色） */
+/* v0.5.5 第四轮修复：排除 ghost 和 tea-btn-text，避免深色模式下 ghost/text 按钮文字变白色不可见 */
+/* 根因：原规则未排除 ghost 和 tea-btn-text，导致"编辑"(ghost primary) 和"查看"(text primary) 按钮
+   在深色模式下文字色被强制设置为白色，与透明背景混合后不可见 */
+[data-theme='dark'] .n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+[data-theme='dark'] .n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+[data-theme='dark'] .n-tag--primary-type,
+[data-theme='dark'] .n-tag--primary-type * {
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 主色背景 - 任何位置文字都强制用反色 */
+[style*='background-color: var(--tea-primary)'] *,
+[style*='background: var(--tea-primary)'] *,
+.tea-primary-bg,
+.tea-primary-bg * {
+  color: var(--tea-content-inverse) !important;
+}
+[data-theme='dark'] [style*='background-color: var(--tea-primary)'] *,
+[data-theme='dark'] [style*='background: var(--tea-primary)'] * {
+  color: #FFFFFF !important;
+}
+
+/* n-alert 各类型文字色 - 浅色模式加深，对比度更强 */
+.n-alert--info-type {
+  color: var(--tea-content-info, #2A5F8F) !important;
+  font-weight: 500;
+}
+.n-alert--success-type {
+  color: #4A7549 !important;
+  font-weight: 500;
+}
+.n-alert--warning-type {
+  color: #A86820 !important;
+  font-weight: 500;
+}
+.n-alert--error-type {
+  color: #A84A50 !important;
+  font-weight: 500;
+}
+
+/* n-alert 深色模式文字色 - 用更亮的文字 */
+[data-theme='dark'] .n-alert--info-type {
+  color: #9CC5E8 !important;
+}
+[data-theme='dark'] .n-alert--success-type {
+  color: #A8D2A6 !important;
+}
+[data-theme='dark'] .n-alert--warning-type {
+  color: #F0C896 !important;
+}
+[data-theme='dark'] .n-alert--error-type {
+  color: #F0AAB0 !important;
+}
+
+/* n-data-table 选中行 - 文字色保护（避免 hover 文字变主色与浅色背景同色） */
+.n-data-table .n-data-table-tr:hover .n-data-table-td,
+.n-data-table .n-data-table-tr--selected .n-data-table-td {
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-td,
+[data-theme='dark'] .n-data-table .n-data-table-tr--selected .n-data-table-td {
+  color: var(--tea-content-1) !important;
+  background: var(--tea-surface-hover) !important;
+}
+
+/* n-pagination 激活态 - 文字色（深色模式确保可见） */
+.n-pagination-item--active {
+  color: var(--tea-primary) !important;
+  font-weight: 600;
+}
+[data-theme='dark'] .n-pagination-item--active {
+  color: #E0A55C !important;
+}
+
+/* n-tabs 激活态 - 文字色（避免在主色背景上同色） */
+.n-tabs .n-tabs-tab--active {
+  color: var(--tea-primary) !important;
+  font-weight: 600;
+}
+[data-theme='dark'] .n-tabs .n-tabs-tab--active {
+  color: #E0A55C !important;
+}
+
+/* n-menu 选中态文字 */
+[data-theme='dark'] .n-menu-item-content--selected {
+  color: #E0A55C !important;
+}
+
+/* dashboard 演示数据卡片 - 内部 alert 文字色保护（沿用 type=info 样式）*/
+.demo-data-card .n-alert,
+.demo-data-card .n-alert * {
+  color: var(--tea-content-info, #2A5F8F) !important;
+}
+[data-theme='dark'] .demo-data-card .n-alert,
+[data-theme='dark'] .demo-data-card .n-alert * {
+  color: #9CC5E8 !important;
+}
+
+/* dashboard 今日概览 trend 标签对比度 */
+.today-stat-trend-up {
+  color: #4A7549 !important;
+  background: rgba(91, 140, 90, 0.18) !important;
+  font-weight: 600;
+}
+.today-stat-trend-down {
+  color: #A86820 !important;
+  background: rgba(201, 122, 43, 0.18) !important;
+  font-weight: 600;
+}
+[data-theme='dark'] .today-stat-trend-up {
+  color: #A8D2A6 !important;
+  background: rgba(91, 140, 90, 0.25) !important;
+}
+[data-theme='dark'] .today-stat-trend-down {
+  color: #F0C896 !important;
+  background: rgba(201, 122, 43, 0.25) !important;
+}
+
+/* dashboard 演示数据 n-tag "仅开发使用" - 文字保护 */
+.demo-data-card .n-tag--warning-type {
+  background: rgba(201, 122, 43, 0.2) !important;
+  color: #A86820 !important;
+  font-weight: 600;
+}
+[data-theme='dark'] .demo-data-card .n-tag--warning-type {
+  color: #F0C896 !important;
+  background: rgba(201, 122, 43, 0.25) !important;
+}
+
+/* 全局 - 防止 [style*='color: ...'] 写死色导致同色 */
+[data-theme='dark'] [style*='color: #5B4636'],
+[data-theme='dark'] [style*='color: #6B5B4B'] {
+  color: var(--tea-content-1) !important;
+}
+[data-theme='dark'] [style*='color: #8B7B6B'],
+[data-theme='dark'] [style*='color: #A89B8C'] {
+  color: var(--tea-content-3) !important;
+}
+[data-theme='dark'] [style*='color: #C4B8A8'] {
+  color: var(--tea-content-4) !important;
+}
+
+/* n-button 文字色 - 主色按钮在深色下禁止用 inverse（深棕色） */
+/* @fix 排除 ghost 和 tea-btn-text */
+[data-theme='dark'] .n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+[data-theme='dark'] .n-button--info-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+[data-theme='dark'] .n-button--success-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+[data-theme='dark'] .n-button--warning-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+[data-theme='dark'] .n-button--error-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) {
+  color: #FFFFFF !important;
+}
+[data-theme='dark'] .n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+[data-theme='dark'] .n-button--info-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+[data-theme='dark'] .n-button--success-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+[data-theme='dark'] .n-button--warning-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+[data-theme='dark'] .n-button--error-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) * {
+  color: #FFFFFF !important;
+}
+
+/* n-button 文字色 - 浅色下用 inverse 文字（背景是主色茶金） */
+/* @fix 排除 ghost 和 tea-btn-text */
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+.n-button--info-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+.n-button--info-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+.n-button--success-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+.n-button--success-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+.n-button--warning-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+.n-button--warning-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) *,
+.n-button--error-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+.n-button--error-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text) * {
+  color: var(--tea-content-inverse) !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
+/* 兜底 - n-segmented 激活项在主色背景上的文字 */
+.n-segmented-item--selected {
+  color: var(--tea-primary) !important;
+  font-weight: 600;
+}
+[data-theme='dark'] .n-segmented-item--selected {
+  color: #E0A55C !important;
+}
+
+/* 兜底 - n-radio/n-checkbox 选中态 label 文字 */
+.n-radio--checked .n-radio__label,
+.n-checkbox--checked .n-checkbox__label {
+  color: var(--tea-content-1) !important;
+  font-weight: 600;
+}
+
+/* 兜底 - n-card 内部统计数字（dashboard 演示数据卡） */
+.n-card__content .n-statistic-value__value,
+.n-card__content .n-statistic-value__prefix,
+.n-card__content .n-statistic-value__suffix {
+  color: var(--tea-content-1) !important;
+}
+.n-card__content .n-statistic__label {
+  color: var(--tea-content-3) !important;
+}
+
+/* 兜底 - n-data-table 行 hover 状态 - 文字不与背景同色 */
+.n-data-table .n-data-table-tr:hover .n-data-table-td .text-primary {
+  color: var(--tea-primary) !important;
+  font-weight: 600;
+}
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-td .text-primary {
+  color: #E0A55C !important;
+}
+
+/* 兜底 - n-tag 内 n-icon 颜色 */
+.n-tag .n-icon {
+  color: inherit;
+}
+
+/* ==================== v0.5.3 终极同色保护（强调 3 次）==================== */
+/* 核心原则：任何元素的文字色必须与其父容器背景形成 WCAG AA 对比度 (≥4.5:1) */
+/* 注意：浅色模式 = 没有 data-theme 属性(默认 :root)，深色模式 = data-theme='dark' */
+
+/* 1. dashboard 快捷操作 + 今日概览 - 文字 vs 卡片背景同色保护 */
+:root .quick-action-card,
+:root .today-stat-card {
+  background: #F7F4F0 !important;
+}
+:root .quick-action-label,
+:root .today-stat-value {
+  color: #3D2F22 !important;  /* 深棕 - 与米色背景对比度 8.5:1 */
+  font-weight: 600 !important;
+}
+:root .today-stat-label {
+  color: #7A6A58 !important;  /* 中棕 - 与米色背景对比度 4.7:1 */
+}
+:root .quick-actions-title,
+:root .today-stats-title {
+  color: #2A1F14 !important;
+}
+:root .quick-actions-tip,
+:root .today-stats-tip {
+  color: #7A6A58 !important;
+}
+
+[data-theme='dark'] .quick-action-card,
+[data-theme='dark'] .today-stat-card {
+  background: #251D16 !important;  /* 深棕 */
+}
+[data-theme='dark'] .quick-action-label,
+[data-theme='dark'] .today-stat-value {
+  color: #F0E5D2 !important;  /* 米白 - 与深棕背景对比度 11:1 */
+  font-weight: 600 !important;
+}
+[data-theme='dark'] .today-stat-label {
+  color: rgba(232, 217, 197, 0.75) !important;
+}
+[data-theme='dark'] .quick-actions-title,
+[data-theme='dark'] .today-stats-title {
+  color: #F0E5D2 !important;
+}
+[data-theme='dark'] .quick-actions-tip,
+[data-theme='dark'] .today-stats-tip {
+  color: rgba(232, 217, 197, 0.75) !important;
+}
+
+/* 2. 演示数据管理 - 文字/卡片背景同色保护 */
+:root .demo-data-card {
+  background: #FFFFFF !important;
+  border-color: #E8E0D6 !important;
+}
+:root .demo-data-title {
+  color: #2A1F14 !important;
+}
+[data-theme='dark'] .demo-data-card {
+  background: #1F1812 !important;
+  border-color: var(--tea-line-1) !important;
+}
+[data-theme='dark'] .demo-data-title {
+  color: #F0E5D2 !important;
+}
+
+/* 3. 全局兜底 - 任何 .text-primary 落在主色背景上时切换到反色 */
+:root .text-primary {
+  color: #C4956A !important;
+}
+[data-theme='dark'] .text-primary {
+  color: #E0A55C !important;
+}
+
+/* 4. n-button 主色按钮文字兜底 */
+/* @fix 排除 ghost 和 tea-btn-text */
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):focus,
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):active,
+.n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):focus-visible {
+  color: #FFFFFF !important;
+}
+[data-theme='dark'] .n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text),
+[data-theme='dark'] .n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):focus,
+[data-theme='dark'] .n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):active,
+[data-theme='dark'] .n-button--primary-type:not(.n-button--ghost):not(.n-button--ghost-type):not(.tea-btn-text):focus-visible {
+  color: #FFFFFF !important;
+}
+
+/* 5. n-alert - 全类型文字 vs 背景对比度保护 */
+:root .n-alert {
+  color: #2A1F14 !important;
+  font-weight: 500;
+}
+:root .n-alert--info-type {
+  background: #E6F1FA !important;
+  color: #1A4D80 !important;
+  border-color: #B3D4ED !important;
+}
+:root .n-alert--success-type {
+  background: #E8F0E8 !important;
+  color: #2D5C2C !important;
+  border-color: #B5D4B4 !important;
+}
+:root .n-alert--warning-type {
+  background: #FDF2E0 !important;
+  color: #8A4A0F !important;
+  border-color: #F0D0A0 !important;
+}
+:root .n-alert--error-type {
+  background: #FCE8EA !important;
+  color: #8A2A30 !important;
+  border-color: #F0B5B8 !important;
+}
+
+[data-theme='dark'] .n-alert {
+  color: #F0E5D2 !important;
+}
+[data-theme='dark'] .n-alert--info-type {
+  background: rgba(61, 122, 184, 0.18) !important;
+  color: #9CC5E8 !important;
+  border-color: rgba(61, 122, 184, 0.35) !important;
+}
+[data-theme='dark'] .n-alert--success-type {
+  background: rgba(91, 140, 90, 0.18) !important;
+  color: #A8D2A6 !important;
+  border-color: rgba(91, 140, 90, 0.35) !important;
+}
+[data-theme='dark'] .n-alert--warning-type {
+  background: rgba(201, 122, 43, 0.18) !important;
+  color: #F0C896 !important;
+  border-color: rgba(201, 122, 43, 0.35) !important;
+}
+[data-theme='dark'] .n-alert--error-type {
+  background: rgba(194, 90, 96, 0.18) !important;
+  color: #F0AAB0 !important;
+  border-color: rgba(194, 90, 96, 0.35) !important;
+}
+
+/* 6. n-tag - 全类型文字 vs 背景对比度保护 */
+:root .n-tag--primary-type {
+  background: rgba(196, 149, 106, 0.18) !important;
+  color: #8A5A30 !important;
+  border-color: transparent !important;
+}
+:root .n-tag--success-type {
+  background: rgba(91, 140, 90, 0.18) !important;
+  color: #2D5C2C !important;
+  border-color: transparent !important;
+}
+:root .n-tag--info-type {
+  background: rgba(61, 122, 184, 0.18) !important;
+  color: #1A4D80 !important;
+  border-color: transparent !important;
+}
+:root .n-tag--warning-type {
+  background: rgba(201, 122, 43, 0.18) !important;
+  color: #8A4A0F !important;
+  border-color: transparent !important;
+}
+:root .n-tag--error-type {
+  background: rgba(194, 90, 96, 0.18) !important;
+  color: #8A2A30 !important;
+  border-color: transparent !important;
+}
+
+[data-theme='dark'] .n-tag--primary-type {
+  background: rgba(196, 149, 106, 0.25) !important;
+  color: #E0A55C !important;
+  border-color: transparent !important;
+}
+[data-theme='dark'] .n-tag--success-type {
+  background: rgba(91, 140, 90, 0.25) !important;
+  color: #A8D2A6 !important;
+  border-color: transparent !important;
+}
+[data-theme='dark'] .n-tag--info-type {
+  background: rgba(61, 122, 184, 0.25) !important;
+  color: #9CC5E8 !important;
+  border-color: transparent !important;
+}
+[data-theme='dark'] .n-tag--warning-type {
+  background: rgba(201, 122, 43, 0.25) !important;
+  color: #F0C896 !important;
+  border-color: transparent !important;
+}
+[data-theme='dark'] .n-tag--error-type {
+  background: rgba(194, 90, 96, 0.25) !important;
+  color: #F0AAB0 !important;
+  border-color: transparent !important;
+}
+
+/* 7. n-tabs 激活态文字 */
+:root .n-tabs .n-tabs-tab--active {
+  color: #C4956A !important;
+  font-weight: 600 !important;
+}
+[data-theme='dark'] .n-tabs .n-tabs-tab--active {
+  color: #E0A55C !important;
+  font-weight: 600 !important;
+}
+
+/* 8. n-menu 选中态 */
+:root .n-menu-item-content--selected,
+:root .n-menu-item-content--selected:hover {
+  color: #C4956A !important;
+  font-weight: 600 !important;
+}
+[data-theme='dark'] .n-menu-item-content--selected,
+[data-theme='dark'] .n-menu-item-content--selected:hover {
+  color: #E0A55C !important;
+  font-weight: 600 !important;
+}
+
+/* 9. dashboard hero 区域 - 文字必须白（背景是主色渐变） */
+.dashboard-hero *,
+.dashboard-hero .dashboard-hero-greeting,
+.dashboard-hero .dashboard-hero-subtitle,
+.dashboard-hero .dashboard-hero-meta-item,
+.dashboard-hero .dashboard-hero-btn {
+  color: #FFFFFF !important;
+}
+[data-theme='dark'] .dashboard-hero *,
+[data-theme='dark'] .dashboard-hero .dashboard-hero-greeting,
+[data-theme='dark'] .dashboard-hero .dashboard-hero-subtitle,
+[data-theme='dark'] .dashboard-hero .dashboard-hero-meta-item,
+[data-theme='dark'] .dashboard-hero .dashboard-hero-btn {
+  color: #FFFFFF !important;
+}
+
+/* 10. 抽屉/弹窗内的统计数字 */
+.n-drawer .n-statistic-value__value,
+.n-drawer .n-statistic__label,
+.n-modal .n-statistic-value__value,
+.n-modal .n-statistic__label {
+  color: #2A1F14 !important;
+}
+[data-theme='dark'] .n-drawer .n-statistic-value__value,
+[data-theme='dark'] .n-drawer .n-statistic__label,
+[data-theme='dark'] .n-modal .n-statistic-value__value,
+[data-theme='dark'] .n-modal .n-statistic__label {
+  color: #F0E5D2 !important;
+}
+
+/* 11. n-card 背景与文字 */
+:root .n-card,
+:root .n-card__content {
+  background: #FFFFFF !important;
+  color: #2A1F14 !important;
+}
+:root .n-card-header__main {
+  color: #2A1F14 !important;
+}
+[data-theme='dark'] .n-card,
+[data-theme='dark'] .n-card__content {
+  background: #1F1812 !important;
+  color: #F0E5D2 !important;
+}
+[data-theme='dark'] .n-card-header__main {
+  color: #F0E5D2 !important;
+}
+
+/* 12. n-descriptions 文字色 */
+:root .n-descriptions-item-label {
+  background: #FAF6F1 !important;
+  color: #5B4636 !important;
+}
+:root .n-descriptions-item-value {
+  background: #FFFFFF !important;
+  color: #2A1F14 !important;
+}
+[data-theme='dark'] .n-descriptions-item-label {
+  background: #1A140E !important;
+  color: rgba(232, 217, 197, 0.75) !important;
+}
+[data-theme='dark'] .n-descriptions-item-value {
+  background: #1F1812 !important;
+  color: #F0E5D2 !important;
+}
+
+/* 13. n-form-item label */
+:root .n-form-item .n-form-item-label__text {
+  color: #5B4636 !important;
+  font-weight: 500;
+}
+[data-theme='dark'] .n-form-item .n-form-item-label__text {
+  color: rgba(232, 217, 197, 0.85) !important;
+  font-weight: 500;
+}
+
+/* 14. n-input / n-select 文字色 */
+:root .n-input__input-el,
+:root .n-base-selection-input__content {
+  color: #2A1F14 !important;
+}
+:root .n-input__placeholder,
+:root .n-base-selection-placeholder {
+  color: #A89B8C !important;
+  opacity: 1 !important;
+}
+[data-theme='dark'] .n-input__input-el,
+[data-theme='dark'] .n-base-selection-input__content {
+  color: #F0E5D2 !important;
+}
+[data-theme='dark'] .n-input__placeholder,
+[data-theme='dark'] .n-base-selection-placeholder {
+  color: rgba(232, 217, 197, 0.45) !important;
+  opacity: 1 !important;
+}
+
+/* 15. n-data-table 表头/单元格 */
+:root .n-data-table .n-data-table-th {
+  background: #FAF6F1 !important;
+  color: #5B4636 !important;
+  border-bottom-color: #E8E0D6 !important;
+}
+:root .n-data-table .n-data-table-td {
+  color: #2A1F14 !important;
+  border-bottom-color: #F0E8DC !important;
+}
+:root .n-data-table .n-data-table-tr:hover .n-data-table-td {
+  background: #FBF2E8 !important;
+  color: #2A1F14 !important;
+}
+[data-theme='dark'] .n-data-table .n-data-table-th {
+  /* v0.5.4 修复：表头使用实色 surface-3 替代半透明 rgba，避免横向滚动时 sticky 固定列表头穿透 */
+  background: var(--tea-surface-3) !important;
+  color: rgba(232, 217, 197, 0.85) !important;
+  border-bottom-color: var(--tea-line-1) !important;
+}
+[data-theme='dark'] .n-data-table .n-data-table-td {
+  color: #F0E5D2 !important;
+  border-bottom-color: var(--tea-line-2) !important;
+}
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-td {
+  background: var(--tea-surface-hover) !important;
+  color: #F0E5D2 !important;
+}
+
+/* 16. n-pagination 文字色 */
+:root .n-pagination-item {
+  color: #5B4636 !important;
+  border-color: #E8E0D6 !important;
+}
+:root .n-pagination-item--active {
+  color: #C4956A !important;
+  font-weight: 600;
+}
+[data-theme='dark'] .n-pagination-item {
+  color: rgba(232, 217, 197, 0.75) !important;
+  border-color: var(--tea-line-1) !important;
+}
+[data-theme='dark'] .n-pagination-item--active {
+  color: #E0A55C !important;
+  font-weight: 600;
+}
+
+/* 17. n-empty 文字色 */
+:root .n-empty__description {
+  color: #8B7B6B !important;
+}
+[data-theme='dark'] .n-empty__description {
+  color: rgba(232, 217, 197, 0.6) !important;
+}
+
+/* 18. n-divider 文字色 */
+:root .n-divider {
+  color: #5B4636 !important;
+}
+[data-theme='dark'] .n-divider {
+  color: rgba(232, 217, 197, 0.75) !important;
+}
+
+/* 19. n-spin 文字色 */
+:root .n-spin__description {
+  color: #5B4636 !important;
+}
+[data-theme='dark'] .n-spin__description {
+  color: rgba(232, 217, 197, 0.75) !important;
+}
+
+/* 20. n-radio / n-checkbox 文字色 */
+:root .n-radio__label,
+:root .n-checkbox__label {
+  color: #2A1F14 !important;
+}
+[data-theme='dark'] .n-radio__label,
+[data-theme='dark'] .n-checkbox__label {
+  color: #F0E5D2 !important;
+}
+
+/* 21. n-segmented 激活项文字色 */
+:root .n-segmented-item--selected {
+  color: #C4956A !important;
+  font-weight: 600;
+}
+[data-theme='dark'] .n-segmented-item--selected {
+  color: #E0A55C !important;
+  font-weight: 600;
+}
+
+/* 22. n-list item 文字色 */
+:root .n-list-item__main {
+  color: #2A1F14 !important;
+}
+[data-theme='dark'] .n-list-item__main {
+  color: #F0E5D2 !important;
+}
+
+/* 23. 兜底 - 全局所有 .text-* 工具类 */
+:root .text-success { color: #2D5C2C !important; }
+:root .text-warning { color: #8A4A0F !important; }
+:root .text-danger { color: #8A2A30 !important; }
+:root .text-info { color: #1A4D80 !important; }
+:root .text-primary { color: #C4956A !important; }
+:root .text-light { color: #8B7B6B !important; }
+:root .text-muted { color: #A89B8C !important; }
+
+[data-theme='dark'] .text-success { color: #A8D2A6 !important; }
+[data-theme='dark'] .text-warning { color: #F0C896 !important; }
+[data-theme='dark'] .text-danger { color: #F0AAB0 !important; }
+[data-theme='dark'] .text-info { color: #9CC5E8 !important; }
+[data-theme='dark'] .text-primary { color: #E0A55C !important; }
+[data-theme='dark'] .text-light { color: rgba(232, 217, 197, 0.65) !important; }
+[data-theme='dark'] .text-muted { color: rgba(232, 217, 197, 0.45) !important; }
+
+/* 24. 兜底 - dropdown / popover / tooltip / popconfirm / notification */
+:root .n-dropdown-option,
+:root .n-popover__content,
+:root .n-tooltip-inner,
+:root .n-popconfirm__body,
+:root .n-notification-main__content,
+:root .n-message__content {
+  color: #2A1F14 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+[data-theme='dark'] .n-dropdown-option,
+[data-theme='dark'] .n-popover__content,
+[data-theme='dark'] .n-tooltip-inner,
+[data-theme='dark'] .n-popconfirm__body,
+[data-theme='dark'] .n-notification-main__content,
+[data-theme='dark'] .n-message__content {
+  color: #F0E5D2 !important;
+  background: var(--tea-overlay-bg) !important;
+}
+
+/* 25. v0.5.3 全局背景白底兜底 */
+[data-theme='dark'] .bg-white,
+[data-theme='dark'] [class*='bg-white'] {
+  background: #1F1812 !important;
+}
+[data-theme='dark'] [style*='background: #FFFFFF'],
+[data-theme='dark'] [style*='background: #FFF'],
+[data-theme='dark'] [style*='background: white'],
+[data-theme='dark'] [style*='background-color: #FFFFFF'],
+[data-theme='dark'] [style*='background-color: #FFF'],
+[data-theme='dark'] [style*='background-color: white'] {
+  background: #1F1812 !important;
+}
+[data-theme='dark'] [style*='background: #FFFFFF'] *,
+[data-theme='dark'] [style*='background: #FFF'] *,
+[data-theme='dark'] [style*='background: white'] * {
+  color: #F0E5D2 !important;
+}
+
+/* 26. v0.5.3 修复 dashboard 内 n-card 白底穿透 */
+[data-theme='dark'] .tea-dashboard .n-card,
+[data-theme='dark'] .tea-dashboard .n-card__content {
+  background: #1F1812 !important;
+}
+
+/* 27. v0.5.3 修复 n-alert 演示数据管理特殊文字色 */
+:root .demo-data-card .n-alert,
+:root .demo-data-card .n-alert * {
+  color: #1A4D80 !important;
+}
+[data-theme='dark'] .demo-data-card .n-alert,
+[data-theme='dark'] .demo-data-card .n-alert * {
+  color: #9CC5E8 !important;
+}
+
+/* 28. 终极兜底 - 任何 [style*='color: white'] 不在主色背景上时 */
+:root [style*='color: white']:not([class*='dashboard-hero']):not([class*='primary']):not([class*='btn']) {
+  color: #2A1F14 !important;
+}
+[data-theme='dark'] [style*='color: white']:not([class*='dashboard-hero']):not([class*='primary']):not([class*='btn']) {
+  color: #F0E5D2 !important;
+}
+
+/* ==================== v0.5.4 第二轮修复（用户反馈遗留问题） ==================== */
+/* 问题 1：商品档案深色模式表头与底部行穿透 - 提升规则特异性，确保覆盖 */
+/* 1.1 表头 th 实色背景（覆盖第 2885 行的半透明 rgba） */
+[data-theme='dark'] .n-data-table .n-data-table-thead .n-data-table-th,
+[data-theme='dark'] .n-data-table .n-data-table-tr .n-data-table-th,
+[data-theme='dark'] .n-data-table .n-data-table-th {
+  background: var(--tea-surface-3) !important;
+  color: rgba(232, 217, 197, 0.85) !important;
+  border-bottom-color: var(--tea-line-1) !important;
+}
+
+/* 1.2 表格所有 td（含 last-row / 固定列 / 普通行）实色背景 */
+[data-theme='dark'] .n-data-table .n-data-table-tr .n-data-table-td,
+[data-theme='dark'] .n-data-table .n-data-table-td,
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-td,
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-td--last-row,
+[data-theme='dark'] .n-data-table .n-data-table-td--last-row {
+  background: var(--tea-surface-2) !important;
+}
+
+/* 1.3 striped 行用 surface-3 区分（覆盖前规则） */
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-td,
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-td--last-row {
+  background: var(--tea-surface-3) !important;
+}
+
+/* 1.4 hover 行用 surface-hover */
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-td,
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-td--last-row {
+  background: var(--tea-surface-hover) !important;
+}
+
+/* 1.4.1 v0.5.5 修复：固定列 hover 时强制实色背景，防止穿透 */
+/* @根因 固定列 position:sticky，hover 时 td 背景若透明会显示下层滚动内容 */
+/* @方案 显式覆盖固定列 td 及其 hover 状态的背景为实色 */
+[data-theme='dark'] .n-data-table .n-data-table-td.n-data-table-td--fixed-left,
+[data-theme='dark'] .n-data-table .n-data-table-td.n-data-table-td--fixed-right,
+[data-theme='dark'] .n-data-table .n-data-table-th.n-data-table-th--fixed-left,
+[data-theme='dark'] .n-data-table .n-data-table-th.n-data-table-th--fixed-right {
+  background: var(--tea-surface-2) !important;
+}
+
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-td.n-data-table-td--fixed-left,
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-td.n-data-table-td--fixed-right,
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-th.n-data-table-th--fixed-left,
+[data-theme='dark'] .n-data-table .n-data-table-tr:hover .n-data-table-th.n-data-table-th--fixed-right {
+  background: var(--tea-surface-hover) !important;
+}
+
+/* 固定列 striped 行 */
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-td.n-data-table-td--fixed-left,
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-td.n-data-table-td--fixed-right,
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-th.n-data-table-th--fixed-left,
+[data-theme='dark'] .n-data-table .n-data-table-tr--striped .n-data-table-th.n-data-table-th--fixed-right {
+  background: var(--tea-surface-3) !important;
+}
+
+/* 1.4.2 通用（浅色+深色）固定列 hover 实色背景兜底 */
+.n-data-table .n-data-table-td--fixed-left,
+.n-data-table .n-data-table-td--fixed-right,
+.n-data-table .n-data-table-th--fixed-left,
+.n-data-table .n-data-table-th--fixed-right {
+  background: var(--tea-surface-2) !important;
+}
+
+.n-data-table .n-data-table-tr--striped .n-data-table-td--fixed-left,
+.n-data-table .n-data-table-tr--striped .n-data-table-td--fixed-right,
+.n-data-table .n-data-table-tr--striped .n-data-table-th--fixed-left,
+.n-data-table .n-data-table-tr--striped .n-data-table-th--fixed-right {
+  background: var(--tea-surface-3) !important;
+}
+
+.n-data-table .n-data-table-tr:hover .n-data-table-td--fixed-left,
+.n-data-table .n-data-table-tr:hover .n-data-table-td--fixed-right,
+.n-data-table .n-data-table-tr:hover .n-data-table-th--fixed-left,
+.n-data-table .n-data-table-tr:hover .n-data-table-th--fixed-right {
+  background: var(--tea-surface-hover) !important;
+}
+
+/* 1.5 表格容器自身背景（避免容器透明导致穿透） */
+[data-theme='dark'] .n-data-table,
+[data-theme='dark'] .n-data-table-wrapper,
+[data-theme='dark'] .n-data-table-base-table,
+[data-theme='dark'] .n-data-table-base-table-header,
+[data-theme='dark'] .n-data-table-base-table-body {
+  background: var(--tea-surface-2) !important;
+}
+
+/* 问题 2：首页快捷操作/今日概览卡片深色模式显示白色 */
+/* 根因：tea-card 类用半透明 --tea-card-bg (rgba(31,24,18,0.72))，叠加多层半透明后视觉偏浅 */
+/* 修复：深色模式下强制 .tea-card 用实色 surface-2，子卡片用 surface-3 */
+[data-theme='dark'] .tea-card {
+  background: var(--tea-surface-2) !important;
+  border-color: var(--tea-line-1) !important;
+  /* 保留 backdrop-filter 模糊效果（实色背景下无效果，但不影响视觉） */
+}
+
+/* 深色模式下子卡片（quick-action-card / today-stat-card）强制实色 surface-3 */
+[data-theme='dark'] .quick-action-card,
+[data-theme='dark'] .today-stat-card {
+  background: var(--tea-surface-3) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* 兜底：所有 .n-card 在深色模式下也用实色 surface-2（覆盖第 2808 行 :root 强制白色） */
+[data-theme='dark'] .n-card,
+[data-theme='dark'] .n-card__content,
+[data-theme='dark'] .demo-data-card {
+  background: var(--tea-surface-2) !important;
+  color: var(--tea-content-1) !important;
+  border-color: var(--tea-line-1) !important;
+}
+
+/* 兜底：n-data-table 在浅色模式下也确保 td 不穿透（统一规则） */
+.n-data-table .n-data-table-th {
+  background: var(--tea-surface-3) !important;
+}
+
+.n-data-table .n-data-table-td {
+  background: var(--tea-surface-2) !important;
+}
+
+.n-data-table .n-data-table-tr--striped .n-data-table-td {
+  background: var(--tea-surface-3) !important;
+}
+
+.n-data-table .n-data-table-tr:hover .n-data-table-td {
+  background: var(--tea-surface-hover) !important;
+}
+

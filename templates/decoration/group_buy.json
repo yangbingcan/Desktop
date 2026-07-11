@@ -1,0 +1,155 @@
+{
+  "templateId": "group_buy",
+  "name": "团购拼团",
+  "scenario": "group_buy",
+  "coverImage": "cloud://replace-required/group-buy/hero.webp",
+  "summary": "适合双人同行、好友组队和拼团活动，强化真实报名动态和组队氛围。",
+  "materials": [
+    { "materialId": "mat_group_buy_hero", "role": "hero" },
+    { "materialId": "mat_common_calm_music", "role": "music" }
+  ],
+  "tradeRecommendations": [
+    { "type": "team_package", "message": "建议配置一个双人同行或 2 人组队套餐，用于承接团购转化。" },
+    { "type": "share", "message": "建议开启分享引导或红包规则，提高好友邀请转化。" }
+  ],
+  "previewData": {
+    "title": "双人同行瑜伽课·拼团特惠",
+    "startTime": "2026-07-22 19:00",
+    "endTime": "2026-07-22 20:30",
+    "signupDeadline": "2026-07-21 18:00",
+    "location": "禅心瑜伽·东城区东直门外大街48号",
+    "instructor": "赵雅婷老师",
+    "maxParticipants": 24,
+    "virtualViewCount": 1876,
+    "virtualSignupCount": 18,
+    "coverImage": "",
+    "packages": [
+      { "name": "单人报名", "price": "89", "type": "single", "content": ["90分钟流瑜伽课", "瑜伽垫免费使用"] },
+      { "name": "双人同行价", "price": "149", "type": "team", "content": ["2人各1节课", "同行优惠立省29元", "赠送双人瑜伽照"] }
+    ],
+    "redPacketConfig": { "enabled": true, "signupAmount": 5, "inviteAmount": 15, "rankAmount": 30, "rankCount": 3 },
+    "show_group": true,
+    "componentPreview": {
+      "image_ad": { "content": { "mode": "single", "images": ["preview://group-buy-banner"] } },
+      "rich_text": { "content": { "html": "<h3>拼团规则</h3><ul><li>选择双人同行套餐，邀请好友一起报名</li><li>拼团成功后各得1节瑜伽课</li><li>额外赠送双人瑜伽照1张</li><li>3人成团享更多优惠</li></ul>" } },
+      "video": { "content": { "src": "preview://group-buy-video", "poster": "preview://group-buy-poster", "autoplay": false } }
+    }
+  },
+  "enabled": true,
+  "sort": 4,
+  "version": 1,
+  "layout": {
+    "version": 2,
+    "showHeader": true,
+    "globalStyle": {
+      "themeColor": "#D64545",
+      "accentColor": "#FFB84D",
+      "pageBg": { "type": "color", "color": "#FFF5F2" },
+      "cardRadius": 8,
+      "componentGap": 12,
+      "fontScale": "normal",
+      "buttonStyle": "solid"
+    },
+    "floating": {
+      "music": { "enabled": true, "position": "rightTop", "defaultPlay": false },
+      "danmaku": { "enabled": true, "position": "rightTop", "defaultOn": false },
+      "toolGroup": { "enabled": true, "position": "leftMiddle", "actions": ["share", "customer_service", "back_to_top"] },
+      "benefitButton": { "enabled": "auto", "position": "rightMiddle" }
+    },
+    "components": [
+      {
+        "id": "group_title",
+        "type": "title",
+        "enabled": true,
+        "order": 1,
+        "config": {
+          "content": { "title": "{{activityName}}", "subtitle": "好友同行 · 组队更划算 · 名额有限" },
+          "style": { "background": "#FFFFFF", "textColor": "#3E1E1E", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "group_notice",
+        "type": "notice",
+        "enabled": true,
+        "order": 2,
+        "config": {
+          "content": { "mode": "scroll", "title": "组队提醒", "text": "邀请好友一起报名，优先选择 2 人同行价" },
+          "style": { "background": "#FFE3D6", "textColor": "#8B2B22", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "share" }
+        }
+      },
+      {
+        "id": "group_grid",
+        "type": "data_grid",
+        "enabled": true,
+        "order": 3,
+        "config": {
+          "content": { "title": "拼团热度" },
+          "style": { "background": "#FFFFFF", "textColor": "#3E1E1E", "borderRadius": 10 },
+          "data": {
+            "columns": 3,
+            "rows": 1,
+            "items": [
+              { "key": "team_price", "label": "同行价", "value": "2人", "unit": "起" },
+              "signup_count",
+              "remaining"
+            ]
+          },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "group_recent",
+        "type": "recent_signup",
+        "enabled": true,
+        "order": 4,
+        "config": {
+          "content": { "title": "组队动态" },
+          "style": { "background": "#FFFFFF", "textColor": "#3E1E1E", "borderRadius": 10 },
+          "data": { "mode": "avatar_scroll", "fillWithVirtual": true, "count": 10 },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "group_trade",
+        "type": "trade_showcase",
+        "enabled": true,
+        "order": 5,
+        "config": {
+          "content": { "title": "选择同行套餐" },
+          "style": { "background": "#FFFFFF", "textColor": "#3E1E1E", "borderRadius": 10 },
+          "data": { "source": "packages", "packageIds": [] },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "group_rank",
+        "type": "redpacket_rank",
+        "enabled": true,
+        "order": 6,
+        "config": {
+          "content": { "title": "邀请奖励榜", "ruleText": "邀请好友报名后可按活动规则获得奖励。" },
+          "style": { "background": "#FFFFFF", "textColor": "#3E1E1E", "borderRadius": 10 },
+          "data": { "rankType": "invite", "limit": 3, "showRule": true },
+          "behavior": { "action": "claim_redpacket" }
+        }
+      },
+      {
+
+        "id": "group_bottom",
+        "type": "bottom_signup_bar",
+        "enabled": true,
+        "order": 99,
+        "config": {
+          "content": { "buttonText": "立即组队报名" },
+          "style": { "background": "#D64545", "textColor": "#FFFFFF", "buttonColor": "#FFB84D" },
+          "data": { "source": "packages" },
+          "behavior": { "action": "signup" }
+        }
+      }
+    ]
+  }
+}

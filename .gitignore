@@ -1,0 +1,52 @@
+# ============================================================
+# 茶易管 (TeaManage) 项目根 .gitignore
+# 作用：排除依赖、构建产物、本地工具数据，避免巨型文件污染版本库
+# 说明：tea-manage/.gitignore 已有 node_modules/dist 等规则，本文件补充根级与 Rust 产物规则
+# ============================================================
+
+# ===== 依赖（npm） =====
+node_modules/
+
+# ===== Rust 构建产物（src-tauri/target 高达 12G，必须排除） =====
+target/
+**/target/
+
+# ===== 前端构建产物 =====
+dist/
+dist-ssr/
+
+# ===== 测试产物（Playwright） =====
+test-results/
+playwright-report/
+blob-report/
+
+# ===== 日志 =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===== 环境变量 / 本地配置 =====
+.env
+.env.local
+.env.*.local
+*.local
+
+# ===== 操作系统 / 编辑器 =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# ===== 本地工具数据（WorkBuddy 记忆，不纳入版本控制） =====
+.workbuddy/
+
+# ===== 用户运行时数据（SQLite 数据库，按需解注释纳入/排除） =====
+# *.db
+# *.sqlite
+# *.sqlite3

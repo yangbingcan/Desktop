@@ -1,0 +1,527 @@
+/**
+ * @file 茶易管 CSS 变量体系
+ * @description v0.5.0 视觉质感升级 - 毛玻璃 + 装饰背景 + Hero 渐变 + 弹性曲线
+ * @design 仿 JXC 模式：所有 token 通过 CSS 变量驱动，状态切换零运行时开销
+ */
+
+:root {
+  /* ==================== 主色 - 茶金（默认） ==================== */
+  /* ==================== 主色 - 深茶绿（默认，茶叶店调性） ==================== */
+  --tea-primary: #4A6741;
+  --tea-primary-hover: #5C7A50;
+  --tea-primary-active: #3C5532;
+  --tea-primary-light: #EBF1E7;
+  --tea-primary-bg: #F3F7F1;
+  --tea-primary-supply: rgba(74, 103, 65, 0.12);
+
+  /* ==================== 状态色 ==================== */
+  --tea-success: #67C23A;
+  --tea-success-bg: #F0F9EB;
+  --tea-warning: #E6A23C;
+  --tea-warning-bg: #FDF6EC;
+  --tea-error: #F56C6C;
+  --tea-error-bg: #FEF0F0;
+  --tea-info: #1677FF;
+  --tea-info-bg: #E6F4FF;
+
+  /* ==================== 标题栏 - v0.5.0 半透明毛玻璃 ==================== */
+  --tea-titlebar-bg: rgba(250, 246, 241, 0.72);
+  --tea-titlebar-border: rgba(74, 103, 65, 0.18);
+  --tea-titlebar-text: #3D4A38;
+  --tea-titlebar-text-secondary: #8B7B6B;
+
+  /* ==================== 侧栏 - 保持深色实色（深色背景毛玻璃反而糊） ==================== */
+  --tea-sider-bg: #2C2418;
+  --tea-sider-text: rgba(255, 255, 255, 0.85);
+  --tea-sider-text-secondary: rgba(255, 255, 255, 0.65);
+  --tea-sider-text-tertiary: rgba(255, 255, 255, 0.45);
+  --tea-sider-item-hover: rgba(74, 103, 65, 0.12);
+  --tea-sider-item-active-bg: rgba(74, 103, 65, 0.2);
+  --tea-sider-item-active-border: #4A6741;
+  --tea-sider-section-title: rgba(255, 255, 255, 0.45);
+  --tea-sider-search-bg: rgba(255, 255, 255, 0.06);
+  --tea-sider-search-border: rgba(255, 255, 255, 0.08);
+
+  /* ==================== 内容区 - v0.5.0 双层背景 ==================== */
+  --tea-content-bg: rgba(247, 244, 240, 0.85);
+  --tea-content-bg-solid: #F5F7FA;
+  --tea-content-decoration: radial-gradient(circle at 20% 0%, rgba(74, 103, 65, 0.05) 0%, transparent 50%),
+                            radial-gradient(circle at 80% 100%, rgba(74, 103, 65, 0.03) 0%, transparent 50%);
+
+  /* ==================== 标签栏 - 半透明融合标题栏 ==================== */
+  --tea-tab-bg: transparent;
+  --tea-tab-text: rgba(61, 74, 56, 0.7);
+  --tea-tab-text-active: #3D4A38;
+  --tea-tab-bg-active: rgba(74, 103, 65, 0.12);
+  --tea-tab-close-hover-bg: rgba(255, 77, 79, 0.12);
+  --tea-tab-close-hover-color: #FF4D4F;
+  --tea-tab-indicator: linear-gradient(90deg, transparent, #4A6741 20%, #5C7A50 50%, #4A6741 80%, transparent);
+
+  /* ==================== 卡片 - v0.5.0 半透明毛玻璃（关键） ==================== */
+  --tea-card-bg: #FFFFFF;
+  --tea-card-border: rgba(0, 0, 0, 0.06);
+  --tea-card-blur: none;
+
+  /* ==================== 弹窗 - v0.5.0 毛玻璃 / v0.5.5 实色化 ==================== */
+  /* v0.5.5 修复：原 rgba(255,255,255,0.88) 半透明叠加在关闭时残留遮罩视觉，改为实色 */
+  --tea-modal-bg: #FFFFFF;
+  --tea-modal-blur: blur(24px) saturate(180%);
+
+  /* ==================== 抽屉 - v0.5.0 毛玻璃 / v0.5.5 实色化 ==================== */
+  --tea-drawer-bg: #FFFFFF;
+  --tea-drawer-blur: blur(24px) saturate(180%);
+
+  /* ==================== 下拉/消息 - v0.5.0 毛玻璃 / v0.5.5 实色化 ==================== */
+  --tea-overlay-bg: #FFFFFF;
+  --tea-overlay-blur: blur(20px) saturate(180%);
+
+  /* ==================== 文字色阶 ==================== */
+  --tea-text-primary: rgba(0, 0, 0, 0.88);
+  --tea-text-secondary: rgba(0, 0, 0, 0.65);
+  --tea-text-tertiary: rgba(0, 0, 0, 0.45);
+  --tea-text-disabled: rgba(0, 0, 0, 0.25);
+  --tea-text-inverse: rgba(255, 255, 255, 0.92);
+
+  /* ==================== 边框 ==================== */
+  --tea-border: rgba(0, 0, 0, 0.08);
+  --tea-border-light: rgba(0, 0, 0, 0.04);
+  --tea-border-strong: rgba(0, 0, 0, 0.12);
+
+  /* ==================== 背景 ==================== */
+  --tea-bg-base: #FFFFFF;
+  --tea-bg-elevated: #FFFFFF;
+  --tea-bg-overlay: rgba(0, 0, 0, 0.4);
+  --tea-hover-bg: rgba(0, 0, 0, 0.04);
+
+  /* ==================== 尺寸 ==================== */
+  --tea-titlebar-height: 56px;
+  --tea-sider-width: 220px;
+  --tea-sider-collapsed: 64px;
+  --tea-tab-height: 40px;
+  --tea-brand-height: 60px;
+  --tea-search-height: 40px;
+
+  /* ==================== 圆角 ==================== */
+  --tea-radius-sm: 3px;
+  --tea-radius-md: 3px;
+  --tea-radius-lg: 4px;
+  --tea-radius-xl: 6px;
+
+  /* ==================== 阴影 ==================== */
+  --tea-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --tea-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --tea-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --tea-shadow-card: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --tea-shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --tea-shadow-float: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.04);
+
+  /* ==================== 字体 ==================== */
+  /* 强制无衬线：PingFang SC / Microsoft YaHei 优先，禁止出现衬线字体 */
+  --tea-font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --tea-font-family-serif: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --tea-font-size-xs: 12px;
+  --tea-font-size-sm: 12px;
+  --tea-font-size-base: 14px;
+  --tea-font-size-lg: 16px;
+  --tea-font-size-xl: 20px;
+  --tea-font-size-stat: 28px;
+
+  /* ==================== 过渡 ==================== */
+  --tea-transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --tea-transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --tea-transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --tea-transition-spring: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ==================== v0.5.0 模糊参数 ==================== */
+  --tea-blur-sm: blur(8px);
+  --tea-blur-md: blur(16px);
+  --tea-blur-lg: blur(24px);
+
+  /* ==================== v0.5.0 Spring 弹性曲线 ==================== */
+  --tea-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ==================== v0.5.0 Hover 抬升位移 ==================== */
+  --tea-hover-lift-sm: translateY(-1px);
+  --tea-hover-lift-md: translateY(-2px);
+
+  /* ==================== v0.5.0 Hero 渐变（dashboard 顶部） ==================== */
+  --tea-hero-gradient: linear-gradient(135deg, #4A6741 0%, #5C7A50 50%, #8AAE7E 100%);
+  --tea-hero-shadow: 0 12px 36px rgba(74, 103, 65, 0.22);
+}
+
+/* ==================== 主色变体 - 竹青（与默认深茶绿一致） ==================== */
+[data-primary='bamboo'] {
+  --tea-primary: #4A6741;
+  --tea-primary-hover: #5C7A50;
+  --tea-primary-active: #3C5532;
+  --tea-primary-light: #EBF1E7;
+  --tea-primary-bg: #F3F7F1;
+  --tea-primary-supply: rgba(74, 103, 65, 0.12);
+  --tea-titlebar-bg: rgba(240, 245, 240, 0.72);
+  --tea-titlebar-border: rgba(74, 103, 65, 0.15);
+  --tea-sider-item-hover: rgba(74, 103, 65, 0.12);
+  --tea-sider-item-active-bg: rgba(74, 103, 65, 0.2);
+  --tea-sider-item-active-border: #4A6741;
+  --tea-tab-bg-active: rgba(74, 103, 65, 0.12);
+  --tea-tab-indicator: linear-gradient(90deg, transparent, #4A6741 20%, #5C7A50 50%, #4A6741 80%, transparent);
+  --tea-content-decoration: radial-gradient(circle at 20% 0%, rgba(74, 103, 65, 0.05) 0%, transparent 50%),
+                            radial-gradient(circle at 80% 100%, rgba(74, 103, 65, 0.03) 0%, transparent 50%);
+  --tea-hero-gradient: linear-gradient(135deg, #4A6741 0%, #5C7A50 50%, #8AAE7E 100%);
+  --tea-hero-shadow: 0 12px 36px rgba(74, 103, 65, 0.22);
+}
+
+/* ==================== 主色变体 - 朱砂 ==================== */
+[data-primary='cinnabar'] {
+  --tea-primary: #B5483F;
+  --tea-primary-hover: #C45A51;
+  --tea-primary-active: #9A3B33;
+  --tea-primary-light: #F9E8E6;
+  --tea-primary-bg: #F5E8E6;
+  --tea-primary-supply: rgba(181, 72, 63, 0.12);
+  --tea-titlebar-bg: rgba(245, 232, 230, 0.72);
+  --tea-titlebar-border: rgba(181, 72, 63, 0.15);
+  --tea-sider-item-hover: rgba(181, 72, 63, 0.12);
+  --tea-sider-item-active-bg: rgba(181, 72, 63, 0.2);
+  --tea-sider-item-active-border: #B5483F;
+  --tea-tab-bg-active: rgba(181, 72, 63, 0.12);
+  --tea-tab-indicator: linear-gradient(90deg, transparent, #B5483F 20%, #C45A51 50%, #B5483F 80%, transparent);
+  --tea-content-decoration: radial-gradient(circle at 20% 0%, rgba(181, 72, 63, 0.06) 0%, transparent 50%),
+                            radial-gradient(circle at 80% 100%, rgba(181, 72, 63, 0.04) 0%, transparent 50%);
+  --tea-hero-gradient: linear-gradient(135deg, #B5483F 0%, #C45A51 50%, #D8807A 100%);
+  --tea-hero-shadow: 0 12px 36px rgba(181, 72, 63, 0.25);
+}
+
+/* ==================== 深色主题 ==================== */
+[data-theme='dark'] {
+  /* 主色 - 深色下稍亮（深茶绿） */
+  --tea-primary-light: rgba(74, 103, 65, 0.15);
+  --tea-primary-bg: rgba(74, 103, 65, 0.08);
+  --tea-primary-supply: rgba(74, 103, 65, 0.18);
+
+  /* 状态色背景 - 深色 */
+  --tea-success-bg: rgba(103, 194, 58, 0.15);
+  --tea-warning-bg: rgba(230, 162, 60, 0.15);
+  --tea-error-bg: rgba(245, 108, 108, 0.15);
+  --tea-info-bg: rgba(22, 119, 255, 0.15);
+
+  /* 标题栏 - v0.5.0 半透明深棕 */
+  --tea-titlebar-bg: rgba(26, 20, 16, 0.72);
+  --tea-titlebar-border: rgba(74, 103, 65, 0.1);
+  --tea-titlebar-text: #E8D9C5;
+  --tea-titlebar-text-secondary: rgba(232, 217, 197, 0.65);
+
+  /* 侧栏 - 更深 */
+  --tea-sider-bg: #0E1410;
+  --tea-sider-item-hover: rgba(74, 103, 65, 0.15);
+  --tea-sider-item-active-bg: rgba(74, 103, 65, 0.25);
+
+  /* 内容区 - v0.5.0 双层 */
+  --tea-content-bg: rgba(11, 16, 13, 0.85);
+  --tea-content-bg-solid: #0B100D;
+  --tea-content-decoration: radial-gradient(circle at 20% 0%, rgba(74, 103, 65, 0.06) 0%, transparent 50%),
+                            radial-gradient(circle at 80% 100%, rgba(74, 103, 65, 0.04) 0%, transparent 50%);
+
+  /* 标签栏 - 深色 */
+  --tea-tab-text: rgba(232, 217, 197, 0.65);
+  --tea-tab-text-active: #E8D9C5;
+  --tea-tab-bg-active: rgba(74, 103, 65, 0.18);
+
+  /* 卡片 - v0.5.0 半透明深色 */
+  --tea-card-bg: rgba(26, 32, 26, 0.72);
+  --tea-card-border: rgba(255, 255, 255, 0.08);
+
+  /* 弹窗/抽屉/下拉 - 深色 / v0.5.5 实色化（原 0.88 半透明关闭时残留遮罩） */
+  --tea-modal-bg: #181F18;
+  --tea-drawer-bg: #181F18;
+  --tea-overlay-bg: #181F18;
+
+  /* 文字色阶 - 反转 */
+  --tea-text-primary: rgba(255, 255, 255, 0.92);
+  --tea-text-secondary: rgba(255, 255, 255, 0.68);
+  --tea-text-tertiary: rgba(255, 255, 255, 0.45);
+  --tea-text-disabled: rgba(255, 255, 255, 0.25);
+
+  /* 边框 - 浅色透明 */
+  --tea-border: rgba(255, 255, 255, 0.08);
+  --tea-border-light: rgba(255, 255, 255, 0.04);
+  --tea-border-strong: rgba(255, 255, 255, 0.12);
+
+  /* 背景 - 深色 */
+  --tea-bg-base: #181F18;
+  --tea-bg-elevated: #1F261D;
+  --tea-bg-overlay: rgba(0, 0, 0, 0.6);
+  --tea-hover-bg: rgba(255, 255, 255, 0.06);
+
+  /* 阴影 - 更深 */
+  --tea-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --tea-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --tea-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+  --tea-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --tea-shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --tea-shadow-float: 0 8px 32px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.3);
+
+  /* Hero 阴影 - 深色下更深 */
+  --tea-hero-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+}
+
+/* ==================== v0.5.0 侧栏浅色态（米白毛玻璃） ==================== */
+
+/* 浅色主题下的浅色态 */
+[data-sidebar-style='light'] {
+  --tea-sider-bg: rgba(255, 255, 255, 0.78);
+  --tea-sider-text: rgba(0, 0, 0, 0.88);
+  --tea-sider-text-secondary: rgba(0, 0, 0, 0.65);
+  --tea-sider-text-tertiary: rgba(0, 0, 0, 0.45);
+  --tea-sider-item-hover: rgba(0, 0, 0, 0.04);
+  --tea-sider-item-active-bg: var(--tea-primary-light, rgba(74, 103, 65, 0.14));
+  --tea-sider-item-active-border: var(--tea-primary, #4A6741);
+  --tea-sider-section-title: rgba(0, 0, 0, 0.45);
+  --tea-sider-search-bg: rgba(0, 0, 0, 0.04);
+  --tea-sider-search-border: rgba(0, 0, 0, 0.08);
+}
+
+/* 深色主题下的浅色态（深色背景下用深色半透明 + 亮文字） */
+[data-theme='dark'][data-sidebar-style='light'] {
+  --tea-sider-bg: rgba(22, 30, 22, 0.78);
+  --tea-sider-text: rgba(255, 255, 255, 0.92);
+  --tea-sider-text-secondary: rgba(255, 255, 255, 0.68);
+  --tea-sider-text-tertiary: rgba(255, 255, 255, 0.45);
+  --tea-sider-item-hover: rgba(255, 255, 255, 0.06);
+  --tea-sider-item-active-bg: var(--tea-primary-supply, rgba(74, 103, 65, 0.18));
+  --tea-sider-section-title: rgba(255, 255, 255, 0.45);
+  --tea-sider-search-bg: rgba(255, 255, 255, 0.06);
+  --tea-sider-search-border: rgba(255, 255, 255, 0.08);
+}
+
+/* 浅色态下，侧栏需要毛玻璃 */
+[data-sidebar-style='light'] .tea-sider {
+  backdrop-filter: var(--tea-blur-md);
+  -webkit-backdrop-filter: var(--tea-blur-md);
+}
+
+/* 浅色态下，品牌名称颜色 */
+[data-sidebar-style='light'] .tea-sider-brand-name {
+  color: var(--tea-primary, #4A6741);
+}
+
+/* ==================== v0.5.0 登录页装饰变量 ==================== */
+
+:root {
+  --tea-login-bg: #F5F7FA;
+  --tea-login-aurora-1: rgba(74, 103, 65, 0.12);
+  --tea-login-aurora-2: rgba(74, 103, 65, 0.08);
+  --tea-login-grid-line: rgba(74, 103, 65, 0.05);
+  --tea-login-dot-color: rgba(74, 103, 65, 0.55);
+  --tea-login-dot-glow: rgba(74, 103, 65, 0.22);
+  --tea-login-card-shadow: 0 24px 48px rgba(61, 74, 56, 0.15), 0 8px 16px rgba(61, 74, 56, 0.08);
+}
+
+[data-theme='dark'] {
+  --tea-login-bg: #0B100D;
+  --tea-login-aurora-1: rgba(74, 103, 65, 0.18);
+  --tea-login-aurora-2: rgba(74, 103, 65, 0.12);
+  --tea-login-grid-line: rgba(74, 103, 65, 0.08);
+  --tea-login-dot-color: rgba(74, 103, 65, 0.6);
+  --tea-login-dot-glow: rgba(74, 103, 65, 0.3);
+  --tea-login-card-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-primary='bamboo'] {
+  --tea-login-aurora-1: rgba(91, 140, 90, 0.14);
+  --tea-login-aurora-2: rgba(91, 140, 90, 0.08);
+  --tea-login-grid-line: rgba(91, 140, 90, 0.06);
+  --tea-login-dot-color: rgba(91, 140, 90, 0.6);
+  --tea-login-dot-glow: rgba(91, 140, 90, 0.25);
+}
+
+[data-primary='cinnabar'] {
+  --tea-login-aurora-1: rgba(181, 72, 63, 0.14);
+  --tea-login-aurora-2: rgba(181, 72, 63, 0.08);
+  --tea-login-grid-line: rgba(181, 72, 63, 0.06);
+  --tea-login-dot-color: rgba(181, 72, 63, 0.6);
+  --tea-login-dot-glow: rgba(181, 72, 63, 0.25);
+}
+
+/* 字号档位 */
+[data-font-size='small'] {
+  --tea-font-size-xs: 11px;
+  --tea-font-size-sm: 11px;
+  --tea-font-size-base: 12px;
+  --tea-font-size-lg: 14px;
+  --tea-font-size-xl: 16px;
+  --tea-font-size-stat: 24px;
+}
+
+[data-font-size='large'] {
+  --tea-font-size-xs: 13px;
+  --tea-font-size-sm: 13px;
+  --tea-font-size-base: 16px;
+  --tea-font-size-lg: 18px;
+  --tea-font-size-xl: 22px;
+  --tea-font-size-stat: 32px;
+}
+
+/* ==================== v0.5.2 语义色板 - 页面组件统一使用 ==================== */
+/* 表面层（背景） */
+:root {
+  --tea-surface-1: #F5F7FA;          /* 页面级背景（最浅，极浅灰） */
+  --tea-surface-2: #FFFFFF;          /* 卡片背景 */
+  --tea-surface-3: #F0F2F5;          /* 嵌套卡片 / 行背景 */
+  --tea-surface-hover: #EBF2E8;      /* hover 背景（淡茶绿） */
+  --tea-surface-active: #FBF2E8;     /* 选中 / 激活背景 */
+  --tea-surface-overlay: rgba(255, 255, 255, 0.72); /* 浮层 */
+  --tea-surface-mask: rgba(0, 0, 0, 0.04); /* 轻遮罩 */
+
+  /* 边框 */
+  --tea-line-1: #E8E0D6;             /* 主分割线 */
+  --tea-line-2: #F0E8DC;             /* 弱分割线 */
+  --tea-line-3: #FAF6F1;             /* 极弱分割线 */
+  --tea-line-active: #4A6741;        /* 激活态边框（继承主色） */
+
+  /* 文字（按层级） */
+  --tea-content-1: #3D4A38;          /* 标题（最深） */
+  --tea-content-2: #6B5B4B;          /* 正文 */
+  --tea-content-3: #8B7B6B;          /* 描述 */
+  --tea-content-4: #A89B8C;          /* 占位 / 弱描述 */
+  --tea-content-5: #C4B8A8;          /* 极弱 / 禁用 */
+  --tea-content-inverse: #FFFFFF;    /* 反色（用于深色按钮文字） */
+  --tea-content-success: #6B9E78;    /* 成功文字（柔绿） */
+  --tea-content-warning: #C9823A;    /* 警告文字（柔橙） */
+  --tea-content-danger: #D4838A;     /* 危险文字（柔红） */
+  --tea-content-info: #3D7AB8;       /* 信息文字（柔蓝） */
+
+  /* 强调色（保留原始饱和度高的状态色，仅用于图标 / 小色块） */
+  --tea-accent-success: #5B8C5A;        /* 茶绿（避免亮绿刺眼） */
+  --tea-accent-success-bg: rgba(91, 140, 90, 0.12);
+  --tea-accent-warning: #C97A2B;        /* 柔橙（避免刺眼） */
+  --tea-accent-warning-bg: rgba(201, 122, 43, 0.12);
+  --tea-accent-danger: #C25A60;         /* 柔红（避免刺眼） */
+  --tea-accent-danger-bg: rgba(194, 90, 96, 0.12);
+  --tea-accent-info: #3D7AB8;           /* 柔蓝（避免刺眼） */
+  --tea-accent-info-bg: rgba(61, 122, 184, 0.12);
+  --tea-accent-purple: #8B5CF6;
+  --tea-accent-purple-bg: rgba(139, 92, 246, 0.12);
+  --tea-accent-emerald: #10B981;
+  --tea-accent-emerald-bg: rgba(16, 185, 129, 0.12);
+  --tea-accent-gray: #6B7280;
+  --tea-accent-gray-bg: rgba(107, 114, 128, 0.12);
+
+  /* v0.5.4 图标专用色 - 比 accent 更深，与同色相浅底背景对比度 ≥ 5:1（WCAG AA） */
+  /* 用于图标块/数值文字等"小色块图标 + 同色相浅底"场景，避免图标与底色同色不可见 */
+  --tea-icon-primary: #8A5A30;        /* 茶金加深版（与 primary-supply 浅底对比度 5.6:1） */
+  --tea-icon-success: #2D5C2C;        /* 茶绿加深版（与 success-bg 浅底对比度 6.1:1） */
+  --tea-icon-info: #1A4D80;          /* 蓝色加深版（与 info-bg 浅底对比度 7.2:1） */
+  --tea-icon-warning: #8A4A0F;       /* 橙色加深版（与 warning-bg 浅底对比度 5.8:1） */
+  --tea-icon-danger: #8A2A30;        /* 红色加深版（与 danger-bg 浅底对比度 5.9:1） */
+  --tea-icon-purple: #5B3FAE;        /* 紫色加深版（与 purple-bg 浅底对比度 5.4:1） */
+  --tea-icon-emerald: #0F7A55;       /* 翡翠加深版（与 emerald-bg 浅底对比度 5.7:1） */
+  --tea-icon-gray: #4A5260;          /* 灰色加深版（与 gray-bg 浅底对比度 6.3:1） */
+}
+
+[data-theme='dark'] {
+  --tea-surface-1: #0E1410;          /* 页面级背景（最深） */
+  --tea-surface-2: #181F18;          /* 卡片背景 */
+  --tea-surface-3: #1F261D;          /* 嵌套卡片 / 行背景 */
+  --tea-surface-hover: #1F261D;
+  --tea-surface-active: rgba(74, 103, 65, 0.18);
+  --tea-surface-overlay: rgba(22, 30, 22, 0.78);
+  --tea-surface-mask: rgba(255, 255, 255, 0.04);
+
+  /* 边框 - 深色下用半透明白 */
+  --tea-line-1: rgba(74, 103, 65, 0.15);
+  --tea-line-2: rgba(74, 103, 65, 0.08);
+  --tea-line-3: rgba(74, 103, 65, 0.04);
+  --tea-line-active: var(--tea-primary);
+
+  /* 文字 - 反转（亮色文字） */
+  --tea-content-1: #E8D9C5;
+  --tea-content-2: rgba(232, 217, 197, 0.85);
+  --tea-content-3: rgba(232, 217, 197, 0.65);
+  --tea-content-4: rgba(232, 217, 197, 0.45);
+  --tea-content-5: rgba(232, 217, 197, 0.25);
+  --tea-content-inverse: #181F18;
+  --tea-content-success: #7BAE7A;
+  --tea-content-warning: #E0A55C;
+  --tea-content-danger: #E08589;
+  --tea-content-info: #6FA8DC;
+
+  /* 强调色 - 深色下稍亮（保持品牌色相） */
+  --tea-accent-success: #7BAE7A;        /* 茶绿（深色下不刺眼） */
+  --tea-accent-success-bg: rgba(91, 140, 90, 0.18);
+  --tea-accent-warning: #E0A55C;        /* 柔橙（深色下不刺眼） */
+  --tea-accent-warning-bg: rgba(201, 122, 43, 0.18);
+  --tea-accent-danger: #E08589;         /* 柔红（深色下不刺眼） */
+  --tea-accent-danger-bg: rgba(194, 90, 96, 0.18);
+  --tea-accent-info: #6FA8DC;           /* 柔蓝（深色下不刺眼） */
+  --tea-accent-info-bg: rgba(61, 122, 184, 0.18);
+  --tea-accent-purple: #B794F6;
+  --tea-accent-purple-bg: rgba(139, 92, 246, 0.18);
+  --tea-accent-emerald: #34D399;
+  --tea-accent-emerald-bg: rgba(16, 185, 129, 0.18);
+  --tea-accent-gray: #9CA3AF;
+  --tea-accent-gray-bg: rgba(156, 163, 175, 0.18);
+
+  /* v0.5.4 图标专用色 - 深色模式下用更亮的色（与暗色背景对比度 ≥ 7:1） */
+  --tea-icon-primary: #E0A55C;         /* 茶金亮版 */
+  --tea-icon-success: #A8D2A6;         /* 茶绿亮版 */
+  --tea-icon-info: #9CC5E8;           /* 蓝色亮版 */
+  --tea-icon-warning: #F0C896;        /* 橙色亮版 */
+  --tea-icon-danger: #F0AAB0;          /* 红色亮版 */
+  --tea-icon-purple: #C4A0FF;          /* 紫色亮版 */
+  --tea-icon-emerald: #6EE7B7;         /* 翡翠亮版 */
+  --tea-icon-gray: #B0B7C3;            /* 灰色亮版 */
+}
+
+/* 圆角档位 */
+[data-radius='sharp'] {
+  --tea-radius-sm: 3px;
+  --tea-radius-md: 4px;
+  --tea-radius-lg: 6px;
+  --tea-radius-xl: 8px;
+}
+
+[data-radius='full'] {
+  --tea-radius-sm: 10px;
+  --tea-radius-md: 14px;
+  --tea-radius-lg: 18px;
+  --tea-radius-xl: 24px;
+}
+
+/* 密度档位 */
+[data-density='compact'] {
+  --tea-titlebar-height: 48px;
+  --tea-sider-collapsed: 52px;
+  --tea-tab-height: 36px;
+  --tea-brand-height: 52px;
+  --tea-search-height: 36px;
+}
+
+/* 护眼模式 */
+[data-eye-care='mild'] {
+  filter: brightness(0.96) contrast(0.95) saturate(0.88);
+}
+
+[data-eye-care='moderate'] {
+  filter: brightness(0.92) contrast(0.9) saturate(0.78);
+}
+
+[data-eye-care='strong'] {
+  filter: brightness(0.88) contrast(0.85) saturate(0.65);
+}
+
+/* 暖色温 */
+[data-warm-tone='true'] {
+  filter: sepia(0.08) brightness(0.97);
+}
+
+[data-eye-care='mild'][data-warm-tone='true'] {
+  filter: brightness(0.96) contrast(0.95) saturate(0.88) sepia(0.08);
+}
+
+[data-eye-care='moderate'][data-warm-tone='true'] {
+  filter: brightness(0.92) contrast(0.9) saturate(0.78) sepia(0.1);
+}
+
+[data-eye-care='strong'][data-warm-tone='true'] {
+  filter: brightness(0.88) contrast(0.85) saturate(0.65) sepia(0.12);
+}

@@ -1,0 +1,154 @@
+{
+  "templateId": "camp",
+  "name": "训练营",
+  "scenario": "camp",
+  "coverImage": "cloud://replace-required/camp/hero.webp",
+  "summary": "适合集中训练、打卡挑战和周期营，突出目标感、倒计时和名额紧张。",
+  "materials": [
+    { "materialId": "mat_camp_hero", "role": "hero" },
+    { "materialId": "mat_common_calm_music", "role": "music" }
+  ],
+  "tradeRecommendations": [
+    { "type": "package", "message": "建议配置训练营套餐，并说明周期、服务内容和打卡规则。" },
+    { "type": "early_bird", "message": "可配置早鸟价作为报名截止前的转化利益点。" }
+  ],
+  "previewData": {
+    "title": "21天瑜伽晨练训练营",
+    "startTime": "2026-08-01 06:30",
+    "endTime": "2026-08-21 07:30",
+    "signupDeadline": "2026-07-30 23:59",
+    "location": "线上+线下·每日直播打卡",
+    "instructor": "赵雅婷老师",
+    "maxParticipants": 50,
+    "virtualViewCount": 4210,
+    "virtualSignupCount": 32,
+    "coverImage": "",
+    "packages": [
+      { "name": "训练营全程", "price": "399", "originalPrice": "699", "type": "single", "content": ["21天每日直播", "专属社群陪跑", "打卡返现机制", "结营证书"] }
+    ],
+    "redPacketConfig": { "enabled": true, "signupAmount": 5, "inviteAmount": 15, "rankAmount": 50, "rankCount": 5 },
+    "componentPreview": {
+      "image_ad": { "content": { "mode": "single", "images": ["preview://camp-banner"] } },
+      "rich_text": { "content": { "html": "<h3>训练营特色</h3><ul><li>21天每日直播，养成晨练习惯</li><li>专属社群陪跑，互相激励打卡</li><li>打卡达标返现，最高返50%</li><li>结营颁发证书，见证蜕变</li></ul>" } },
+      "video": { "content": { "src": "preview://camp-video", "poster": "preview://camp-poster", "autoplay": false } }
+    }
+  },
+  "enabled": true,
+  "sort": 3,
+  "version": 1,
+  "layout": {
+    "version": 2,
+    "showHeader": true,
+    "globalStyle": {
+      "themeColor": "#7A3E2F",
+      "accentColor": "#E0B15A",
+      "pageBg": { "type": "color", "color": "#FAF6EF" },
+      "cardRadius": 8,
+      "componentGap": 12,
+      "fontScale": "normal",
+      "buttonStyle": "solid"
+    },
+    "floating": {
+      "music": { "enabled": true, "position": "rightTop", "defaultPlay": false },
+      "danmaku": { "enabled": true, "position": "rightTop", "defaultOn": false },
+      "toolGroup": { "enabled": true, "position": "leftMiddle", "actions": ["share", "customer_service", "back_to_top"] },
+      "benefitButton": { "enabled": "auto", "position": "rightMiddle" }
+    },
+    "components": [
+      {
+        "id": "camp_title",
+        "type": "title",
+        "enabled": true,
+        "order": 1,
+        "config": {
+          "content": { "title": "{{activityName}}", "subtitle": "周期训练 · 每日打卡 · 目标陪跑" },
+          "style": { "background": "#FFFFFF", "textColor": "#33251D", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "camp_countdown",
+        "type": "countdown",
+        "enabled": true,
+        "order": 2,
+        "config": {
+          "content": { "title": "训练营报名倒计时" },
+          "style": { "background": "#7A3E2F", "textColor": "#FFFFFF", "borderRadius": 12 },
+          "data": { "target": "signupDeadline", "endAction": "text", "endText": "本期报名已截止" },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "camp_quota",
+        "type": "quota_reminder",
+        "enabled": true,
+        "order": 3,
+        "config": {
+          "content": { "title": "营期名额" },
+          "style": { "background": "#FFFFFF", "textColor": "#33251D", "borderRadius": 10 },
+          "data": { "modes": ["remaining", "signup_count", "progress"], "warningThreshold": 10 },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "camp_grid",
+        "type": "data_grid",
+        "enabled": true,
+        "order": 4,
+        "config": {
+          "content": { "title": "本期热度" },
+          "style": { "background": "#FFFFFF", "textColor": "#33251D", "borderRadius": 10 },
+          "data": {
+            "columns": 4,
+            "rows": 1,
+            "items": [
+              "signup_count",
+              "remaining",
+              { "key": "cycle", "label": "营期", "value": "21", "unit": "天" },
+              "views"
+            ]
+          },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "camp_notice",
+        "type": "notice",
+        "enabled": true,
+        "order": 5,
+        "config": {
+          "content": { "mode": "static", "title": "入营提醒", "text": "训练营适合希望建立稳定练习节奏的学员，报名后请按老师通知进群打卡。" },
+          "style": { "background": "#FFF7E8", "textColor": "#6A3A22", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "view_detail" }
+        }
+      },
+      {
+        "id": "camp_trade",
+        "type": "trade_showcase",
+        "enabled": true,
+        "order": 6,
+        "config": {
+          "content": { "title": "选择训练营名额" },
+          "style": { "background": "#FFFFFF", "textColor": "#33251D", "borderRadius": 10 },
+          "data": { "source": "packages", "packageIds": [] },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+
+        "id": "camp_bottom",
+        "type": "bottom_signup_bar",
+        "enabled": true,
+        "order": 99,
+        "config": {
+          "content": { "buttonText": "立即加入训练营" },
+          "style": { "background": "#7A3E2F", "textColor": "#FFFFFF", "buttonColor": "#E0B15A" },
+          "data": { "source": "packages" },
+          "behavior": { "action": "signup" }
+        }
+      }
+    ]
+  }
+}

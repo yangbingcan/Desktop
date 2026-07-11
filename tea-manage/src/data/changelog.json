@@ -1,0 +1,29 @@
+[
+  {
+    "version": "0.3.1",
+    "date": "2026-07-02",
+    "type": "minor",
+    "title": "会员储值余额功能",
+    "changes": [
+      "feat: 会员储值充值（支持现金/微信/支付宝转账）",
+      "feat: 会员退款（退剩余余额到原支付方式，备注≥5字符）",
+      "feat: 储值流水查询与类型筛选（recharge/consume/refund）",
+      "feat: 收银台「会员卡」支付方式（pay_method=memberBalance）",
+      "feat: 数据库 schema 升级到 v4，新增 member_balance_logs 表（11字段+4索引）",
+      "feat: 会员详情页新增「储值流水」标签页 + 充值/退款弹窗",
+      "test: 8 个单元测试覆盖充值/退款/流水/支付方式等关键路径"
+    ]
+  },
+  {
+    "version": "0.3.0",
+    "date": "2026-07-02",
+    "type": "minor",
+    "title": "出入库闭环（M04）",
+    "changes": [
+      "feat: 供应商档案 CRUD",
+      "feat: 退货出库单管理",
+      "feat: 数据库 schema 升级到 v3，新增采购入库主单/明细表",
+      "fix: 多处事务原子性、订单号唯一性、SQL 列顺序问题"
+    ]
+  }
+]

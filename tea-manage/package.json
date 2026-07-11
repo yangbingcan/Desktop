@@ -1,0 +1,48 @@
+{
+  "name": "tea-manage",
+  "private": true,
+  "version": "0.5.5",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:contract": "vitest run tests/contract",
+    "test:unit": "vitest run tests/unit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "vitest run && playwright test"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@vicons/ionicons5": "^0.13.0",
+    "@vueuse/core": "^14.3.0",
+    "jsbarcode": "^3.12.3",
+    "naive-ui": "^2.44.1",
+    "pinia": "^3.0.4",
+    "qrcode": "^1.5.4",
+    "vue": "^3.5.13",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@iconify-json/ic": "^1.2.4",
+    "@iconify-json/mdi": "^1.2.3",
+    "@playwright/test": "^1.61.1",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^26.1.0",
+    "@unocss/preset-uno": "^66.7.4",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/test-utils": "^2.4.11",
+    "jsdom": "^25.0.1",
+    "typescript": "~5.6.2",
+    "unocss": "^66.7.4",
+    "vite": "^6.0.3",
+    "vitest": "^2.1.9",
+    "vue-tsc": "^2.1.10"
+  }
+}

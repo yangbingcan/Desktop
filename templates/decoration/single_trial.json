@@ -1,0 +1,144 @@
+{
+  "templateId": "single_trial",
+  "name": "单次体验课",
+  "scenario": "single_trial",
+  "coverImage": "cloud://replace-required/single-trial/hero.webp",
+  "summary": "适合新客低门槛预约体验，突出名额、倒计时和报名按钮。",
+  "materials": [
+    { "materialId": "mat_single_trial_hero", "role": "hero" },
+    { "materialId": "mat_common_calm_music", "role": "music" }
+  ],
+  "tradeRecommendations": [
+    { "type": "package", "message": "建议配置 1 个单人体验套餐，价格表达简单清晰。" }
+  ],
+  "previewData": {
+    "title": "新客体验课·首次到店免费",
+    "startTime": "2026-07-15 09:00",
+    "endTime": "2026-07-15 10:30",
+    "signupDeadline": "2026-07-14 22:00",
+    "location": "静心瑜伽馆·朝阳区建国路88号",
+    "instructor": "李雨桐老师",
+    "maxParticipants": 20,
+    "virtualViewCount": 358,
+    "virtualSignupCount": 12,
+    "coverImage": "",
+    "packages": [
+      { "name": "单次体验", "price": "59", "originalPrice": "99", "type": "single", "content": ["90分钟专业指导", "瑜伽垫免费使用", "课后茶歇"] }
+    ],
+    "redPacketConfig": { "enabled": true, "signupAmount": 3, "inviteAmount": 8, "rankAmount": 20, "rankCount": 3 },
+    "componentPreview": {
+      "image_ad": { "content": { "mode": "single", "images": ["preview://yoga-studio"] } },
+      "rich_text": { "content": { "html": "<h3>体验课亮点</h3><ul><li>90分钟专业瑜伽指导，零基础友好</li><li>小班教学，每班不超过8人</li><li>免费使用瑜伽垫和辅具</li><li>课后茶歇，与老师交流答疑</li></ul>" } },
+      "video": { "content": { "src": "preview://yoga-trial-video", "poster": "preview://yoga-trial-poster", "autoplay": false } }
+    }
+  },
+  "enabled": true,
+  "sort": 1,
+  "version": 1,
+  "layout": {
+    "version": 2,
+    "showHeader": true,
+    "globalStyle": {
+      "themeColor": "#2B7A4B",
+      "accentColor": "#F6A35D",
+      "pageBg": { "type": "color", "color": "#F3F7F2" },
+      "cardRadius": 10,
+      "componentGap": 12,
+      "fontScale": "normal",
+      "buttonStyle": "solid"
+    },
+    "floating": {
+      "music": { "enabled": true, "position": "rightTop", "defaultPlay": false },
+      "danmaku": { "enabled": true, "position": "rightTop", "defaultOn": false },
+      "toolGroup": { "enabled": true, "position": "leftMiddle", "actions": ["share", "customer_service", "back_to_top"] },
+      "benefitButton": { "enabled": "auto", "position": "rightMiddle" }
+    },
+    "components": [
+      {
+        "id": "single_title",
+        "type": "title",
+        "enabled": true,
+        "order": 1,
+        "config": {
+          "content": { "title": "{{activityName}}", "subtitle": "新客友好 · 小班体验 · 当天可约" },
+          "style": { "background": "#FFFFFF", "textColor": "#173D2F", "borderRadius": 12 },
+          "data": {},
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "single_notice",
+        "type": "notice",
+        "enabled": true,
+        "order": 2,
+        "config": {
+          "content": { "mode": "scroll", "title": "体验提醒", "text": "已有 {{报名人数}} 人预约，剩余名额 {{剩余名额}}" },
+          "style": { "background": "#E7F3EA", "textColor": "#1E5A3E", "borderRadius": 10 },
+          "data": {},
+          "behavior": { "action": "view_detail" }
+        }
+      },
+      {
+        "id": "single_grid",
+        "type": "data_grid",
+        "enabled": true,
+        "order": 3,
+        "config": {
+          "content": { "title": "活动热度" },
+          "style": { "background": "#FFFFFF", "textColor": "#173D2F", "borderRadius": 12 },
+          "data": { "columns": 3, "rows": 1, "items": ["signup_count", "remaining", "views"] },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+        "id": "single_countdown",
+        "type": "countdown",
+        "enabled": true,
+        "order": 4,
+        "config": {
+          "content": { "title": "体验名额锁定中" },
+          "style": { "background": "#2B7A4B", "textColor": "#FFFFFF", "borderRadius": 14 },
+          "data": { "target": "signupDeadline", "endAction": "text", "endText": "报名已截止" },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "single_trade",
+        "type": "trade_showcase",
+        "enabled": true,
+        "order": 5,
+        "config": {
+          "content": { "title": "选择体验名额" },
+          "style": { "background": "#FFFFFF", "textColor": "#173D2F", "borderRadius": 12 },
+          "data": { "source": "packages", "packageIds": [] },
+          "behavior": { "action": "signup" }
+        }
+      },
+      {
+        "id": "single_recent",
+        "type": "recent_signup",
+        "enabled": true,
+        "order": 6,
+        "config": {
+          "content": { "title": "刚刚有人预约" },
+          "style": { "background": "#FFFFFF", "textColor": "#173D2F", "borderRadius": 12 },
+          "data": { "mode": "avatar_scroll", "fillWithVirtual": true, "count": 8 },
+          "behavior": { "action": "none" }
+        }
+      },
+      {
+
+        "id": "single_bottom",
+        "type": "bottom_signup_bar",
+        "enabled": true,
+        "order": 99,
+        "config": {
+          "content": { "buttonText": "立即预约体验" },
+          "style": { "background": "#2B7A4B", "textColor": "#FFFFFF", "buttonColor": "#F6A35D" },
+          "data": { "source": "packages" },
+          "behavior": { "action": "signup" }
+        }
+      }
+    ]
+  }
+}
