@@ -196,7 +196,17 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
     // 设置页面标题
     document.title = `${to.meta.title || '茶易管'} - 茶易管`
-    next()
+    // 轻量会话门禁：未登录访问非公开路由 → 重定向到登录页
+    const isPublic = to.meta?.public === true
+    const loggedIn = localStorage.getItem('tea-logged-in') === '1'
+    if (!loggedIn && !isPublic) {
+        next('/login')
+    } else if (loggedIn && to.name === 'Login') {
+        // 已登录再访问登录页 → 回首页
+        next('/')
+    } else {
+        next()
+    }
 })
 
 export default router

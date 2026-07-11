@@ -11,7 +11,7 @@
             <!-- 标题栏 + 返回 -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="i-mdi-archive-outline text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-archive-outline text-[18px] align-middle text-tea-primary" />
                     <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">
                         {{ isEdit ? '编辑入库单' : '新增入库单' }}
                     </span>
@@ -124,7 +124,7 @@
             <!-- 搜索商品弹窗 -->
             <n-modal v-model:show="showSearchModal" preset="card" title="选择商品" style="width: 700px">
                 <template #header-extra>
-                    <span class="i-mdi-cube-outline text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-cube-outline text-[18px] align-middle text-tea-primary" />
                 </template>
                 <n-input
                     v-model:value="productSearch"
@@ -150,7 +150,7 @@
             <!-- 选择单位弹窗 -->
             <n-modal v-model:show="showUnitModal" preset="card" title="设置入库信息" style="width: 480px">
                 <template #header-extra>
-                    <span class="i-mdi-weight text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-weight text-[18px] align-middle text-tea-primary" />
                 </template>
                 <template v-if="selectedProduct">
                     <n-descriptions :column="2" size="small" label-placement="left">

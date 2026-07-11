@@ -11,7 +11,7 @@
             <!-- 标题栏 + 返回 -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="i-mdi-undo-variant text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-undo-variant text-[18px] align-middle text-tea-primary" />
                     <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">
                         {{ isEdit ? '编辑退货单' : '新增退货单' }}
                     </span>
@@ -117,7 +117,7 @@
             <n-modal v-model:show="showProductModal" :mask-closable="false">
                 <n-card title="选择退货商品" style="width: 800px" closable @close="showProductModal = false">
                     <template #header-extra>
-                        <span class="i-mdi-cube-outline text-[18px] align-middle text-[var(--tea-primary)]" />
+                        <span class="i-mdi-cube-outline text-[18px] align-middle text-tea-primary" />
                     </template>
                     <n-input
                         v-model:value="productSearch"

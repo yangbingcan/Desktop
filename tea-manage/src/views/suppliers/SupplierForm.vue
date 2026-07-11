@@ -10,7 +10,7 @@
             <!-- 标题栏 + 返回 -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="i-mdi-truck-delivery text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-truck-delivery text-[18px] align-middle text-tea-primary" />
                     <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">
                         {{ isEdit ? '编辑供应商' : '新增供应商' }}
                     </span>

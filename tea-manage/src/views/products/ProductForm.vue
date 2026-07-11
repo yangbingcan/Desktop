@@ -11,7 +11,7 @@
             <!-- 标题栏 + 返回 -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="i-mdi-leaf text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-leaf text-[18px] align-middle text-tea-primary" />
                     <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">
                         {{ isEdit ? '编辑商品' : '新增商品' }}
                     </span>

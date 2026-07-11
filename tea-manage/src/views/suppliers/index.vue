@@ -12,7 +12,7 @@
             <!-- 标题栏 -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="i-mdi-domain text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-domain text-[18px] align-middle text-tea-primary" />
                     <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">供应商管理</span>
                 </div>
                 <n-button type="primary" @click="$router.push('/suppliers/new')">
@@ -80,7 +80,7 @@
                         <n-space vertical :size="8">
                             <div class="flex items-center justify-between w-full">
                                 <div class="flex items-center gap-2">
-                                    <span class="i-mdi-domain text-[16px] align-middle text-[var(--tea-primary)]" />
+                                    <span class="i-mdi-domain text-[16px] align-middle text-tea-primary" />
                                     <span class="text-[15px] font-semibold text-[var(--tea-content-1)]">
                                         {{ drawerSupplier?.name || '' }}
                                     </span>

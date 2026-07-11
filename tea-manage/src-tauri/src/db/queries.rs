@@ -2,11 +2,9 @@
 //! 
 //! 提供商品查询、分类查询等常用查询函数
 
-use crate::db::Database;
 use crate::models::{
     Category, CategoryTree, Product, ProductDetail, ProductType, BaseUnit,
-    SalesUnit, ProductInput, ProductUpdate, SalesUnitInput,
-    CategoryInput, CategoryUpdate,
+    SalesUnit, ProductInput, SalesUnitInput,
 };
 use crate::models::PageResult;
 use chrono::Local;

@@ -1,7 +1,7 @@
 {
   "name": "tea-manage",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,7 +20,6 @@
   "dependencies": {
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "@vicons/ionicons5": "^0.13.0",
     "@vueuse/core": "^14.3.0",
     "jsbarcode": "^3.12.3",
     "naive-ui": "^2.44.1",
@@ -30,7 +29,6 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@iconify-json/ic": "^1.2.4",
     "@iconify-json/mdi": "^1.2.3",
     "@playwright/test": "^1.61.1",
     "@tauri-apps/cli": "^2",

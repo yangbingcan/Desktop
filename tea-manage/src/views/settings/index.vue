@@ -11,7 +11,7 @@
             <!-- 页面标题 -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="i-mdi-cog-outline text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-cog-outline text-[18px] align-middle text-tea-primary" />
                     <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">系统设置</span>
                 </div>
             </div>
@@ -147,7 +147,7 @@ const message = useMessage()
 const settingsStore = useSettingsStore()
 
 // v0.5.5 修复：从常量同步版本号，避免显示过期的 v0.1.0
-const appVersion = ref('0.6.0')
+const appVersion = ref('0.6.1')
 
 const shopSettings = reactive({
     shopName: '茶易管',

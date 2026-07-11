@@ -11,7 +11,7 @@
             <!-- 顶部操作栏 -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="i-mdi-account-group-outline text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-account-group-outline text-[18px] align-middle text-tea-primary" />
                     <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">会员管理</span>
                 </div>
                 <n-button type="primary" @click="$router.push('/members/new')">
@@ -82,7 +82,7 @@
                     <template #header>
                         <div class="flex items-center justify-between w-full">
                             <div class="flex items-center gap-2">
-                                <span class="i-mdi-account-circle text-[16px] align-middle text-[var(--tea-primary)]" />
+                                <span class="i-mdi-account-circle text-[16px] align-middle text-tea-primary" />
                                 <span class="text-[15px] font-semibold text-[var(--tea-content-1)]">
                                     {{ drawerMember ? `会员 - ${drawerMember.name}` : '会员详情' }}
                                 </span>

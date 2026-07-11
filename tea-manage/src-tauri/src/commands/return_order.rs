@@ -207,7 +207,7 @@ pub async fn create_return_order(
         ).map_err(|e| rollback(format!("记录流水失败: {}", e), &conn))?;
 
         // 4.7 暂存明细数据（延迟到 return_orders 插入后再写入 return_items，避免外键约束失败）
-        let subtotal = purchase_price * item.quantity as f64;
+        let subtotal = crate::utils::money::round2(purchase_price * item.quantity as f64);
         total_amount += subtotal;
 
         let item_id = Uuid::new_v4().to_string();
@@ -240,6 +240,9 @@ pub async fn create_return_order(
             subtotal,
         });
     }
+
+    // 金额精度：聚合后对总和四舍五入，消除 f64 累加漂移
+    total_amount = crate::utils::money::round2(total_amount);
 
     // 5. 创建退货单（必须先插主单，满足 return_items.order_id 外键约束）
     conn.execute(
@@ -753,7 +756,7 @@ pub async fn update_return_order(
         ).map_err(|e| rollback(format!("记录流水失败: {}", e), &conn))?;
 
         // 暂存明细数据（延迟到 return_orders 插入后再写入 return_items）
-        let subtotal = purchase_price * item.quantity as f64;
+        let subtotal = crate::utils::money::round2(purchase_price * item.quantity as f64);
         total_amount += subtotal;
 
         let item_id = Uuid::new_v4().to_string();
@@ -786,6 +789,9 @@ pub async fn update_return_order(
             subtotal,
         });
     }
+
+    // 金额精度：聚合后对总和四舍五入
+    total_amount = crate::utils::money::round2(total_amount);
 
     // 创建主单（复用原 id 和原 order_no，必须先插主单满足外键约束）
     conn.execute(

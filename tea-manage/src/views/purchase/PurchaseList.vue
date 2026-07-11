@@ -13,7 +13,7 @@
             <!-- 页面标题 + 主操作 -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="i-mdi-archive-outline text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-archive-outline text-[18px] align-middle text-tea-primary" />
                     <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">采购入库单</span>
                 </div>
                 <n-button type="primary" @click="$router.push('/purchase/new')">
@@ -156,7 +156,7 @@
             <!-- 供应商付款弹窗 -->
             <n-modal v-model:show="showPaymentModal" preset="card" title="供应商付款" style="width: 450px">
                 <template #header-extra>
-                    <span class="i-mdi-cash-register text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-cash-register text-[18px] align-middle text-tea-primary" />
                 </template>
                 <n-form label-placement="left" label-width="80">
                     <n-form-item label="付款金额">

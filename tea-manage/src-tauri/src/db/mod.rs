@@ -5,7 +5,7 @@
 mod queries;
 mod schema;
 
-use rusqlite::{Connection, Result as SqliteResult};
+use rusqlite::Connection;
 use std::sync::Mutex;
 
 /// 数据库连接管理器

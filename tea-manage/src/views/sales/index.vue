@@ -78,7 +78,7 @@
 
                 <!-- 会员识别区 -->
                 <div v-if="currentMember" class="pos-member-info">
-                    <span class="i-mdi-account text-[18px] align-middle text-[var(--tea-primary)]" />
+                    <span class="i-mdi-account text-[18px] align-middle text-tea-primary" />
                     <n-text strong>{{ currentMember.name }}</n-text>
                     <n-tag size="small" :bordered="false" :type="currentMember.level === 'gold' ? 'warning' : currentMember.level === 'silver' ? 'info' : 'default'">
                         {{ getMemberLevelName(currentMember.level) }}

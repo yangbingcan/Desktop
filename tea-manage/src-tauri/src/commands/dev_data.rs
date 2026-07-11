@@ -831,6 +831,11 @@ pub async fn seed_demo_data(
 pub async fn clear_all_data(
     db: tauri::State<'_, Database>,
 ) -> Result<ClearResult, String> {
+    // 安全门禁：清空全库仅允许在开发(debug)构建中执行，避免生产环境误清空
+    if !cfg!(debug_assertions) {
+        return Err("清空全库命令仅开发环境可用".into());
+    }
+
     let conn = db.get_conn()?;
 
     conn.execute("BEGIN EXCLUSIVE TRANSACTION", [])

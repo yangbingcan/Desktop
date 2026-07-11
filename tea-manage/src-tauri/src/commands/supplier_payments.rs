@@ -70,7 +70,7 @@ pub async fn create_supplier_payment(
                 id,
                 input.supplier_id,
                 input.purchase_order_id,
-                input.amount,
+                crate::utils::money::round2(input.amount),
                 input.payment_method,
                 input.payment_date,
                 remark,
@@ -98,6 +98,8 @@ pub async fn create_supplier_payment(
                     |row| row.get(0),
                 )
                 .map_err(|e| format!("查询已付总额失败: {}", e))?;
+            let paid_amount = crate::utils::money::round2(paid_amount);
+            let total_amount = crate::utils::money::round2(total_amount);
 
             // 计算 payment_status
             let payment_status = if paid_amount >= total_amount {

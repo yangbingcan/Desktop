@@ -7,6 +7,7 @@
 mod commands;
 mod db;
 mod models;
+pub mod utils;
 
 use db::Database;
 use tauri::Manager;

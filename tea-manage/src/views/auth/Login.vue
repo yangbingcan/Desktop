@@ -226,6 +226,8 @@ async function handleLogin() {
   loading.value = true
   // 保存登录信息到 localStorage
   saveRememberedLogin(form.value.username, form.value.password, rememberPassword.value)
+  // 写入登录态标记（轻量会话门禁依赖此标记）
+  localStorage.setItem('tea-logged-in', '1')
   // 模拟一点点延迟，让按钮 shimmer 走完
   setTimeout(() => {
     loading.value = false

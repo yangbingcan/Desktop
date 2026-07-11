@@ -227,7 +227,7 @@ pub async fn create_sale_order(
         ).map_err(|e| rollback_on_err(e.to_string(), &conn))?;
         
         let grams = grams_per_unit * item.quantity;
-        let subtotal = retail_price * item.quantity as f64;
+        let subtotal = crate::utils::money::round2(retail_price * item.quantity as f64);
         total_amount += subtotal;
         
         // 检查库存
@@ -330,9 +330,12 @@ pub async fn create_sale_order(
         });
     }
     
+    // 金额精度：聚合后对总和四舍五入，消除 f64 累加漂移
+    total_amount = crate::utils::money::round2(total_amount);
+
     // 计算折扣
-    let discount_amount = total_amount * (1.0 - discount_rate);
-    let after_discount = total_amount - discount_amount;
+    let discount_amount = crate::utils::money::round2(total_amount * (1.0 - discount_rate));
+    let after_discount = crate::utils::money::round2(total_amount - discount_amount);
     
     // CR-06: 积分抵扣规则修正
     // points_deduct 是使用的积分数（不是金额），100积分=1元
@@ -342,7 +345,7 @@ pub async fn create_sale_order(
         return Err(rollback_on_err("积分抵扣数不能为负数".to_string(), &conn));
     }
     // 抵扣金额 = 积分数 / 100
-    let points_deduct_amount = points_deduct as f64 / 100.0;
+    let points_deduct_amount = crate::utils::money::round2(points_deduct as f64 / 100.0);
     
     // 如果有会员，校验积分余额是否足够
     if let Some(ref mid) = input.member_id {
@@ -360,7 +363,7 @@ pub async fn create_sale_order(
         }
     }
     
-    let actual_amount = after_discount - points_deduct_amount;
+    let actual_amount = crate::utils::money::round2(after_discount - points_deduct_amount);
     // CR-07: 校验实付金额不能为负
     if actual_amount < 0.0 {
         return Err(rollback_on_err("实付金额不能为负数，积分抵扣过多".to_string(), &conn));
@@ -409,7 +412,7 @@ pub async fn create_sale_order(
             |row| Ok((row.get(0)?, row.get(1)?)),
         ).map_err(|e| rollback_on_err(e.to_string(), &conn))?;
         
-        let new_total_consume = current_total_consume + actual_amount;
+        let new_total_consume = crate::utils::money::round2(current_total_consume + actual_amount);
         // CR-09: 根据累计消费自动判断等级
         let new_level = MemberLevel::from_total_consume(new_total_consume);
         
@@ -446,7 +449,7 @@ pub async fn create_sale_order(
             }
 
             // 3. 扣减余额
-            let new_balance = current_balance - actual_amount;
+            let new_balance = crate::utils::money::round2(current_balance - actual_amount);
             conn.execute(
                 "UPDATE members SET balance = ?, updated_at = ? WHERE id = ?",
                 params![new_balance, now, mid],
@@ -523,9 +526,13 @@ pub async fn hold_order(
             let _ = conn.execute("ROLLBACK", []);
             e.to_string()
         })?;
-        total_amount += retail_price * item.quantity as f64;
+        let item_subtotal = crate::utils::money::round2(retail_price * item.quantity as f64);
+        total_amount += item_subtotal;
     }
     
+    // 金额精度：聚合后对总和四舍五入
+    total_amount = crate::utils::money::round2(total_amount);
+
     // 会员名称
     let member_name: Option<String> = if let Some(ref mid) = input.member_id {
         conn.query_row(
@@ -560,7 +567,7 @@ pub async fn hold_order(
         })?;
         
         let grams = grams_per_unit * item.quantity;
-        let subtotal = retail_price * item.quantity as f64;
+        let subtotal = crate::utils::money::round2(retail_price * item.quantity as f64);
         let item_id = Uuid::new_v4().to_string();
         
         // 获取单位名称

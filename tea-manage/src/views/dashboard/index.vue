@@ -16,7 +16,7 @@
           <n-card :bordered="false">
             <template #header>
               <div class="flex items-center gap-2">
-                <i class="i-mdi-grid align-middle text-[15px] text-[var(--tea-primary)]" />
+                <i class="i-mdi-grid align-middle text-[15px] text-tea-primary" />
                 <span class="text-[15px] font-semibold text-[var(--tea-content-1)]">快捷操作</span>
               </div>
             </template>
@@ -30,7 +30,7 @@
           <n-card :bordered="false">
             <template #header>
               <div class="flex items-center gap-2">
-                <i class="i-mdi-chart-line align-middle text-[15px] text-[var(--tea-primary)]" />
+                <i class="i-mdi-chart-line align-middle text-[15px] text-tea-primary" />
                 <span class="text-[15px] font-semibold text-[var(--tea-content-1)]">今日概览</span>
               </div>
             </template>
@@ -46,7 +46,7 @@
       <n-card :bordered="false">
         <template #header>
           <div class="flex items-center gap-2">
-            <i class="i-mdi-cog-outline align-middle text-[15px] text-[var(--tea-primary)]" />
+            <i class="i-mdi-cog-outline align-middle text-[15px] text-tea-primary" />
             <span class="text-[15px] font-semibold text-[var(--tea-content-1)]">演示数据管理</span>
           </div>
         </template>

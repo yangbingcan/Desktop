@@ -103,7 +103,7 @@ pub fn recharge_member_balance_impl(
         .map_err(|e| rollback(format!("会员不存在或已停用: {}", e), conn))?;
 
     // 4. 计算并更新余额
-    let new_balance = current_balance + input.amount;
+    let new_balance = crate::utils::money::round2(current_balance + input.amount);
     conn.execute(
         "UPDATE members SET balance = ?, updated_at = ? WHERE id = ?",
         params![new_balance, now, &input.member_id],
@@ -120,11 +120,11 @@ pub fn recharge_member_balance_impl(
         params![
             log_id,
             input.member_id,
-            input.amount,
+            crate::utils::money::round2(input.amount),
             new_balance,
             input.payment_method,
             input.operator,
-            input.bonus_amount,
+            crate::utils::money::round2(input.bonus_amount),
             remark_str,
             now
         ],
@@ -192,7 +192,7 @@ pub fn refund_member_balance_impl(
     validate_refund_amount(input.amount, current_balance).map_err(|e| rollback(e, conn))?;
 
     // 5. 扣减余额
-    let new_balance = current_balance - input.amount;
+    let new_balance = crate::utils::money::round2(current_balance - input.amount);
     conn.execute(
         "UPDATE members SET balance = ?, updated_at = ? WHERE id = ?",
         params![new_balance, now, &input.member_id],
@@ -208,7 +208,7 @@ pub fn refund_member_balance_impl(
         params![
             log_id,
             input.member_id,
-            -input.amount,
+            crate::utils::money::round2(-input.amount),
             new_balance,
             input.payment_method,
             input.operator,
