@@ -43,8 +43,11 @@ Desktop.ini
 .vscode/*
 !.vscode/extensions.json
 
-# ===== 本地工具数据（WorkBuddy 记忆，不纳入版本控制） =====
+# ===== 本地工具数据（IDE 记忆/技能，不纳入版本控制） =====
+# .workbuddy = WorkBuddy 记忆；.trae = Trae IDE 配置与技能库
+# 注意：.trae/skills/atutun-xhs-cover 是嵌入的 git 仓库，纳入会导致 gitlink 假备份，故排除整个目录
 .workbuddy/
+.trae/
 
 # ===== 用户运行时数据（SQLite 数据库，按需解注释纳入/排除） =====
 # *.db
