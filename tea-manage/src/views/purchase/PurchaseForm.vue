@@ -468,6 +468,7 @@ async function handleSubmit() {
         const input = {
             supplierId: form.supplierId,
             handler: form.handler || undefined,
+            paymentStatus: form.paymentStatus as 'unpaid' | 'partial' | 'paid',
             items: form.items.map(item => ({
                 productId: item.productId,
                 unitId: item.unitId,

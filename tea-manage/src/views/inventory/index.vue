@@ -144,6 +144,22 @@
                     <n-form-item label="商品">
                         <n-input :value="purchaseForm.items[0]?.productId ? productStore.products.find(p => p.id === purchaseForm.items[0].productId)?.name || '' : ''" disabled />
                     </n-form-item>
+                    <n-form-item label="入库单位">
+                        <n-select
+                            v-model:value="purchaseForm.items[0].unitId"
+                            :options="purchaseUnits.map(u => ({ label: u.name, value: u.id }))"
+                            placeholder="请选择入库单位"
+                            :disabled="purchaseUnits.length === 0"
+                        />
+                    </n-form-item>
+                    <n-form-item label="供应商">
+                        <n-select
+                            v-model:value="purchaseForm.supplierId"
+                            :options="supplierOptions"
+                            placeholder="请选择供应商"
+                            filterable
+                        />
+                    </n-form-item>
                     <n-form-item label="入库数量">
                         <n-input-number
                             v-model:value="purchaseForm.items[0].quantity"
@@ -263,10 +279,11 @@
  * @refactor v0.6.0 仅做模板与样式层重构（Naive UI 组件化 + mdi 图标 + NText 着色），业务逻辑完全保留。
  */
 import { ref, computed, onMounted, h } from 'vue'
-import { NButton, NSpace, NTag, NText } from 'naive-ui'
+import { NButton, NSpace, NTag, NText, NSelect } from 'naive-ui'
 import { getInventory, getInventoryDetail, purchaseIn, damageOut, adjustStock } from '@/api/inventory'
-import type { InventoryItem, InventoryDetail, PurchaseInput, DamageOutInput, AdjustInput, StockFlow } from '@/types'
-import { useProductStore } from '@/stores'
+import { getProductUnits } from '@/api/products'
+import type { InventoryItem, InventoryDetail, PurchaseInput, DamageOutInput, AdjustInput, StockFlow, SalesUnit } from '@/types'
+import { useProductStore, useSupplierStore } from '@/stores'
 import { useMessage } from 'naive-ui'
 
 const message = useMessage()
@@ -293,6 +310,10 @@ const purchaseForm = ref<PurchaseInput>({
     items: [],
     remark: ''
 })
+// F1/F2：采购入库所需商品单位与供应商列表
+const purchaseUnits = ref<SalesUnit[]>([])
+const supplierStore = useSupplierStore()
+const supplierOptions = computed(() => supplierStore.activeSuppliers.map(s => ({ label: s.name, value: s.id })))
 
 // 报损弹窗
 const damageVisible = ref(false)
@@ -412,8 +433,8 @@ function closeDetail() {
     inventoryDetail.value = null
 }
 
-/** 打开采购入库弹窗 */
-function openPurchase(item: InventoryItem) {
+/** 打开采购入库弹窗（F1/F2 修复：加载单位与供应商，默认选中第一个单位） */
+async function openPurchase(item: InventoryItem) {
     purchaseForm.value = {
         supplierId: undefined,
         handler: '',
@@ -426,12 +447,30 @@ function openPurchase(item: InventoryItem) {
         remark: ''
     }
     purchaseVisible.value = true
+    // 加载该商品销售单位，默认选中第一个
+    try {
+        const units = await getProductUnits(item.productId)
+        purchaseUnits.value = units
+        if (units.length > 0) {
+            purchaseForm.value.items[0].unitId = units[0].id
+        }
+    } catch (e) {
+        console.error('加载销售单位失败:', e)
+    }
+    // 确保供应商下拉有数据
+    if (supplierStore.activeSuppliers.length === 0) {
+        supplierStore.loadActiveSuppliers().catch(e => console.error('加载供应商失败:', e))
+    }
 }
 
 /** 提交采购入库 */
 async function submitPurchase() {
     if (!purchaseForm.value.items[0].unitId) {
         message.warning('请选择入库单位')
+        return
+    }
+    if (!purchaseForm.value.supplierId) {
+        message.warning('请选择供应商')
         return
     }
     if (purchaseForm.value.items[0].quantity <= 0) {

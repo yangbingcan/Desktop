@@ -779,6 +779,52 @@ pub fn create_tables(conn: &Connection) -> SqliteResult<()> {
         [],
     )?;
 
+    // ========== 客户销售退货表（CR-02 客户退货闭环，v0.7.0 新增，additive） ==========
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS return_sale_orders (
+            id TEXT PRIMARY KEY NOT NULL,
+            order_no TEXT NOT NULL UNIQUE,
+            original_order_id TEXT NOT NULL,
+            member_id TEXT,
+            member_name TEXT,
+            total_amount REAL NOT NULL DEFAULT 0,
+            refund_amount REAL NOT NULL DEFAULT 0,
+            points_reversed INTEGER NOT NULL DEFAULT 0,
+            remark TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (original_order_id) REFERENCES sales_orders(id) ON DELETE SET NULL
+        )",
+        [],
+    )?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_return_sale_order_no ON return_sale_orders(order_no)",
+        [],
+    )?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_return_sale_original ON return_sale_orders(original_order_id)",
+        [],
+    )?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS return_sale_items (
+            id TEXT PRIMARY KEY NOT NULL,
+            order_id TEXT NOT NULL,
+            product_id TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            unit_id TEXT NOT NULL,
+            unit_name TEXT NOT NULL,
+            quantity INTEGER NOT NULL DEFAULT 1,
+            unit_price REAL NOT NULL DEFAULT 0,
+            subtotal REAL NOT NULL DEFAULT 0,
+            FOREIGN KEY (order_id) REFERENCES return_sale_orders(id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+        )",
+        [],
+    )?;
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_return_sale_item_order ON return_sale_items(order_id)",
+        [],
+    )?;
+
     Ok(())
 }
 

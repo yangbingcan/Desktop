@@ -1,186 +1,157 @@
 <!--
-  @file 打印模板管理
-  @description 小票模板、入库单模板管理
-  @refactor v0.6.0 统一深茶绿视觉纪律：tea-page p-md + n-card + n-tabs + mdi 图标；
-             金额统一 .toFixed(2) + font-mono；保留编辑弹窗逻辑。
+  @file 打印模板设计器
+  @description 4 类单据（零售小票 / 采购入库单 / 退货出库单 / 条码标签）的可视化模板设计器。
+              左：结构化区块配置器（TemplateDesigner）；右：所见即所得预览（TemplatePreview）。
+              配置经 Pinia store 持久化到 localStorage，重构后不再写死 HTML。
+  @refactor v0.7.0 用区块配置器 + 实时预览替换原占位壳；引入 TemplateDesigner / TemplatePreview。
 -->
 <template>
     <div class="tea-page p-md">
         <n-space vertical :size="16">
-            <!-- 页面标题 -->
-            <div class="flex items-center justify-between">
+            <!-- 页面标题 + 操作 -->
+            <div class="flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-2">
                     <span class="i-mdi-printer-settings text-[18px] align-middle text-tea-primary" />
-                    <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">打印模板</span>
+                    <span class="text-[18px] font-semibold text-[var(--tea-content-1)]">打印模板设计器</span>
                 </div>
+                <n-space :size="8">
+                    <n-button size="small" @click="onReset">
+                        <template #icon>
+                            <span class="i-mdi-restore align-middle" />
+                        </template>
+                        重置默认
+                    </n-button>
+                    <n-button size="small" @click="onTestPrint">
+                        <template #icon>
+                            <span class="i-mdi-printer align-middle" />
+                        </template>
+                        测试打印
+                    </n-button>
+                    <n-button type="primary" size="small" @click="onSave">
+                        <template #icon>
+                            <span class="i-mdi-content-save align-middle" />
+                        </template>
+                        保存模板
+                    </n-button>
+                </n-space>
             </div>
 
             <n-card :bordered="false">
-                <n-tabs type="line" animated>
-                    <!-- 小票模板 -->
-                    <n-tab-pane name="receipt">
+                <n-tabs v-model:value="activeType" type="line" animated>
+                    <n-tab-pane
+                        v-for="t in typeList"
+                        :key="t.value"
+                        :name="t.value"
+                    >
                         <template #tab>
-                            <span class="i-mdi-receipt align-middle" />
-                            <span class="ml-1">小票模板</span>
+                            <span :class="t.icon" class="align-middle" />
+                            <span class="ml-1">{{ t.label }}</span>
                         </template>
 
-                        <n-space vertical :size="12">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[14px] font-semibold text-[var(--tea-content-1)]">零售小票模板</span>
-                                <n-button type="primary" size="small" @click="editTemplate('receipt')">
-                                    <template #icon>
-                                        <span class="i-mdi-pencil align-middle" />
-                                    </template>
-                                    编辑
-                                </n-button>
-                            </div>
-
-                        <!-- 模板预览 - 固定白色背景（模拟真实小票纸） -->
-                        <div class="receipt-preview">
-                            <div class="text-center" style="margin-bottom: 12px;">
-                                <div class="text-[16px] font-bold">{{ receiptDemo.shopName }}</div>
-                            </div>
-                            <div class="receipt-divider">
-                                <div
-                                    v-for="(item, idx) in receiptDemo.items"
-                                    :key="idx"
-                                    class="flex items-center justify-between"
-                                    style="padding: 2px 0;"
-                                >
-                                    <span class="text-[13px]">{{ item.name }} × {{ item.qty }}</span>
-                                    <span class="text-[13px] font-mono">¥{{ item.amount.toFixed(2) }}</span>
-                                </div>
-                            </div>
-                            <div class="text-right font-bold font-mono" style="margin-top: 8px;">
-                                合计：¥{{ receiptTotal }}
-                            </div>
-                            <div class="text-center text-[12px]" style="margin-top: 12px;">
-                                {{ receiptDemo.footer }}
-                            </div>
-                        </div>
-                        </n-space>
-                    </n-tab-pane>
-
-                    <!-- 入库单模板 -->
-                    <n-tab-pane name="purchase">
-                        <template #tab>
-                            <span class="i-mdi-clipboard-text align-middle" />
-                            <span class="ml-1">入库单模板</span>
-                        </template>
-
-                        <n-space vertical :size="12">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[14px] font-semibold text-[var(--tea-content-1)]">采购入库单模板</span>
-                                <n-button type="primary" size="small" @click="editTemplate('purchase')">
-                                    <template #icon>
-                                        <span class="i-mdi-pencil align-middle" />
-                                    </template>
-                                    编辑
-                                </n-button>
-                            </div>
-                            <n-empty description="暂无模板预览" />
-                        </n-space>
+                        <n-grid
+                            cols="1 820:2"
+                            :x-gap="16"
+                            :y-gap="16"
+                            responsive="screen"
+                        >
+                            <n-gi>
+                                <n-card title="区块配置" size="small" :bordered="false">
+                                    <TemplateDesigner v-model="drafts[t.value]" />
+                                </n-card>
+                            </n-gi>
+                            <n-gi>
+                                <n-card title="预览" size="small" :bordered="false">
+                                    <TemplatePreview :template="drafts[t.value]" />
+                                </n-card>
+                            </n-gi>
+                        </n-grid>
                     </n-tab-pane>
                 </n-tabs>
             </n-card>
         </n-space>
-
-        <!-- 编辑弹窗 -->
-        <n-modal
-            v-model:show="showEditModal"
-            preset="card"
-            :title="`编辑${currentTypeName}模板`"
-            style="width: 800px"
-        >
-            <n-input
-                v-model:value="templateContent"
-                type="textarea"
-                :rows="20"
-                placeholder="请输入模板内容（HTML格式）"
-            />
-            <template #footer>
-                <div class="flex items-center justify-end gap-2">
-                    <n-button @click="showEditModal = false">取消</n-button>
-                    <n-button type="primary" @click="saveTemplate">
-                        <template #icon>
-                            <span class="i-mdi-content-save align-middle" />
-                        </template>
-                        保存
-                    </n-button>
-                </div>
-            </template>
-        </n-modal>
     </div>
 </template>
 
 <script setup lang="ts">
 /**
- * @file 打印模板管理逻辑
- * @description 小票模板 / 入库单模板
- *
- * 业务逻辑（严格保留）：
- * 1. showEditModal / currentType / templateContent / currentTypeName 响应式状态
- * 2. editTemplate(type) 设置当前类型并提示（编辑功能开发中）
- * 3. saveTemplate() 提示保存并关闭弹窗
- *
- * 演示小票金额统一 .toFixed(2) + font-mono（视觉纪律 #8）
+ * @file 打印模板设计器逻辑
+ * @description 维护 4 类模板的可编辑副本 drafts；保存落盘、重置默认、测试打印走 store + 渲染引擎。
  */
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useMessage } from 'naive-ui'
+import TemplateDesigner from '@/components/print/TemplateDesigner.vue'
+import TemplatePreview from '@/components/print/TemplatePreview.vue'
+import { usePrintTemplatesStore } from '@/stores/printTemplates'
+import { useSettingsStore } from '@/stores/settings'
+import { renderTemplateHTML, renderLabelHTML, demoPrintData } from '@/utils/printTemplate'
+import { printHTML } from '@/utils/print'
+import type {
+    TemplateType,
+    PrintTemplate,
+    ShopInfo,
+    ReceiptPrintData,
+    DocPrintData,
+    LabelPrintData
+} from '@/types/printTemplate'
 
+const store = usePrintTemplatesStore()
+const settings = useSettingsStore()
 const message = useMessage()
 
-const showEditModal = ref(false)
-const currentType = ref('receipt')
-const templateContent = ref('')
-const currentTypeName = ref('')
+const typeList = [
+    { value: 'receipt', label: '零售小票', icon: 'i-mdi-receipt' },
+    { value: 'purchase', label: '采购入库单', icon: 'i-mdi-clipboard-text' },
+    { value: 'return', label: '退货出库单', icon: 'i-mdi-clipboard-remove' },
+    { value: 'label', label: '条码标签', icon: 'i-mdi-barcode' }
+] as const
 
-/** 演示小票数据（仅用于预览，不改变业务逻辑） */
-const receiptDemo = {
-    shopName: '茶易管',
-    items: [
-        { name: '铁观音 50g', qty: 2, amount: 80.0 },
-        { name: '大红袍 100g', qty: 1, amount: 88.0 }
-    ],
-    footer: '感谢惠顾，欢迎再次光临！'
+const activeType = ref<TemplateType>('receipt')
+const drafts = ref<Record<TemplateType, PrintTemplate>>(clone(store.templates))
+
+/** 深拷贝（模板为纯 JSON 结构） */
+function clone<T>(x: T): T {
+    return JSON.parse(JSON.stringify(x))
 }
 
-/** 合计金额：toFixed(2) 固定两位小数 */
-const receiptTotal = computed(() =>
-    receiptDemo.items.reduce((sum, i) => sum + i.amount, 0).toFixed(2)
-)
-
-function editTemplate(type: string) {
-    currentType.value = type
-    currentTypeName.value = type === 'receipt' ? '小票' : '入库单'
-    // 打印模板编辑功能开发中
-    message.info('打印模板编辑功能开发中')
+function typeLabel(t: TemplateType): string {
+    return typeList.find(x => x.value === t)?.label ?? ''
 }
 
-function saveTemplate() {
-    // 保存模板功能开发中
-    message.info('打印模板保存功能开发中')
-    showEditModal.value = false
+function shopInfo(): ShopInfo {
+    return {
+        shopName: settings.settings.shopName || '茶易管',
+        shopAddress: settings.settings.shopAddress || '',
+        shopPhone: settings.settings.shopPhone || ''
+    }
+}
+
+/** 保存当前类型模板到 store（localStorage 持久化） */
+function onSave() {
+    const type = activeType.value
+    store.saveTemplate(drafts.value[type])
+    message.success(`已保存「${typeLabel(type)}」模板`)
+}
+
+/** 重置当前类型为默认模板 */
+function onReset() {
+    const type = activeType.value
+    store.resetTemplate(type)
+    drafts.value[type] = clone(store.getTemplate(type))
+    message.info(`已重置「${typeLabel(type)}」为默认模板`)
+}
+
+/** 用演示数据渲染当前模板并调用浏览器打印（验证排版） */
+async function onTestPrint() {
+    const type = activeType.value
+    const tpl = drafts.value[type]
+    const data = demoPrintData(type, shopInfo())
+    let html = ''
+    if (type === 'label') {
+        html = await renderLabelHTML(tpl, data as LabelPrintData)
+    } else {
+        html = renderTemplateHTML(tpl, data as ReceiptPrintData | DocPrintData)
+    }
+    await printHTML(html)
+    message.success('已发送打印，请在打印对话框中确认')
 }
 </script>
-
-<style scoped>
-/* v0.5.2 模板预览 - 模拟真实小票纸（固定浅色背景） */
-.receipt-preview {
-    padding: 16px;
-    width: 300px;
-    margin: 0 auto;
-    background: #FFFFFF;
-    border: 1px solid var(--tea-line-1);
-    border-radius: var(--tea-radius-lg);
-    color: #000000;
-    font-family: 'Courier New', monospace;
-}
-
-.receipt-preview .receipt-divider {
-    border-top: 1px dashed #000000;
-    border-bottom: 1px dashed #000000;
-    padding: 8px 0;
-    margin-bottom: 8px;
-}
-</style>

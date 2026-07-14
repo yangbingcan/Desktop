@@ -5,7 +5,8 @@
 import { invoke } from '@tauri-apps/api/core'
 import type {
     Member, SaleOrder, SaleOrderItem, SaleItemInput,
-    SaleOrderInput, HeldOrder
+    SaleOrderInput, HeldOrder, SaleOrderSummary, DashboardStats,
+    SaleOrderQuery, PageResult, ReturnSaleOrder, ReturnSaleOrderInput
 } from '@/types'
 import { getMemberDiscountRate, getMemberLevelName } from './members'
 
@@ -70,5 +71,44 @@ export async function deleteHeldOrder(orderId: string): Promise<void> {
     return await invoke('delete_held_order', { orderId })
 }
 
+/**
+ * 获取销售历史（分页 + 筛选）
+ *
+ * 支持日期区间（YYYY-MM-DD）、会员、商品筛选；仅返回已完成订单。
+ */
+export async function getSaleOrders(query: SaleOrderQuery = {}): Promise<PageResult<SaleOrderSummary>> {
+    return await invoke('get_sale_orders', {
+        startDate: query.startDate ?? null,
+        endDate: query.endDate ?? null,
+        memberId: query.memberId ?? null,
+        productId: query.productId ?? null,
+        page: query.page ?? 1,
+        pageSize: query.pageSize ?? 20,
+    })
+}
+
+/**
+ * 获取单个销售订单详情（含明细），供客户退货弹窗加载原单商品行
+ */
+export async function getSaleOrder(id: string): Promise<SaleOrder> {
+    return await invoke('get_sale_order', { id })
+}
+
+/**
+ * 获取首页经营指标（今日订单/销售额/库存预警/新增会员）
+ */
+export async function getDashboardStats(): Promise<DashboardStats> {
+    return await invoke('get_dashboard_stats')
+}
+
+/**
+ * 客户销售退货（CR-02 闭环）
+ *
+ * 传入原订单 id 与退货明细（商品/单位/数量），后端自动回滚库存、冲减会员积分并生成退货单。
+ */
+export async function returnSaleOrder(input: ReturnSaleOrderInput): Promise<ReturnSaleOrder> {
+    return await invoke('return_sale_order', { input })
+}
+
 // 重新导出类型，方便外部使用
-export type { Member, SaleOrder, SaleOrderItem, SaleItemInput, SaleOrderInput, HeldOrder }
+export type { Member, SaleOrder, SaleOrderItem, SaleItemInput, SaleOrderInput, HeldOrder, SaleOrderSummary, DashboardStats, SaleOrderQuery, ReturnSaleOrder, ReturnSaleOrderInput }

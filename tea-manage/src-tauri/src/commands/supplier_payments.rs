@@ -332,8 +332,8 @@ pub async fn get_supplier_balance(
         )
         .map_err(|e| e.to_string())?;
 
-    // 欠款余额 = 采购总额 - 已付总额 - 退货冲抵
-    let balance = total_purchase - total_paid - total_return;
+    // 欠款余额 = 采购总额 - 已付总额 - 退货冲抵（金额收敛防 f64 漂移）
+    let balance = crate::utils::money::round2(total_purchase - total_paid - total_return);
 
     Ok(SupplierBalance {
         total_purchase,

@@ -164,7 +164,8 @@ import {
     NDrawer, NDrawerContent, NDescriptions, NDescriptionsItem
 } from 'naive-ui'
 import { useMemberStore } from '@/stores'
-import type { Member } from '@/types'
+import type { Member, MemberLevel } from '@/types'
+import { getMemberDiscountRate } from '@/api/members'
 
 const router = useRouter()
 const memberStore = useMemberStore()
@@ -213,12 +214,12 @@ function getLevelLabel(level: string): string {
     }
 }
 
-function getDiscountLabel(level: string): string {
-    switch (level) {
-        case 'gold': return '8折'
-        case 'silver': return '9折'
-        default: return '无折扣'
-    }
+function getDiscountLabel(level: MemberLevel): string {
+    const rate = getMemberDiscountRate(level)
+    if (rate >= 1) return '无折扣'
+    const zhe = rate * 10
+    const text = Number.isInteger(zhe) ? zhe.toString() : zhe.toFixed(1)
+    return `${text}折`
 }
 
 /** 表格最大高度 - 自适应屏幕 */

@@ -27,3 +27,8 @@ export async function seedDemoData(): Promise<SeedResult> {
 export async function clearAllData(): Promise<ClearResult> {
     return await invoke('clear_all_data')
 }
+
+/** 数据库备份：复制当前数据库为带时间戳的副本，返回备份文件路径 */
+export async function backupDatabase(): Promise<string> {
+    return await invoke('backup_database')
+}

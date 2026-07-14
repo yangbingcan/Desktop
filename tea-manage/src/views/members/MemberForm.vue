@@ -65,11 +65,7 @@
                     <n-form-item label="偏好茶类">
                         <n-checkbox-group v-model:value="form.preferences.preferredTeas">
                             <n-space>
-                                <n-checkbox value="qingcha">青茶</n-checkbox>
-                                <n-checkbox value="hongcha">红茶</n-checkbox>
-                                <n-checkbox value="puer">普洱</n-checkbox>
-                                <n-checkbox value="lvcha">绿茶</n-checkbox>
-                                <n-checkbox value="baicha">白茶</n-checkbox>
+                                <n-checkbox v-for="opt in TEA_TYPE_OPTIONS" :key="opt" :value="opt">{{ opt }}</n-checkbox>
                             </n-space>
                         </n-checkbox-group>
                     </n-form-item>
@@ -77,10 +73,7 @@
                     <n-form-item label="口感倾向">
                         <n-checkbox-group v-model:value="form.preferences.tastePreferences">
                             <n-space>
-                                <n-checkbox value="strong">浓醇厚重</n-checkbox>
-                                <n-checkbox value="fresh">清香甘甜</n-checkbox>
-                                <n-checkbox value="bitter">苦后回甘</n-checkbox>
-                                <n-checkbox value="smooth">顺滑柔和</n-checkbox>
+                                <n-checkbox v-for="opt in TASTE_OPTIONS" :key="opt" :value="opt">{{ opt }}</n-checkbox>
                             </n-space>
                         </n-checkbox-group>
                     </n-form-item>
@@ -104,9 +97,7 @@
                     <n-form-item label="消费场景">
                         <n-checkbox-group v-model:value="form.preferences.consumptionScenario">
                             <n-space>
-                                <n-checkbox value="self">自饮</n-checkbox>
-                                <n-checkbox value="gift">送礼</n-checkbox>
-                                <n-checkbox value="office">办公接待</n-checkbox>
+                                <n-checkbox v-for="opt in SCENARIO_OPTIONS" :key="opt" :value="opt">{{ opt }}</n-checkbox>
                             </n-space>
                         </n-checkbox-group>
                     </n-form-item>
@@ -132,7 +123,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMessage } from 'naive-ui'
-import { createMember, updateMember, getMemberDetail, updateMemberPreference } from '@/api/members'
+import { createMember, updateMember, getMemberDetail, updateMemberPreference, TEA_TYPE_OPTIONS, TASTE_OPTIONS, SCENARIO_OPTIONS } from '@/api/members'
 
 const router = useRouter()
 const route = useRoute()
@@ -200,8 +191,16 @@ async function handleSubmit() {
 
             message.success('会员信息已更新')
         } else {
-            // 新增模式
-            await createMember(form.name, form.phone, genderStr, birthdayStr)
+            // 新增模式：先创建会员，再保存口味偏好（C5 修复：原代码丢弃偏好）
+            const created = await createMember(form.name, form.phone, genderStr, birthdayStr)
+            await updateMemberPreference(created.id, {
+                preferredTeas: form.preferences.preferredTeas,
+                tastePreferences: form.preferences.tastePreferences,
+                taboos: form.preferences.taboos,
+                brewHabits: form.preferences.brewHabits,
+                consumptionScenario: form.preferences.consumptionScenario,
+                remark: ''
+            })
             message.success('会员创建成功')
         }
 

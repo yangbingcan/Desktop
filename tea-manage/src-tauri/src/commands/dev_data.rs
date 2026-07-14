@@ -80,6 +80,11 @@ pub async fn seed_demo_data(
     db: tauri::State<'_, Database>,
 ) -> Result<SeedResult, String> {
     let conn = db.get_conn()?;
+    // C3: 生产环境保护——演示数据生成仅开发环境可用，
+    //     避免 release 构建中绕过 clear_all_data 的门禁清空真实业务数据
+    if !cfg!(debug_assertions) {
+        return Err("演示数据生成仅开发环境可用".to_string());
+    }
     let now = chrono::Local::now();
     let now_str = now.format("%Y-%m-%d %H:%M:%S").to_string();
     let today = now.format("%Y-%m-%d").to_string();

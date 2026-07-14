@@ -1,6 +1,6 @@
 [package]
 name = "tea-manage"
-version = "0.6.1"
+version = "0.7.0"
 description = "茶易管 - 茶叶店管理系统"
 authors = ["you"]
 edition = "2021"

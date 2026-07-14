@@ -27,6 +27,8 @@ const SupplierForm = () => import('@/views/suppliers/SupplierForm.vue')
 const ReturnList = () => import('@/views/returns/ReturnList.vue')
 const ReturnForm = () => import('@/views/returns/ReturnForm.vue')
 const ReturnDetail = () => import('@/views/returns/ReturnDetail.vue')
+// v0.7.x 报表
+const SalesHistory = () => import('@/views/reports/SalesHistory.vue')
 // v0.5.0 登录页（公开页，不进入 AppLayout）
 const Login = () => import('@/views/auth/Login.vue')
 
@@ -158,6 +160,12 @@ const routes: RouteRecordRaw[] = [
         name: 'ReturnEdit',
         component: ReturnForm,
         meta: { title: '编辑退货单', tabTitle: '退货出库' }
+    },
+    {
+        path: '/reports/sales',
+        name: 'SalesHistory',
+        component: SalesHistory,
+        meta: { title: '销售历史', tabTitle: '报表中心' }
     },
     {
         path: '/print-templates',

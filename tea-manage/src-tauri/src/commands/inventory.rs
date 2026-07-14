@@ -331,10 +331,18 @@ pub fn purchase_in_impl(
             |row| Ok((row.get(0)?, row.get(1)?)),
         ).map_err(|e| rollback(format!("单位不存在: {}", e), conn))?;
 
-        // 4.3 计算入库克数和小计
+        // 校验单价与数量符号（S-2 修复：负单价污染财务，负数量反向增减库存）
+        if item.unit_price < 0.0 || item.quantity <= 0 {
+            return Err(rollback(
+                "采购单价不能为负数、数量必须大于 0".to_string(),
+                conn,
+            ));
+        }
+
+        // 4.3 计算入库克数和小计（金额收敛防 f64 漂移）
         let grams = item.quantity * conversion;
-        let subtotal = item.unit_price * item.quantity as f64;
-        total_amount += subtotal;
+        let subtotal = crate::utils::money::round2(item.unit_price * item.quantity as f64);
+        total_amount = crate::utils::money::round2(total_amount + subtotal);
 
         // 4.4 生成批次号
         let batch_id = Uuid::new_v4().to_string();
@@ -476,30 +484,37 @@ pub async fn damage_out(
     conn.execute("BEGIN EXCLUSIVE TRANSACTION", [])
         .map_err(|e| e.to_string())?;
 
-    // 检查库存
-    let (stock_grams, product_type): (i64, String) = conn.query_row(
-        "SELECT stock_grams, product_type FROM products WHERE id = ?",
+    // 检查库存（按商品类型选择库存列：称重用 stock_grams，计件用 stock_units）
+    let (stock, product_type): (i64, String) = conn.query_row(
+        "SELECT CASE WHEN product_type = 'weight' THEN stock_grams ELSE stock_units END, product_type
+         FROM products WHERE id = ?",
         [&input.product_id],
         |row| Ok((row.get(0)?, row.get(1)?)),
     ).map_err(|e| e.to_string())?;
 
-    if stock_grams < input.grams {
-        conn.execute("ROLLBACK", []).map_err(|e| e.to_string())?;
-        return Err(format!("库存不足，当前库存 {}g，需要 {}g", stock_grams, input.grams));
+    if input.grams <= 0 {
+        let _ = conn.execute("ROLLBACK", []);
+        return Err("报损数量必须大于 0".to_string());
     }
 
-    // 扣减库存
+    if stock < input.grams {
+        conn.execute("ROLLBACK", []).map_err(|e| e.to_string())?;
+        return Err(format!("库存不足，当前库存 {}，需要 {}", stock, input.grams));
+    }
+
+    // 扣减库存（按类型选择列）
+    let stock_field = if product_type == "weight" { "stock_grams" } else { "stock_units" };
     conn.execute(
-        "UPDATE products SET stock_grams = stock_grams - ? WHERE id = ?",
+        &format!("UPDATE products SET {} = {} - ? WHERE id = ?", stock_field, stock_field),
         params![input.grams, input.product_id],
     ).map_err(|e| e.to_string())?;
 
-    // FIFO 批次扣减
+    // FIFO 批次扣减（remaining_grams 对计件即剩余件数）
     deduct_from_batches(&conn, &input.product_id, input.grams)?;
 
     // 记录流水
     let new_balance: i64 = conn.query_row(
-        "SELECT stock_grams FROM products WHERE id = ?",
+        &format!("SELECT {} FROM products WHERE id = ?", stock_field),
         [&input.product_id],
         |row| row.get(0),
     ).map_err(|e| e.to_string())?;
@@ -544,24 +559,26 @@ pub async fn adjust_stock(
     conn.execute("BEGIN TRANSACTION", [])
         .map_err(|e| e.to_string())?;
 
-    // 检查商品存在
-    let (stock_grams,): (i64,) = conn.query_row(
-        "SELECT stock_grams FROM products WHERE id = ?",
+    // 检查商品存在（按类型选择库存列）
+    let (product_type, stock): (String, i64) = conn.query_row(
+        "SELECT product_type, CASE WHEN product_type = 'weight' THEN stock_grams ELSE stock_units END
+         FROM products WHERE id = ?",
         [&input.product_id],
-        |row| Ok((row.get(0)?,)),
+        |row| Ok((row.get(0)?, row.get(1)?)),
     ).map_err(|e| e.to_string())?;
 
-    let new_balance = stock_grams + input.grams;
+    let stock_field = if product_type == "weight" { "stock_grams" } else { "stock_units" };
+    let new_balance = stock + input.grams;
 
     // 检查调整后不为负
     if new_balance < 0 {
         conn.execute("ROLLBACK", []).map_err(|e| e.to_string())?;
-        return Err(format!("调整后库存不能为负数，当前 {}g，调整 {}g", stock_grams, input.grams));
+        return Err(format!("调整后库存不能为负数，当前 {}，调整 {}", stock, input.grams));
     }
 
-    // 更新库存
+    // 更新库存（按类型选择列）
     conn.execute(
-        "UPDATE products SET stock_grams = ? WHERE id = ?",
+        &format!("UPDATE products SET {} = ? WHERE id = ?", stock_field),
         params![new_balance, input.product_id],
     ).map_err(|e| e.to_string())?;
 
@@ -897,17 +914,29 @@ pub async fn update_purchase_order(
     let now = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
     // 4. 反向库存操作：遍历旧明细，删除旧批次 + 扣减商品库存
+    // 🔧 v0.6.x 修复(C1)：按商品类型选择库存列，且按批次【当前剩余量】回滚，
+    //    避免对已售出/报损部分重复扣减导致负库存。
     for old_item in &old_order.items {
-        // 4.1 删除旧批次
+        // 4.1 查询批次当前剩余量与商品类型
+        let (product_type, remaining): (String, i64) = conn.query_row(
+            "SELECT p.product_type, b.remaining_grams
+             FROM inventory_batches b JOIN products p ON p.id = b.product_id
+             WHERE b.id = ?",
+            [&old_item.batch_id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        ).map_err(|e| rollback(format!("查询旧批次失败: {}", e), &conn))?;
+
+        // 4.2 删除旧批次
         conn.execute(
             "DELETE FROM inventory_batches WHERE id = ?",
             [&old_item.batch_id],
         ).map_err(|e| rollback(format!("删除旧批次失败: {}", e), &conn))?;
 
-        // 4.2 扣减商品库存（反向操作：减去原先入库的量）
+        // 4.3 按【当前剩余量】回滚商品库存（按类型选列）
+        let stock_field = if product_type == "weight" { "stock_grams" } else { "stock_units" };
         conn.execute(
-            "UPDATE products SET stock_grams = stock_grams - ? WHERE id = ?",
-            params![old_item.grams, old_item.product_id],
+            &format!("UPDATE products SET {} = {} - ? WHERE id = ?", stock_field, stock_field),
+            params![remaining, old_item.product_id],
         ).map_err(|e| rollback(format!("扣减库存失败: {}", e), &conn))?;
     }
 
@@ -961,10 +990,10 @@ pub async fn update_purchase_order(
             |row| Ok((row.get(0)?, row.get(1)?)),
         ).map_err(|e| rollback(format!("单位不存在: {}", e), &conn))?;
 
-        // 计算入库克数和小计
+        // 计算入库克数和小计（金额收敛防 f64 漂移）
         let grams = item.quantity * conversion;
-        let subtotal = item.unit_price * item.quantity as f64;
-        total_amount += subtotal;
+        let subtotal = crate::utils::money::round2(item.unit_price * item.quantity as f64);
+        total_amount = crate::utils::money::round2(total_amount + subtotal);
 
         // 生成新批次
         let batch_id = Uuid::new_v4().to_string();

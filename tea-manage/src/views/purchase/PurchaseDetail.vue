@@ -20,6 +20,12 @@
                     </template>
                     返回
                 </n-button>
+                <n-button v-if="order" type="primary" @click="handlePrint">
+                    <template #icon>
+                        <span class="i-mdi-printer align-middle" />
+                    </template>
+                    打印采购单
+                </n-button>
             </div>
 
             <n-card v-if="loading" :bordered="false">
@@ -87,6 +93,7 @@ import {
 import type { DataTableColumns } from 'naive-ui'
 import type { PurchaseOrder, PurchaseOrderItem } from '@/types'
 import { getPurchaseOrderDetail } from '@/api/purchases'
+import { printPurchaseOrder } from '@/utils/print'
 
 const route = useRoute()
 const message = useMessage()
@@ -135,6 +142,17 @@ const itemColumns = computed<DataTableColumns<PurchaseOrderItem>>(() => [
     { title: '小计', key: 'subtotal', width: 120, render: (row) => h(NText, { type: 'warning', class: 'font-mono' }, { default: () => `¥${row.subtotal.toFixed(2)}` }) },
     { title: '批次号', key: 'batchCode', width: 160, ellipsis: { tooltip: true } }
 ])
+
+/** 打印采购入库单（走模板引擎） */
+async function handlePrint() {
+    if (!order.value) return
+    try {
+        await printPurchaseOrder(order.value)
+        message.success('已发送打印任务')
+    } catch (e) {
+        message.error('打印失败：' + String(e))
+    }
+}
 
 onMounted(() => {
     loadDetail()

@@ -76,6 +76,9 @@ pub fn run() {
             commands::get_held_orders,
             commands::get_held_order_detail,
             commands::delete_held_order,
+            commands::get_sale_orders,
+            commands::get_sale_order,
+            commands::get_dashboard_stats,
             // 供应商相关（v0.2.0 M04 出入库闭环）
             commands::get_suppliers,
             commands::get_all_active_suppliers,
@@ -103,6 +106,10 @@ pub fn run() {
             // 演示数据（开发辅助）
             commands::seed_demo_data,
             commands::clear_all_data,
+            // 客户销售退货（CR-02 闭环）
+            commands::return_sale_order,
+            // 数据库备份（v0.7.0 替换占位）
+            commands::backup_database,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

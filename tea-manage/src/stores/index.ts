@@ -8,7 +8,6 @@ export const pinia = createPinia()
 
 export { useProductStore } from './products'
 export { useInventoryStore } from './inventory'
-export { useSalesStore } from './sales'
 export { useMemberStore } from './members'
 export { useSupplierStore } from './suppliers'
 export { useSettingsStore } from './settings'

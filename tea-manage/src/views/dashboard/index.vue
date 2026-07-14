@@ -35,15 +35,15 @@
               </div>
             </template>
             <template #header-extra>
-              <n-tag size="small" :bordered="false" type="info">演示数据</n-tag>
+              <n-tag size="small" :bordered="false" type="success">实时</n-tag>
             </template>
             <TodayStats />
           </n-card>
         </n-gi>
       </n-grid>
 
-      <!-- 演示数据管理（开发辅助） -->
-      <n-card :bordered="false">
+      <!-- 演示数据管理（开发辅助，仅演示模式开启时显示） -->
+      <n-card v-if="demoMode" :bordered="false">
         <template #header>
           <div class="flex items-center gap-2">
             <i class="i-mdi-cog-outline align-middle text-[15px] text-tea-primary" />
@@ -83,6 +83,9 @@
           </n-space>
         </n-space>
       </n-card>
+
+      <!-- 系统操作手册（分模块操作说明，常驻显示） -->
+      <OperationManual />
     </n-space>
 
     <!-- 清空确认弹窗 -->
@@ -131,9 +134,11 @@
 import { ref } from 'vue'
 import { NAlert, NInput, NCard, NButton, NModal, NSpace, NTag, NGrid, NGi, useMessage } from 'naive-ui'
 import { seedDemoData, clearAllData } from '@/api/dev'
+import { demoMode } from '@/utils/demoMode'
 import DashboardHero from './components/DashboardHero.vue'
 import QuickActions from './components/QuickActions.vue'
 import TodayStats from './components/TodayStats.vue'
+import OperationManual from './components/OperationManual.vue'
 
 // 演示数据管理
 const message = useMessage()

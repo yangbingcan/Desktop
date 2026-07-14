@@ -255,7 +255,8 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { getProductUnits } from '@/api/products'
-import { useProductStore } from '@/stores'
+import { getMemberDetail } from '@/api/members'
+import { useProductStore, useSettingsStore } from '@/stores'
 import {
     getMemberByPhone, createSaleOrder, holdOrder, getHeldOrders, getHeldOrderDetail, deleteHeldOrder,
     getMemberDiscountRate, getMemberLevelName
@@ -266,6 +267,7 @@ import { useMessage } from 'naive-ui'
 
 const message = useMessage()
 const productStore = useProductStore()
+const settingsStore = useSettingsStore()
 
 // 搜索
 const searchKeyword = ref('')
@@ -323,7 +325,8 @@ const totalAmount = computed(() => {
 })
 
 const discountAmount = computed(() => {
-    if (!currentMember.value) return 0
+    // C2 修复：尊重系统「启用会员折扣」开关，关闭时不打折
+    if (!currentMember.value || !settingsStore.settings.enableMemberDiscount) return 0
     const rate = getMemberDiscountRate(currentMember.value.level)
     return totalAmount.value * (1 - rate)
 })
@@ -543,6 +546,7 @@ async function handleCheckout() {
                 quantity: item.quantity
             })),
             memberId: currentMember.value?.id,
+            applyMemberDiscount: settingsStore.settings.enableMemberDiscount,
             payMethod: selectedPayMethod.value
         }
 
@@ -622,7 +626,15 @@ async function resumeOrder(orderId: string) {
         }))
 
         if (order.memberId) {
-            currentMember.value = { id: order.memberId, name: order.memberName || '', phone: '', level: 'normal', points: 0, balance: 0, totalConsume: 0, consumeCount: 0, lastVisit: null, createdAt: '', gender: null, birthday: null }
+            // S4 修复：取单时恢复真实会员（含余额/积分/等级），避免会员卡支付被误拒
+            try {
+                const detail = await getMemberDetail(order.memberId)
+                currentMember.value = detail.member
+            } catch (e) {
+                console.error('取单恢复会员失败:', e)
+                // 兜底：保留会员标识，余额/积分置 0（避免误拒余额支付）
+                currentMember.value = { id: order.memberId, name: order.memberName || '', phone: '', level: 'normal', points: 0, balance: 0, totalConsume: 0, consumeCount: 0, lastVisit: null, createdAt: '', gender: null, birthday: null }
+            }
         }
 
         heldOrdersVisible.value = false

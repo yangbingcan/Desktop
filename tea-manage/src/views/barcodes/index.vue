@@ -140,14 +140,16 @@
                             </n-form-item>
                         </n-form>
 
+                        <n-text depth="3" class="text-[12px]">标签版式请在「打印模板 → 条码标签」中设计</n-text>
+
                         <n-space :size="12">
-                            <n-button type="primary" @click="previewLabel">
+                            <n-button type="primary" @click="handlePreviewLabel">
                                 <template #icon>
                                     <span class="i-mdi-eye align-middle" />
                                 </template>
                                 预览
                             </n-button>
-                            <n-button type="primary" @click="printLabel">
+                            <n-button type="primary" @click="handlePrintLabel">
                                 <template #icon>
                                     <span class="i-mdi-printer align-middle" />
                                 </template>
@@ -175,8 +177,13 @@
  */
 import { ref, reactive, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
+import { useSettingsStore } from '@/stores/settings'
+import { renderLabelHTML, demoPrintData, loadStoredTemplates, defaultTemplates } from '@/utils/printTemplate'
+import type { ShopInfo, LabelPrintData } from '@/types/printTemplate'
+import { printLabel, previewHTML } from '@/utils/print'
 
 const message = useMessage()
+const settings = useSettingsStore()
 
 const productFilters = reactive({
     productId: null as string | null
@@ -240,12 +247,32 @@ function printSelected() {
     message.info('批量打印功能开发中')
 }
 
-function previewLabel() {
-    message.info('标签预览功能开发中')
+/** 由 settings 构造店铺信息，作为标签渲染数据来源 */
+function currentShop(): ShopInfo {
+    return {
+        shopName: settings.settings.shopName || '茶易管',
+        shopAddress: settings.settings.shopAddress || '',
+        shopPhone: settings.settings.shopPhone || ''
+    }
 }
 
-function printLabel() {
-    message.info('标签打印功能开发中')
+/** 预览条码标签（新窗口打开渲染结果） */
+async function handlePreviewLabel() {
+    const data = demoPrintData('label', currentShop()) as LabelPrintData
+    const tpl = loadStoredTemplates()['label'] ?? defaultTemplates().label
+    const html = await renderLabelHTML(tpl, data)
+    previewHTML(html)
+}
+
+/** 打印条码标签（按配置份数，同页重复） */
+async function handlePrintLabel() {
+    const data = demoPrintData('label', currentShop()) as LabelPrintData
+    try {
+        await printLabel(data, labelConfig.copies)
+        message.success('已发送标签打印任务')
+    } catch (e) {
+        message.error('标签打印失败：' + String(e))
+    }
 }
 
 onMounted(async () => {

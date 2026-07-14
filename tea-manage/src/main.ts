@@ -54,6 +54,8 @@ import {
     NDrawerContent,
     NTooltip,
     NDropdown,
+    NCollapse,
+    NCollapseItem,
 } from 'naive-ui'
 
 // 创建 Naive UI 实例
@@ -94,6 +96,8 @@ const naive = create({
         NDrawerContent,
         NTooltip,
         NDropdown,
+        NCollapse,
+        NCollapseItem,
     ]
 })
 

@@ -50,6 +50,7 @@ export const menuItems: MenuItem[] = [
   { key: '/members', title: '会员管理', icon: 'i-mdi-account-group-outline', group: 'business' },
   { key: '/suppliers', title: '供应商管理', icon: 'i-mdi-domain', group: 'business' },
   { key: '/returns', title: '退货出库', icon: 'i-mdi-undo-variant', group: 'business' },
+  { key: '/reports/sales', title: '销售报表', icon: 'i-mdi-chart-box', group: 'business' },
 
   // ========== 系统设置 ==========
   { key: '/print-templates', title: '打印模板', icon: 'i-mdi-printer-outline', group: 'system' },

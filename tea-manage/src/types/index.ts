@@ -281,9 +281,55 @@ export interface SaleItemInput {
 export interface SaleOrderInput {
     items: SaleItemInput[]
     memberId?: string
+    /** 是否应用会员折扣（受系统「启用会员折扣」开关控制，由前端按开关状态传入） */
+    applyMemberDiscount?: boolean
     pointsDeduct?: number
     payMethod?: string
     remark?: string
+}
+
+/** 客户销售退货明细输入（CR-02） */
+export interface ReturnSaleItemInput {
+    productId: string
+    unitId: string
+    /** 退货数量（必须 > 0 且不超过原单该商品已售数量） */
+    quantity: number
+}
+
+/** 客户销售退货输入（CR-02） */
+export interface ReturnSaleOrderInput {
+    /** 原销售订单 id */
+    originalOrderId: string
+    items: ReturnSaleItemInput[]
+    remark?: string
+}
+
+/** 客户销售退货明细（CR-02） */
+export interface ReturnSaleItem {
+    id: string
+    orderId: string
+    productId: string
+    productName: string
+    unitId: string
+    unitName: string
+    quantity: number
+    unitPrice: number
+    subtotal: number
+}
+
+/** 客户销售退货单（CR-02） */
+export interface ReturnSaleOrder {
+    id: string
+    orderNo: string
+    originalOrderId: string
+    memberId?: string
+    memberName?: string
+    totalAmount: number
+    refundAmount: number
+    pointsReversed: number
+    remark?: string
+    items: ReturnSaleItem[]
+    createdAt: string
 }
 
 /** 销售单据明细 */
@@ -327,6 +373,43 @@ export interface HeldOrder {
     itemCount: number
     totalAmount: number
     createdAt: string
+}
+
+/** 销售订单汇总（列表/报表用，不含明细） */
+export interface SaleOrderSummary {
+    id: string
+    orderNo: string
+    memberId: string | null
+    memberName: string | null
+    totalAmount: number
+    discountAmount: number
+    pointsDeduct: number
+    pointsEarned: number
+    actualAmount: number
+    payMethod: string | null
+    payStatus: string
+    status: string
+    remark: string | null
+    itemCount: number
+    createdAt: string
+}
+
+/** 首页经营指标 */
+export interface DashboardStats {
+    todayOrders: number
+    todaySales: number
+    lowStockCount: number
+    newMembers: number
+}
+
+/** 销售历史查询条件 */
+export interface SaleOrderQuery {
+    startDate?: string
+    endDate?: string
+    memberId?: string
+    productId?: string
+    page?: number
+    pageSize?: number
 }
 
 // ========== 会员相关 ==========

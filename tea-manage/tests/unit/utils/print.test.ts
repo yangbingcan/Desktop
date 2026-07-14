@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { printHTML, printReceipt, printPurchaseOrder } from '@/utils/print'
-import type { SaleOrder } from '@/types'
+import type { SaleOrder, PurchaseOrder } from '@/types'
 
 // 测试用 SaleOrder 数据
 const mockSaleOrder: SaleOrder = {
@@ -178,9 +178,9 @@ describe('print 工具函数', () => {
             expect(html).toContain('茶易管')
             // 订单号
             expect(html).toContain('XS20260703001')
-            // 商品名和数量
+            // 商品名和数量（× 为乘号，非字母 x）
             expect(html).toContain('龙井茶')
-            expect(html).toContain('x2')
+            expect(html).toContain('×2')
             // 实付金额
             expect(html).toContain('95.00')
             // 优惠金额
@@ -250,35 +250,54 @@ describe('print 工具函数', () => {
 
     // ========== printPurchaseOrder ==========
     describe('printPurchaseOrder 入库单打印', () => {
+        const mockPurchaseOrder: PurchaseOrder = {
+            id: 'po-1',
+            orderNo: 'PO20260703001',
+            supplierId: 's-1',
+            supplierName: '浙江茶商',
+            handler: '张三',
+            totalAmount: 900,
+            paymentStatus: 'paid',
+            remark: null,
+            items: [
+                {
+                    productId: 'p-1',
+                    productName: '龙井',
+                    unitId: 'u-1',
+                    unitName: '包',
+                    quantity: 10,
+                    grams: 0,
+                    unitPrice: 50,
+                    subtotal: 500,
+                    batchId: 'b-1',
+                    batchCode: 'BC1'
+                },
+                {
+                    productId: 'p-2',
+                    productName: '红茶',
+                    unitId: 'u-2',
+                    unitName: '盒',
+                    quantity: 5,
+                    grams: 0,
+                    unitPrice: 80,
+                    subtotal: 400,
+                    batchId: 'b-2',
+                    batchCode: 'BC2'
+                }
+            ],
+            createdAt: '2026-07-03'
+        }
+
         it('调用 printHTML 渲染入库单 HTML', async () => {
             const spy = vi.spyOn(document.body, 'appendChild')
-            await printPurchaseOrder({
-                id: 'po-1',
-                orderNo: 'PO20260703001',
-                supplierName: '浙江茶商',
-                items: [],
-                totalAmount: 0,
-                handler: '张三',
-                date: '2026-07-03'
-            })
+            await printPurchaseOrder(mockPurchaseOrder)
             expect(spy).toHaveBeenCalled()
             spy.mockRestore()
         })
 
         it('入库单包含标题/供应商/商品明细/总金额', async () => {
             const mock = mockIframeDocWrite()
-            await printPurchaseOrder({
-                id: 'po-1',
-                orderNo: 'PO20260703001',
-                supplierName: '浙江茶商',
-                items: [
-                    { productName: '龙井', quantity: 10, unitName: '包', price: 50, subtotal: 500 },
-                    { productName: '红茶', quantity: 5, unitName: '盒', price: 80, subtotal: 400 }
-                ],
-                totalAmount: 900,
-                handler: '张三',
-                date: '2026-07-03'
-            })
+            await printPurchaseOrder(mockPurchaseOrder)
             const html = mock.capture()
             expect(html).toContain('采购入库单')
             expect(html).toContain('浙江茶商')

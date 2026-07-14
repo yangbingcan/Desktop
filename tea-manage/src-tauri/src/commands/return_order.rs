@@ -6,7 +6,7 @@
 //! 关键修复：
 //! - CR-RT-01: 单层 BEGIN EXCLUSIVE TRANSACTION 包裹整个创建流程
 //! - CR-RT-02: 退货数量必须 <= 原批次 remaining_grams
-//! - CR-RT-03: 退货后 products.stock_grams 正确扣减
+//! - CR-RT-03: 退货后 products 库存按类型正确扣减（称重用 stock_grams / 计件用 stock_units）
 //! - CR-RT-04: 退货后 inventory_batches.remaining_grams 正确扣减
 //! - CR-RT-05: 退货删除时库存精确还原（按 batch_id + grams）
 
@@ -45,6 +45,24 @@ fn validate_return_order(input: &ReturnOrderInput) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// 根据商品类型返回库存列名（称重 stock_grams / 计件 stock_units）
+///
+/// CR-01 修复：退货原代码恒用 stock_grams，导致计件类商品库存账目错乱。
+fn stock_field_of(conn: &Connection, product_id: &str) -> Result<String, String> {
+    let pt: String = conn
+        .query_row(
+            "SELECT product_type FROM products WHERE id = ?",
+            [product_id],
+            |row| row.get(0),
+        )
+        .map_err(|e| format!("查询商品类型失败: {}", e))?;
+    Ok(if pt == "weight" {
+        "stock_grams".to_string()
+    } else {
+        "stock_units".to_string()
+    })
 }
 
 /// 查询某商品的可用批次（退货选择用）
@@ -105,11 +123,13 @@ pub async fn create_return_order(
     let now = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
     let order_id = Uuid::new_v4().to_string();
     let ts = Local::now();
-    // 订单号加毫秒防重复
+    // 订单号加毫秒 + 随机后缀防重复（IM-02）
+    let random_suffix: u16 = (ts.timestamp_nanos_opt().unwrap_or(0).abs() % 10000) as u16;
     let order_no = format!(
-        "TH{}{:03}",
+        "TH{}{:03}{:04}",
         ts.format("%Y%m%d%H%M%S"),
-        (ts.timestamp_millis() % 1000) as u16
+        (ts.timestamp_millis() % 1000) as u16,
+        random_suffix
     );
 
     // 2. 排他事务
@@ -137,9 +157,9 @@ pub async fn create_return_order(
 
     for item in &input.items {
         // 4.1 查询原批次 + 商品信息 + 销售单位 + 换算关系
-        let (product_name, unit_name, batch_code, remaining, purchase_price, conversion):
-            (String, String, String, i64, f64, i64) = conn.query_row(
-            "SELECT p.name, su.name, b.batch_code, b.remaining_grams, b.purchase_price, su.conversion_to_base
+        let (product_name, unit_name, batch_code, remaining, purchase_price, conversion, product_type):
+            (String, String, String, i64, f64, i64, String) = conn.query_row(
+            "SELECT p.name, su.name, b.batch_code, b.remaining_grams, b.purchase_price, su.conversion_to_base, p.product_type
              FROM inventory_batches b
              JOIN products p ON p.id = b.product_id
              JOIN sales_units su ON su.id = ? AND su.product_id = b.product_id
@@ -151,7 +171,8 @@ pub async fn create_return_order(
                 row.get::<_, String>(2)?,
                 row.get::<_, i64>(3)?,
                 row.get::<_, f64>(4)?,
-                row.get::<_, i64>(5)?
+                row.get::<_, i64>(5)?,
+                row.get::<_, String>(6)?
             )),
         ).map_err(|e| rollback(format!("查询批次失败: {}", e), &conn))?;
 
@@ -175,15 +196,16 @@ pub async fn create_return_order(
             params![grams, item.batch_id],
         ).map_err(|e| rollback(format!("扣减批次失败: {}", e), &conn))?;
 
-        // 4.5 扣减商品总库存
+        // 4.5 扣减商品总库存（按类型选择列，CR-01 修复）
+        let stock_field = if product_type == "weight" { "stock_grams" } else { "stock_units" };
         conn.execute(
-            "UPDATE products SET stock_grams = stock_grams - ? WHERE id = ?",
+            &format!("UPDATE products SET {} = {} - ? WHERE id = ?", stock_field, stock_field),
             params![grams, item.product_id],
         ).map_err(|e| rollback(format!("扣减库存失败: {}", e), &conn))?;
 
         // 4.6 记录流水
         let new_balance: i64 = conn.query_row(
-            "SELECT stock_grams FROM products WHERE id = ?",
+            &format!("SELECT {} FROM products WHERE id = ?", stock_field),
             [&item.product_id],
             |row| row.get(0),
         ).map_err(|e| rollback(format!("查询结余失败: {}", e), &conn))?;
@@ -539,9 +561,16 @@ pub async fn delete_return_order(
             format!("还原批次失败: {}", e)
         })?;
 
-        // 还原商品总库存
+        // 还原商品总库存（按类型选择列，CR-01 修复）
+        let stock_field = match stock_field_of(&conn, &product_id) {
+            Ok(f) => f,
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", []);
+                return Err(e);
+            }
+        };
         conn.execute(
-            "UPDATE products SET stock_grams = stock_grams + ? WHERE id = ?",
+            &format!("UPDATE products SET {} = {} + ? WHERE id = ?", stock_field, stock_field),
             params![grams, product_id],
         ).map_err(|e| {
             let _ = conn.execute("ROLLBACK", []);
@@ -644,9 +673,13 @@ pub async fn update_return_order(
             params![grams, batch_id],
         ).map_err(|e| rollback(format!("还原批次失败: {}", e), &conn))?;
 
-        // 还原商品总库存
+        // 还原商品总库存（按类型选择列，CR-01 修复）
+        let stock_field = match stock_field_of(&conn, &product_id) {
+            Ok(f) => f,
+            Err(e) => return Err(rollback(format!("还原库存失败: {}", e), &conn)),
+        };
         conn.execute(
-            "UPDATE products SET stock_grams = stock_grams + ? WHERE id = ?",
+            &format!("UPDATE products SET {} = {} + ? WHERE id = ?", stock_field, stock_field),
             params![grams, product_id],
         ).map_err(|e| rollback(format!("还原库存失败: {}", e), &conn))?;
     }
@@ -686,9 +719,9 @@ pub async fn update_return_order(
 
     for item in &input.items {
         // 查询原批次 + 商品信息 + 销售单位 + 换算关系
-        let (product_name, unit_name, batch_code, remaining, purchase_price, conversion):
-            (String, String, String, i64, f64, i64) = conn.query_row(
-            "SELECT p.name, su.name, b.batch_code, b.remaining_grams, b.purchase_price, su.conversion_to_base
+        let (product_name, unit_name, batch_code, remaining, purchase_price, conversion, product_type):
+            (String, String, String, i64, f64, i64, String) = conn.query_row(
+            "SELECT p.name, su.name, b.batch_code, b.remaining_grams, b.purchase_price, su.conversion_to_base, p.product_type
              FROM inventory_batches b
              JOIN products p ON p.id = b.product_id
              JOIN sales_units su ON su.id = ? AND su.product_id = b.product_id
@@ -700,7 +733,8 @@ pub async fn update_return_order(
                 row.get::<_, String>(2)?,
                 row.get::<_, i64>(3)?,
                 row.get::<_, f64>(4)?,
-                row.get::<_, i64>(5)?
+                row.get::<_, i64>(5)?,
+                row.get::<_, String>(6)?
             )),
         ).map_err(|e| rollback(format!("查询批次失败: {}", e), &conn))?;
 

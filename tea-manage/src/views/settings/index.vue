@@ -117,11 +117,55 @@
                             <span class="i-mdi-information align-middle" />
                             <span class="ml-1">关于</span>
                         </template>
-                        <n-descriptions :column="1">
-                            <n-descriptions-item label="系统名称">茶易管（TeaManage）</n-descriptions-item>
-                            <n-descriptions-item label="版本号">v{{ appVersion }}</n-descriptions-item>
-                            <n-descriptions-item label="技术栈">Vue 3 + Tauri 2.x + Rust + SQLite</n-descriptions-item>
-                        </n-descriptions>
+                        <n-space vertical :size="16">
+                            <!-- 演示模式开关 -->
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-[14px] font-semibold text-[var(--tea-content-1)]">演示模式</div>
+                                    <div class="text-[13px] text-[var(--tea-content-3)]">
+                                        关闭后首页不显示「演示数据管理」
+                                    </div>
+                                </div>
+                                <n-switch :value="demoMode" @update:value="onDemoModeChange" />
+                            </div>
+
+                            <n-divider />
+
+                            <!-- 版本号（保留） -->
+                            <n-descriptions :column="1">
+                                <n-descriptions-item label="版本号">v{{ appVersion }}</n-descriptions-item>
+                            </n-descriptions>
+
+                            <n-divider />
+
+                            <!-- 版本更新内容 -->
+                            <div>
+                                <div class="section-title">版本更新内容</div>
+                                <n-alert v-if="latest" :title="`v${latest.version} · ${latest.title}`" type="success">
+                                    <ul class="changelog-list">
+                                        <li v-for="(c, i) in latest.changes" :key="i">{{ c }}</li>
+                                    </ul>
+                                </n-alert>
+                            </div>
+
+                            <n-divider />
+
+                            <!-- 版本历史 -->
+                            <div>
+                                <div class="section-title">版本历史</div>
+                                <ul class="version-history">
+                                    <li
+                                        v-for="(v, i) in changelog"
+                                        :key="v.version"
+                                        class="version-item"
+                                    >
+                                        <span class="version-tag" :class="{ 'is-latest': i === 0 }">v{{ v.version }}</span>
+                                        <span class="version-date">{{ v.date }}</span>
+                                        <span class="version-title">{{ v.title }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </n-space>
                     </n-tab-pane>
                 </n-tabs>
             </n-card>
@@ -137,29 +181,59 @@
  * 业务逻辑（严格保留）：
  * 1. settingsStore.saveSettings(shopSettings) / saveSettings(systemSettings)
  * 2. 版本号从常量读取（v0.5.5 修复：避免显示过期版本）
- * 3. 备份 / 初始化为占位功能（message 提示）
+ * 3. 备份已接入真实命令（v0.7.0）；初始化接入 seed_demo_data（I3 修复）
  */
-import { reactive, ref } from 'vue'
-import { useMessage } from 'naive-ui'
+import { onMounted, reactive, ref } from 'vue'
+import { useMessage, useDialog } from 'naive-ui'
+import { getVersion } from '@tauri-apps/api/app'
 import { useSettingsStore } from '@/stores'
+import { demoMode, setDemoMode } from '@/utils/demoMode'
+import { seedDemoData, backupDatabase as backupDatabaseApi } from '@/api/dev'
+import changelogData from '@/data/changelog.json'
+
+interface ChangelogEntry {
+    version: string
+    date: string
+    type: string
+    title: string
+    changes: string[]
+}
 
 const message = useMessage()
+const dialog = useDialog()
 const settingsStore = useSettingsStore()
 
-// v0.5.5 修复：从常量同步版本号，避免显示过期的 v0.1.0
-const appVersion = ref('0.6.1')
+// 版本号从 Tauri 运行时读取（tauri.conf.json），始终与安装包一致，避免硬编码过期版本
+const appVersion = ref('0.7.0')
+const changelog = changelogData as ChangelogEntry[]
+const latest = changelog[0]
 
+onMounted(async () => {
+    try {
+        appVersion.value = await getVersion()
+    } catch {
+        // 非 Tauri 环境保留兜底版本号
+    }
+})
+
+/** 切换演示模式并持久化 */
+function onDemoModeChange(val: boolean): void {
+    setDemoMode(val)
+    message.success(val ? '已开启演示模式' : '已关闭演示模式，首页将隐藏演示数据管理')
+}
+
+// I2 修复：表单初始值从已持久化的 store 读取，确保刷新后回显用户保存的设置
 const shopSettings = reactive({
-    shopName: '茶易管',
-    shopAddress: '',
-    shopPhone: ''
+    shopName: settingsStore.settings.shopName,
+    shopAddress: settingsStore.settings.shopAddress,
+    shopPhone: settingsStore.settings.shopPhone
 })
 
 const systemSettings = reactive({
-    allowNegativeStock: false,
-    enableMemberDiscount: true,
-    enablePrintReceipt: true,
-    defaultReceiptTemplate: 'default'
+    allowNegativeStock: settingsStore.settings.allowNegativeStock,
+    enableMemberDiscount: settingsStore.settings.enableMemberDiscount,
+    enablePrintReceipt: settingsStore.settings.enablePrintReceipt,
+    defaultReceiptTemplate: settingsStore.settings.defaultReceiptTemplate
 })
 
 const templateOptions = [
@@ -175,12 +249,31 @@ async function saveSystemSettings() {
 }
 
 async function backupDatabase() {
-    // 备份功能暂未实现
-    message.info('备份功能开发中')
+    // v0.7.0：替换占位，调用真实备份命令（复制数据库为带时间戳副本）
+    try {
+        const path = await backupDatabaseApi()
+        message.success(`备份成功：${path}`)
+    } catch (e) {
+        message.error(`备份失败：${String(e)}`)
+    }
 }
 
 async function initDatabase() {
-    // TODO: 确认后初始化数据库
+    // I3 修复：原为 TODO 空实现；现在接入 seed_demo_data（清空全库 + 载入演示数据），危险操作需显式确认
+    dialog.warning({
+        title: '初始化数据库',
+        content: '将清空所有业务数据并重新载入演示数据，此操作不可恢复！',
+        positiveText: '确认初始化',
+        negativeText: '取消',
+        onPositiveClick: async () => {
+            try {
+                await seedDemoData()
+                message.success('数据库已初始化为演示数据')
+            } catch (e) {
+                message.error('初始化失败：' + String(e ?? ''))
+            }
+        }
+    })
 }
 </script>
 
@@ -191,5 +284,74 @@ async function initDatabase() {
 }
 .tea-page :deep(.n-card + .n-card) {
     margin-top: 0 !important;
+}
+
+/* 关于页 - 分节标题（版本更新内容 / 版本历史） */
+.section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tea-content-1);
+    padding-left: 8px;
+    border-left: 3px solid var(--tea-primary);
+    line-height: 1.2;
+    margin-bottom: 10px;
+}
+
+/* 版本更新内容 - 变更点列表 */
+.changelog-list {
+    margin: 0;
+    padding-left: 18px;
+    list-style: disc;
+}
+.changelog-list li {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--tea-content-2);
+}
+
+/* 版本历史 - 时间线式列表 */
+.version-history {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+}
+.version-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--tea-line-2);
+}
+.version-item:last-child {
+    border-bottom: none;
+}
+.version-tag {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--tea-font-family);
+    padding: 2px 8px;
+    border-radius: var(--tea-radius-sm);
+    background: var(--tea-primary-light);
+    color: var(--tea-primary-active);
+}
+.version-tag.is-latest {
+    background: var(--tea-primary);
+    color: #fff;
+}
+.version-date {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--tea-content-3);
+    font-variant-numeric: tabular-nums;
+}
+.version-title {
+    font-size: 13px;
+    color: var(--tea-content-1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 </style>

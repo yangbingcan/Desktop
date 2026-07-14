@@ -7,9 +7,10 @@ use crate::models::{
     SaleOrderInput, SaleOrder, SaleOrderItem,
     HeldOrder, Member, MemberLevel, MemberDetail, MemberPreference, MemberPreferenceInput,
     MemberConsumption, MemberConsumptionItem, PageResult,
+    SaleOrderSummary, DashboardStats,
 };
 use chrono::Local;
-use rusqlite::{params, Connection};
+use rusqlite::{params, params_from_iter, Connection, types::Value};
 use uuid::Uuid;
 
 /// 校验手机号格式：中国大陆11位手机号（1开头，第二位3-9，共11位数字）
@@ -180,9 +181,15 @@ pub async fn create_sale_order(
     let conn = db.get_conn()?;
     let now = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
     let order_id = Uuid::new_v4().to_string();
-    // CR-13: 订单编号加毫秒防重复
+    // 订单编号加毫秒 + 随机后缀防重复（CR-13 / IM-02）
     let ts = Local::now();
-    let order_no = format!("XS{}{:03}", ts.format("%Y%m%d%H%M%S"), (ts.timestamp_millis() % 1000) as u16);
+    let random_suffix: u16 = (ts.timestamp_nanos_opt().unwrap_or(0).abs() % 10000) as u16;
+    let order_no = format!(
+        "XS{}{:03}{:04}",
+        ts.format("%Y%m%d%H%M%S"),
+        (ts.timestamp_millis() % 1000) as u16,
+        random_suffix
+    );
     
     // CR-04: 单层 BEGIN EXCLUSIVE TRANSACTION 包裹整个函数
     conn.execute("BEGIN EXCLUSIVE TRANSACTION", []).map_err(|e| e.to_string())?;
@@ -207,7 +214,10 @@ pub async fn create_sale_order(
         (None, MemberLevel::Normal, None)
     };
     
-    let discount_rate = member_level.discount_rate();
+    // C2 修复：尊重系统「启用会员折扣」开关；开关关闭或无可识别会员时不打折。
+    // 折扣以开关状态为唯一来源，避免前端关开关、后端仍打折导致账目不一致。
+    let apply_discount = input.apply_member_discount.unwrap_or(false) && member_id_opt.is_some();
+    let discount_rate = if apply_discount { member_level.discount_rate() } else { 1.0 };
     
     // 计算金额并扣减库存
     let mut total_amount = 0.0;
@@ -230,23 +240,25 @@ pub async fn create_sale_order(
         let subtotal = crate::utils::money::round2(retail_price * item.quantity as f64);
         total_amount += subtotal;
         
-        // 检查库存
-        let (stock_grams, _product_type): (i64, String) = conn.query_row(
-            "SELECT stock_grams, product_type FROM products WHERE id = ?",
+        // 检查库存（按商品类型选择库存列：称重用 stock_grams，计件用 stock_units）
+        // CR-01 修复：原代码恒比较/扣减 stock_grams，导致计件类商品库存账目永久错乱
+        let (stock, product_type): (i64, String) = conn.query_row(
+            "SELECT CASE WHEN product_type = 'weight' THEN stock_grams ELSE stock_units END, product_type FROM products WHERE id = ?",
             [&item.product_id],
             |row| Ok((row.get(0)?, row.get(1)?)),
         ).map_err(|e| rollback_on_err(e.to_string(), &conn))?;
         
-        if stock_grams < grams {
+        if stock < grams {
             return Err(rollback_on_err(
-                format!("商品[{}]库存不足，当前库存{}g，需要{}g", product_name, stock_grams, grams),
+                format!("商品[{}]库存不足，当前库存{}，需要{}", product_name, stock, grams),
                 &conn,
             ));
         }
         
-        // 扣减库存
+        // 扣减库存（按类型选择列）
+        let stock_field = if product_type == "weight" { "stock_grams" } else { "stock_units" };
         conn.execute(
-            "UPDATE products SET stock_grams = stock_grams - ? WHERE id = ?",
+            &format!("UPDATE products SET {} = {} - ? WHERE id = ?", stock_field, stock_field),
             params![grams, item.product_id],
         ).map_err(|e| rollback_on_err(e.to_string(), &conn))?;
         
@@ -282,9 +294,9 @@ pub async fn create_sale_order(
             ));
         }
         
-        // 记录库存流水
+        // 记录库存流水（余额按商品类型读取对应库存列）
         let new_balance: i64 = conn.query_row(
-            "SELECT stock_grams FROM products WHERE id = ?",
+            &format!("SELECT {} FROM products WHERE id = ?", stock_field),
             [&item.product_id],
             |row| row.get(0),
         ).map_err(|e| rollback_on_err(e.to_string(), &conn))?;
@@ -346,7 +358,12 @@ pub async fn create_sale_order(
     }
     // 抵扣金额 = 积分数 / 100
     let points_deduct_amount = crate::utils::money::round2(points_deduct as f64 / 100.0);
-    
+
+    // G4: 无会员时不允许使用积分抵扣（避免凭空优惠且无积分来源）
+    if input.member_id.is_none() && points_deduct > 0 {
+        return Err(rollback_on_err("使用积分抵扣需先选择会员".to_string(), &conn));
+    }
+
     // 如果有会员，校验积分余额是否足够
     if let Some(ref mid) = input.member_id {
         let member_points: i64 = conn.query_row(
@@ -369,8 +386,8 @@ pub async fn create_sale_order(
         return Err(rollback_on_err("实付金额不能为负数，积分抵扣过多".to_string(), &conn));
     }
     
-    // 1元=1积分（按实付金额计算获得积分）
-    let points_earned = actual_amount as i64;
+    // 1元=1积分（按实付金额计算获得积分）；IM-03 修复：四舍五入而非截断
+    let points_earned = crate::utils::money::round2(actual_amount).round() as i64;
     
     // 创建订单
     conn.execute(
@@ -400,6 +417,11 @@ pub async fn create_sale_order(
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             params![item_id, order_id, pid, pname, uid, uname, qty, price, g, sub, now],
         ).map_err(|e| rollback_on_err(e.to_string(), &conn))?;
+    }
+
+    // G6: 会员余额支付必须有会员，否则账目与支付记录脱节
+    if input.pay_method.as_deref() == Some("memberBalance") && input.member_id.is_none() {
+        return Err(rollback_on_err("使用会员余额支付必须先选择会员".to_string(), &conn));
     }
 
     // CR-06/CR-09: 更新会员积分和消费记录
@@ -542,11 +564,11 @@ pub async fn hold_order(
         ).ok()
     } else { None };
     
-    // 创建挂单（status=pending）
+    // 创建挂单（status=pending，pay_status=unpaid 与详情返回保持一致）
     conn.execute(
         "INSERT INTO sales_orders (id, order_no, member_id, member_name, total_amount,
          actual_amount, pay_status, status, remark, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?)",
+         VALUES (?, ?, ?, ?, ?, ?, 'unpaid', 'pending', ?, ?)",
         params![order_id, order_no, input.member_id, member_name, total_amount, total_amount, input.remark, now],
     ).map_err(|e| {
         let _ = conn.execute("ROLLBACK", []);
@@ -915,6 +937,217 @@ pub async fn get_member_consumption(
         total_consume,
         consume_count,
         records,
+    })
+}
+
+/// 获取销售历史订单（列表/报表用）
+///
+/// 支持筛选：日期区间（start_date/end_date，按天比较）、会员、商品；
+/// 仅统计已完成（status='completed'）订单；返回分页结果与每行商品行数。
+#[tauri::command]
+pub async fn get_sale_orders(
+    db: tauri::State<'_, Database>,
+    start_date: Option<String>,
+    end_date: Option<String>,
+    member_id: Option<String>,
+    product_id: Option<String>,
+    page: Option<i64>,
+    page_size: Option<i64>,
+) -> Result<PageResult<SaleOrderSummary>, String> {
+    let conn = db.get_conn()?;
+    let page = page.unwrap_or(1).max(1);
+    let page_size = page_size.unwrap_or(20).clamp(1, 200);
+    let offset = (page - 1) * page_size;
+
+    // 动态拼装 WHERE 条件与参数（参数化，避免 SQL 注入）
+    let mut clauses: Vec<String> = vec!["status = 'completed'".to_string()];
+    let mut values: Vec<Value> = Vec::new();
+
+    if let Some(ref s) = start_date {
+        clauses.push("date(created_at) >= date(?)".to_string());
+        values.push(Value::Text(s.clone()));
+    }
+    if let Some(ref e) = end_date {
+        clauses.push("date(created_at) <= date(?)".to_string());
+        values.push(Value::Text(e.clone()));
+    }
+    if let Some(ref mid) = member_id {
+        clauses.push("member_id = ?".to_string());
+        values.push(Value::Text(mid.clone()));
+    }
+    if let Some(ref pid) = product_id {
+        // 商品筛选通过明细表子查询实现（一个订单可能含多个商品）
+        clauses.push("id IN (SELECT order_id FROM sales_items WHERE product_id = ?)".to_string());
+        values.push(Value::Text(pid.clone()));
+    }
+    let where_sql = clauses.join(" AND ");
+
+    let total: i64 = conn.query_row(
+        &format!("SELECT COUNT(*) FROM sales_orders WHERE {}", where_sql),
+        params_from_iter(values.iter()),
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())?;
+
+    let mut list_stmt = conn.prepare(&format!(
+        "SELECT so.id, so.order_no, so.member_id, so.member_name, so.total_amount,
+                so.discount_amount, so.points_deduct, so.points_earned, so.actual_amount,
+                so.pay_method, so.pay_status, so.status, so.remark, so.created_at,
+                COUNT(si.id) AS item_count
+         FROM sales_orders so
+         LEFT JOIN sales_items si ON si.order_id = so.id
+         WHERE {where_sql}
+         GROUP BY so.id
+         ORDER BY so.created_at DESC
+         LIMIT ? OFFSET ?"
+    )).map_err(|e| e.to_string())?;
+
+    let mut list_values = values.clone();
+    list_values.push(Value::Integer(page_size));
+    list_values.push(Value::Integer(offset));
+
+    let list: Vec<SaleOrderSummary> = list_stmt.query_map(
+        params_from_iter(list_values.iter()),
+        |row| Ok(SaleOrderSummary {
+            id: row.get(0)?,
+            order_no: row.get(1)?,
+            member_id: row.get(2)?,
+            member_name: row.get(3)?,
+            total_amount: row.get(4)?,
+            discount_amount: row.get(5)?,
+            points_deduct: row.get(6)?,
+            points_earned: row.get(7)?,
+            actual_amount: row.get(8)?,
+            pay_method: row.get(9)?,
+            pay_status: row.get(10)?,
+            status: row.get(11)?,
+            remark: row.get(12)?,
+            created_at: row.get(13)?,
+            item_count: row.get(14)?,
+        }),
+    ).map_err(|e| e.to_string())?
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| e.to_string())?;
+
+    Ok(PageResult {
+        list,
+        total: total as u32,
+        page: page as u32,
+        page_size: page_size as u32,
+    })
+}
+
+/// 获取单个销售订单详情（含明细）
+///
+/// 供客户退货弹窗等场景加载原单商品行（product_id / unit_id / 名称 / 数量 / 单价）。
+#[tauri::command]
+pub async fn get_sale_order(
+    db: tauri::State<'_, Database>,
+    id: String,
+) -> Result<SaleOrder, String> {
+    let conn = db.get_conn()?;
+    let mut order: SaleOrder = conn
+        .query_row(
+            "SELECT id, order_no, member_id, member_name, total_amount, discount_amount,
+                    points_deduct, points_earned, actual_amount, pay_method, pay_status, status, remark, created_at
+             FROM sales_orders WHERE id = ?",
+            [&id],
+            |row| {
+                Ok(SaleOrder {
+                    id: row.get(0)?,
+                    order_no: row.get(1)?,
+                    member_id: row.get(2)?,
+                    member_name: row.get(3)?,
+                    total_amount: row.get(4)?,
+                    discount_amount: row.get(5)?,
+                    points_deduct: row.get(6)?,
+                    points_earned: row.get(7)?,
+                    actual_amount: row.get(8)?,
+                    pay_method: row.get(9)?,
+                    pay_status: row.get(10)?,
+                    status: row.get(11)?,
+                    remark: row.get(12)?,
+                    items: Vec::new(),
+                    created_at: row.get(13)?,
+                })
+            },
+        )
+        .map_err(|e| format!("销售订单不存在: {}", e))?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, order_id, product_id, product_name, unit_name, quantity, unit_price, grams, subtotal
+             FROM sales_items WHERE order_id = ? ORDER BY created_at ASC",
+        )
+        .map_err(|e| e.to_string())?;
+    let items: Vec<SaleOrderItem> = stmt
+        .query_map([&id], |row| {
+            Ok(SaleOrderItem {
+                id: row.get(0)?,
+                order_id: row.get(1)?,
+                product_id: row.get(2)?,
+                product_name: row.get(3)?,
+                unit_name: row.get(4)?,
+                quantity: row.get(5)?,
+                unit_price: row.get(6)?,
+                grams: row.get(7)?,
+                subtotal: row.get(8)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    order.items = items;
+    Ok(order)
+}
+
+/// 获取首页经营指标（今日概览）
+///
+/// 使用机器本地日期（桌面端单机场景）作为“今日”口径。
+#[tauri::command]
+pub async fn get_dashboard_stats(
+    db: tauri::State<'_, Database>,
+) -> Result<DashboardStats, String> {
+    let conn = db.get_conn()?;
+    let today = Local::now().format("%Y-%m-%d").to_string();
+
+    let today_orders: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM sales_orders
+         WHERE status = 'completed' AND date(created_at) = date(?)",
+        [&today],
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())?;
+
+    let today_sales: f64 = conn.query_row(
+        "SELECT COALESCE(SUM(actual_amount), 0) FROM sales_orders
+         WHERE status = 'completed' AND date(created_at) = date(?)",
+        [&today],
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())?;
+
+    // 低库存阈值：称重类 <500g，计件类 <20 个（与前端 InventoryItem 预警口径一致）
+    let low_stock_count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM products
+         WHERE is_active = 1 AND (
+             (product_type = 'weight' AND stock_grams < 500)
+             OR (product_type = 'count' AND stock_units < 20)
+         )",
+        [],
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())?;
+
+    let new_members: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM members
+         WHERE is_active = 1 AND date(created_at) = date(?)",
+        [&today],
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())?;
+
+    Ok(DashboardStats {
+        today_orders,
+        today_sales: crate::utils::money::round2(today_sales),
+        low_stock_count,
+        new_members,
     })
 }
 
@@ -1373,7 +1606,7 @@ mod tests {
         conn.execute(
             "INSERT INTO sales_orders (id, order_no, member_id, member_name, total_amount,
              actual_amount, pay_status, status, remark, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?)",
+             VALUES (?, ?, ?, ?, ?, ?, 'unpaid', 'pending', ?, ?)",
             params![order_id, order_no, None::<String>, None::<String>, 200.0, 200.0, None::<String>, "2026-07-01 10:00:00"],
         ).unwrap();
 
@@ -1384,7 +1617,7 @@ mod tests {
             |row| Ok((row.get(0)?, row.get(1)?)),
         ).unwrap();
         assert_eq!(status, "pending", "挂单状态应为 pending");
-        assert_eq!(pay_status, "pending", "挂单支付状态应为 pending");
+        assert_eq!(pay_status, "unpaid", "挂单支付状态应为 unpaid（与详情返回一致）");
     }
 
     #[test]

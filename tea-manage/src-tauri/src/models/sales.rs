@@ -119,6 +119,8 @@ pub struct MemberUpdate {
 pub struct SaleOrderInput {
     pub items: Vec<SaleItemInput>,
     pub member_id: Option<String>,
+    /// 是否应用会员折扣（受系统「启用会员折扣」开关控制，由前端按开关状态传入）
+    pub apply_member_discount: Option<bool>,
     pub points_deduct: Option<i64>,
     pub pay_method: Option<String>,
     pub remark: Option<String>,
@@ -308,4 +310,96 @@ pub struct MemberConsumption {
     pub total_consume: f64,
     pub consume_count: i64,
     pub records: Vec<MemberConsumptionItem>,
+}
+
+/// 销售订单汇总（列表/报表用，不含明细，带商品行数）
+///
+/// 用于销售历史查询与报表页，避免一次性返回所有明细造成网络/内存浪费。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaleOrderSummary {
+    pub id: String,
+    pub order_no: String,
+    pub member_id: Option<String>,
+    pub member_name: Option<String>,
+    pub total_amount: f64,
+    pub discount_amount: f64,
+    pub points_deduct: i64,
+    pub points_earned: i64,
+    pub actual_amount: f64,
+    pub pay_method: Option<String>,
+    pub pay_status: String,
+    pub status: String,
+    pub remark: Option<String>,
+    /// 该订单包含的商品明细行数（LEFT JOIN sales_items 统计）
+    pub item_count: i64,
+    pub created_at: String,
+}
+
+/// 首页经营指标汇总
+///
+/// 用真实经营数据替换原 Dashboard 的 Mock：
+/// - 今日订单：当日已完成（status='completed'）订单数
+/// - 今日销售额：当日已完成订单实付金额合计（actual_amount）
+/// - 库存预警：低于阈值的在售商品数（称重 <500g / 计件 <20 个）
+/// - 新增会员：当日新建会员数
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DashboardStats {
+    pub today_orders: i64,
+    pub today_sales: f64,
+    pub low_stock_count: i64,
+    pub new_members: i64,
+}
+
+/// 客户销售退货明细输入（CR-02）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReturnSaleItemInput {
+    pub product_id: String,
+    pub unit_id: String,
+    /// 退货数量（必须 > 0 且不超过原单该商品已售数量）
+    pub quantity: i64,
+}
+
+/// 客户销售退货输入（CR-02）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReturnSaleOrderInput {
+    /// 原销售订单 id
+    pub original_order_id: String,
+    pub items: Vec<ReturnSaleItemInput>,
+    pub remark: Option<String>,
+}
+
+/// 客户销售退货明细（CR-02）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReturnSaleItem {
+    pub id: String,
+    pub order_id: String,
+    pub product_id: String,
+    pub product_name: String,
+    pub unit_id: String,
+    pub unit_name: String,
+    pub quantity: i64,
+    pub unit_price: f64,
+    pub subtotal: f64,
+}
+
+/// 客户销售退货单（CR-02）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReturnSaleOrder {
+    pub id: String,
+    pub order_no: String,
+    pub original_order_id: String,
+    pub member_id: Option<String>,
+    pub member_name: Option<String>,
+    pub total_amount: f64,
+    pub refund_amount: f64,
+    pub points_reversed: i64,
+    pub remark: Option<String>,
+    pub items: Vec<ReturnSaleItem>,
+    pub created_at: String,
 }
