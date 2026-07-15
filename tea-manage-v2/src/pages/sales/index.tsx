@@ -1,7 +1,7 @@
 /** @file 收银开单 - 商品搜索 + 购物车 + 会员识别 + 结算 */
 import { useState, useCallback, useEffect } from 'react'
 import { Card, Input, Button, Table, Tag, Space, Empty, Modal, Radio, message, InputNumber, Row, Col, Statistic } from 'antd'
-import { ScanOutlined, ShoppingCartOutlined, SearchOutlined, UserOutlined, DeleteOutlined } from '@ant-design/icons'
+import { ScanOutlined, ShoppingCartOutlined, UserOutlined, DeleteOutlined } from '@ant-design/icons'
 import { invoke } from '@tauri-apps/api/core'
 import { getProducts } from '../../services/productService'
 import { createSaleOrder, getMemberByPhone, type CartItem } from '../../services/salesService'
@@ -16,8 +16,6 @@ export default function SalesPage() {
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [payMethod, setPayMethod] = useState('cash')
   const [checkoutLoading, setCheckoutLoading] = useState(false)
-  const token = localStorage.getItem('token') || ''
-
   const total = cart.reduce((sum, item) => sum + item.subtotal, 0)
   const discount = member ? (member.level === 'gold' ? total * 0.05 : member.level === 'silver' ? total * 0.03 : 0) : 0
   const actualAmount = total - discount
@@ -71,7 +69,7 @@ export default function SalesPage() {
   const updateQuantity = (idx: number, qty: number) => {
     if (qty <= 0) { removeItem(idx); return }
     const newCart = [...cart]
-    const unit = productResults.find(p => p.id === newCart[idx].productId)
+    // 数量更新时不重新计算 grams（已通过单位换算在添加时确定）
     newCart[idx].quantity = qty
     newCart[idx].subtotal = newCart[idx].price * qty
     setCart(newCart)

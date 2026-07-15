@@ -1,6 +1,6 @@
 /** @file 采购入库列表页 - V2 Phase 1 占位页面 */
 import { useState, useEffect, useCallback } from 'react'
-import { Table, Card, Tag, Button, Space, message } from 'antd'
+import { Table, Card, Tag, Button, message } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { invoke } from '@tauri-apps/api/core'
 
