@@ -1,0 +1,25 @@
+[package]
+name = "license-gen-tool"
+version = "2.0.0"
+description = "管用GL 授权码生成工具 - GUI 版本"
+authors = ["guanyong"]
+edition = "2021"
+
+[[bin]]
+name = "license-gen-tool"
+path = "src/main.rs"
+
+[dependencies]
+base64 = "0.22"
+hmac = "0.12"
+sha2 = "0.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = "0.4"
+eframe = "0.29"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
