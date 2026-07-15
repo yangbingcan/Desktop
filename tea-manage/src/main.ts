@@ -16,23 +16,31 @@ import { useThemeStore } from './stores/theme'
 // 静态导入 tabs store 以触发其从 localStorage 恢复（让首次渲染时标签已就绪）
 import { useTabsStore } from './stores/tabs'
 import 'virtual:uno.css'
+// v0.7.1 全局错误守卫：任何运行时异常以可见面板呈现，避免整页白屏无提示
+import { installErrorGuard, vueErrorHandler } from './utils/errorGuard'
 
 import {
     create,
     NButton,
+    NButtonGroup,
     NCard,
     NInput,
     NForm,
     NFormItem,
+    NGrid,
+    NGi,
     NSelect,
     NTable,
     NTabs,
     NTabPane,
     NTag,
+    NText,
     NStatistic,
     NModal,
     NDatePicker,
     NInputNumber,
+    NList,
+    NListItem,
     NSwitch,
     NSpace,
     NDivider,
@@ -40,12 +48,15 @@ import {
     NCheckboxGroup,
     NRadio,
     NRadioGroup,
+    NRadioButton,
     NEmpty,
     NDescriptions,
     NDescriptionsItem,
     NDataTable,
     NMessageProvider,
+    NDialogProvider,
     NPopconfirm,
+    NPagination,
     NAlert,
     NSpin,
     NConfigProvider,
@@ -62,19 +73,25 @@ import {
 const naive = create({
     components: [
         NButton,
+        NButtonGroup,
         NCard,
         NInput,
         NForm,
         NFormItem,
+        NGrid,
+        NGi,
         NSelect,
         NTable,
         NTabs,
         NTabPane,
         NTag,
+        NText,
         NStatistic,
         NModal,
         NDatePicker,
         NInputNumber,
+        NList,
+        NListItem,
         NSwitch,
         NSpace,
         NDivider,
@@ -82,12 +99,15 @@ const naive = create({
         NCheckboxGroup,
         NRadio,
         NRadioGroup,
+        NRadioButton,
         NEmpty,
         NDescriptions,
         NDescriptionsItem,
         NDataTable,
         NMessageProvider,
+    NDialogProvider,
         NPopconfirm,
+        NPagination,
         NAlert,
         NSpin,
         NConfigProvider,
@@ -103,6 +123,10 @@ const naive = create({
 
 // 创建并挂载应用
 const app = createApp(App)
+
+// v0.7.1 安装全局错误守卫，并在 Vue 错误通道挂接处理函数
+installErrorGuard()
+app.config.errorHandler = vueErrorHandler
 
 app.use(pinia)
 // 主动初始化 store（触发初始化副作用：主题应用到 DOM、标签从 localStorage 恢复）

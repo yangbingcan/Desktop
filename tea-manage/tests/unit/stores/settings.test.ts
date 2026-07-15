@@ -30,6 +30,8 @@ describe('useSettingsStore 设置 Store', () => {
     beforeEach(() => {
         createTestPinia()
         vi.clearAllMocks()
+        // 隔离：清除 localStorage，避免前一个测试持久化的设置污染新 store 的初始状态
+        localStorage.clear()
     })
 
     // ========== 初始状态 ==========

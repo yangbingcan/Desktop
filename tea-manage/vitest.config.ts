@@ -24,6 +24,8 @@ export default defineConfig({
         },
     },
     test: {
+        // 全局测试装置：mock @tauri-apps/api/core 的 invoke（v0.7.1 补充，原缺失导致组件测试大面积失败）
+        setupFiles: ['tests/setup.ts'],
         // 默认使用 jsdom 环境，支持 DOM API
         environment: 'jsdom',
         // 测试文件匹配规则
@@ -32,11 +34,15 @@ export default defineConfig({
             'tests/**/*.spec.ts',
             'src/**/*.test.ts',
         ],
-        // 排除 node_modules 和 src-tauri
+        // 排除 node_modules、src-tauri、dist 以及 Playwright E2E 用例
+        // （E2E 用例位于 tests/e2e/*.spec.ts，由 @playwright/test 独立运行，
+        //   若被 vitest 的 tests/**/*.spec.ts 包含规则误收集会报
+        //   "Playwright Test did not expect test.describe()" 错误）
         exclude: [
             'node_modules/**',
             'src-tauri/**',
             'dist/**',
+            'tests/e2e/**',
         ],
         // 全局启用（避免每个文件 import describe/it/expect）
         globals: true,

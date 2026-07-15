@@ -43,9 +43,9 @@ const htmlRef = ref('')
 async function render() {
     const tpl = props.template
     const shop = {
-        shopName: settings.settings.shopName || '茶易管',
-        shopAddress: settings.settings.shopAddress || '茶香路1号',
-        shopPhone: settings.settings.shopPhone || '13800000000'
+        shopName: settings.settings?.shopName || '茶易管',
+        shopAddress: settings.settings?.shopAddress || '茶香路1号',
+        shopPhone: settings.settings?.shopPhone || '13800000000'
     }
     const data = (props.data ?? demoPrintData(tpl.type, shop)) as
         | ReceiptPrintData

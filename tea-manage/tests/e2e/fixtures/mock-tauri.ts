@@ -53,6 +53,12 @@ export async function injectMockTauri(page: Page, overrides: Record<string, any>
         // ===== 设置 isTauri 标志 =====
         window.isTauri = true;
 
+        // ===== 模拟已登录态（绕过 router 守卫的登录门禁） =====
+        // 仅用于 E2E 测试；真实运行由 Login.vue 在登录成功后设置该标志。
+        // v0.7.1 回归修复：此前未设置此标志导致所有非公开路由被守卫重定向到 /login，
+        // 使 E2E 用例永远停留在登录页而断言失败。
+        try { localStorage.setItem('tea-logged-in', '1'); } catch (e) {}
+
         // ===== mock 数据（与 mockData 导出保持一致） =====
         var PRODUCTS = ${JSON.stringify(mockData.products)};
         var CATEGORIES = ${JSON.stringify(mockData.categories)};
@@ -93,7 +99,8 @@ export async function injectMockTauri(page: Page, overrides: Record<string, any>
                 return {
                     list: [{
                         productId: 'p-001', productName: '西湖龙井', productCode: 'LONGJING001',
-                        categoryId: 'c-001', categoryName: '绿茶', stockGrams: 1000, stockValue: 2000,
+                        categoryId: 'c-001', categoryName: '绿茶', productType: 'weight',
+                        stockGrams: 1000, stockValue: 2000, displayStock: '1000 g',
                         batchCount: 2, updatedAt: '2026-07-01'
                     }],
                     total: 1, page: 1, pageSize: 20
@@ -103,8 +110,8 @@ export async function injectMockTauri(page: Page, overrides: Record<string, any>
                 return {
                     product: PRODUCTS[0],
                     batches: [
-                        { id: 'b-001', productId: args.productId || 'p-001', batchNo: 'BN20260101', remainingGrams: 500, initialGrams: 500, createdAt: '2026-01-01' },
-                        { id: 'b-002', productId: args.productId || 'p-001', batchNo: 'BN20260115', remainingGrams: 500, initialGrams: 500, createdAt: '2026-01-15' }
+                        { id: 'b-001', productId: args.productId || 'p-001', batchCode: 'BN20260101', remainingGrams: 500, initialGrams: 500, createdAt: '2026-01-01' },
+                        { id: 'b-002', productId: args.productId || 'p-001', batchCode: 'BN20260115', remainingGrams: 500, initialGrams: 500, createdAt: '2026-01-15' }
                     ],
                     flows: []
                 };

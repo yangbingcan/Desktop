@@ -10,12 +10,17 @@ import type { SystemSettings } from '@/types'
 
 const STORAGE_KEY = 'tea-settings'
 
-/** 从 localStorage 读取已持久化的设置（容错：解析失败返回空对象） */
+/** 从 localStorage 读取已持久化的设置（容错：解析失败或非对象返回空对象） */
 function loadFromStorage(): Partial<SystemSettings> {
     try {
         const raw = localStorage.getItem(STORAGE_KEY)
         if (!raw) return {}
-        return JSON.parse(raw) as Partial<SystemSettings>
+        const parsed = JSON.parse(raw)
+        // 确保解析结果为纯对象（排除 null、数组、基本类型等异常值）
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            return parsed as Partial<SystemSettings>
+        }
+        return {}
     } catch {
         return {}
     }
@@ -51,6 +56,14 @@ export const useSettingsStore = defineStore('settings', () => {
      * @param newSettings 部分或全部系统设置
      */
     function saveSettings(newSettings: Partial<SystemSettings>) {
+        // 防御：确保 settings.value 始终为有效对象（HMR / 异常恢复场景下可能丢失）
+        if (!settings.value || typeof settings.value !== 'object') {
+            settings.value = {
+                shopName: '', shopAddress: '', shopPhone: '',
+                allowNegativeStock: false, enableMemberDiscount: true,
+                enablePrintReceipt: true, defaultReceiptTemplate: 'default'
+            }
+        }
         settings.value = { ...settings.value, ...newSettings }
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(settings.value))

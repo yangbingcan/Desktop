@@ -3,7 +3,7 @@
  * @description v0.4.0 - 添加 meta.tabTitle 用于标签页显示
  * @change 修复 PurchaseEdit 重复定义（v0.3.6 已知 bug）
  */
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
 // ========== 路由懒加载 ==========
@@ -195,8 +195,11 @@ const routes: RouteRecordRaw[] = [
 ]
 
 // ========== 创建路由实例 ==========
+// v0.7.1 修复回归：改用 hash 模式。Tauri webview 始终加载 index.html，
+// 刷新/深链时 history 模式会请求不存在的子路径导致白屏；hash 模式子路径在 # 后，
+// 永远回退到 index.html，彻底规避该失败模式。
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes
 })
 

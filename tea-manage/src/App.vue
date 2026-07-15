@@ -6,14 +6,16 @@
 <template>
   <n-config-provider :theme="naiveTheme" :theme-overrides="themeOverrides">
     <n-message-provider>
-      <!-- 公开页（登录）不进入 AppLayout -->
-      <router-view v-if="isPublicRoute" v-slot="{ Component, route: r }">
-        <transition name="tea-fade-in" mode="out-in">
-          <component :is="markRaw(Component)" :key="r.path" v-if="Component" />
-        </transition>
-      </router-view>
-      <!-- 业务页：AppLayout 包裹 -->
-      <AppLayout v-else />
+      <n-dialog-provider>
+        <!-- 公开页（登录）不进入 AppLayout -->
+        <router-view v-if="isPublicRoute" v-slot="{ Component, route: r }">
+          <transition name="tea-fade-in" mode="out-in">
+            <component :is="markRaw(Component)" :key="r.path" v-if="Component" />
+          </transition>
+        </router-view>
+        <!-- 业务页：AppLayout 包裹 -->
+        <AppLayout v-else />
+      </n-dialog-provider>
     </n-message-provider>
   </n-config-provider>
 </template>
@@ -32,7 +34,7 @@
  */
 import { computed, markRaw } from 'vue'
 import { useRoute } from 'vue-router'
-import { NConfigProvider, NMessageProvider, darkTheme } from 'naive-ui'
+import { NConfigProvider, NMessageProvider, NDialogProvider, darkTheme } from 'naive-ui'
 import type { GlobalThemeOverrides } from 'naive-ui'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { useThemeStore } from '@/stores/theme'

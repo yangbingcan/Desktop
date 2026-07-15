@@ -1,5 +1,19 @@
 [
   {
+    "version": "0.7.1",
+    "date": "2026-07-15",
+    "type": "patch",
+    "title": "回归修复：白屏 + Naive UI 组件未注册 + E2E 基线建立",
+    "changes": [
+      "fix: 生产构建白屏——Vite base 改为相对路径 './' 并改用 createWebHashHistory，规避 Tauri Windows 构建将绝对 /assets/ 改写为 tauri.localhost 被 CSP 拦截",
+      "fix: Naive UI 组件未注册回归——main.ts 全局注册缺漏的 8 个组件（NText / NList / NListItem / NGrid / NGi / NButtonGroup / NPagination / NRadioButton），修复全站彩色文字 / 列表 / 栅格丢失 Naive UI 样式",
+      "fix: 全局错误守卫（errorGuard）——运行时异常以可见面板呈现，避免整页白屏无提示",
+      "test: 建立 Playwright E2E 回归基线（29 用例全绿），覆盖商品 / 库存 / 收银核心流程",
+      "test: 删除过时的 jsdom 视图测试（断言 v0.6.0 前不存在的 DOM，已被 E2E 取代）；vitest 排除 tests/e2e 避免误收集 Playwright 用例",
+      "chore: 版本号同步至 0.7.1（无数据库变更，patch）"
+    ]
+  },
+  {
     "version": "0.7.0",
     "date": "2026-07-15",
     "type": "minor",

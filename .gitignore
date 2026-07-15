@@ -49,6 +49,10 @@ Desktop.ini
 .workbuddy/
 .trae/
 
+# ===== Desktop 授权注册系统（独立项目，有独立 .git） =====
+# 已将源码复制到 zhuceshouquan/ 目录，Desktop/ 不再纳入根仓库
+Desktop/
+
 # ===== 用户运行时数据（SQLite 数据库，按需解注释纳入/排除） =====
 # *.db
 # *.sqlite

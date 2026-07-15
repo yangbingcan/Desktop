@@ -200,13 +200,33 @@ interface ChangelogEntry {
 }
 
 const message = useMessage()
-const dialog = useDialog()
+// 防御：useDialog 需要 NDialogProvider 祖先组件，若缺失会抛异常导致 setup 中断
+// 延迟到 shopSettings/systemSettings 初始化之后再调用，确保渲染数据已就绪
 const settingsStore = useSettingsStore()
 
 // 版本号从 Tauri 运行时读取（tauri.conf.json），始终与安装包一致，避免硬编码过期版本
-const appVersion = ref('0.7.0')
+const appVersion = ref('0.7.1')
 const changelog = changelogData as ChangelogEntry[]
 const latest = changelog[0]
+
+// I2 修复：表单初始值从已持久化的 store 读取，确保刷新后回显用户保存的设置
+// 防御：使用可选链 + 默认值，避免 settings 为 undefined 时崩溃（HMR / store 未初始化场景）
+const shopSettings = reactive({
+    shopName: settingsStore.settings?.shopName ?? '',
+    shopAddress: settingsStore.settings?.shopAddress ?? '',
+    shopPhone: settingsStore.settings?.shopPhone ?? ''
+})
+
+const systemSettings = reactive({
+    allowNegativeStock: settingsStore.settings?.allowNegativeStock ?? false,
+    enableMemberDiscount: settingsStore.settings?.enableMemberDiscount ?? true,
+    enablePrintReceipt: settingsStore.settings?.enablePrintReceipt ?? true,
+    defaultReceiptTemplate: settingsStore.settings?.defaultReceiptTemplate ?? 'default'
+})
+
+// useDialog 必须在 shopSettings/systemSettings 之后调用，
+// 确保即使 NDialogProvider 缺失导致异常，渲染所需的响应式数据已就绪
+const dialog = useDialog()
 
 onMounted(async () => {
     try {
@@ -221,20 +241,6 @@ function onDemoModeChange(val: boolean): void {
     setDemoMode(val)
     message.success(val ? '已开启演示模式' : '已关闭演示模式，首页将隐藏演示数据管理')
 }
-
-// I2 修复：表单初始值从已持久化的 store 读取，确保刷新后回显用户保存的设置
-const shopSettings = reactive({
-    shopName: settingsStore.settings.shopName,
-    shopAddress: settingsStore.settings.shopAddress,
-    shopPhone: settingsStore.settings.shopPhone
-})
-
-const systemSettings = reactive({
-    allowNegativeStock: settingsStore.settings.allowNegativeStock,
-    enableMemberDiscount: settingsStore.settings.enableMemberDiscount,
-    enablePrintReceipt: settingsStore.settings.enablePrintReceipt,
-    defaultReceiptTemplate: settingsStore.settings.defaultReceiptTemplate
-})
 
 const templateOptions = [
     { label: '默认模板', value: 'default' }

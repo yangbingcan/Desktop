@@ -9,7 +9,7 @@ import { injectMockTauri, mockData } from './fixtures/mock-tauri'
 test.describe('库存管理流程', () => {
     test.beforeEach(async ({ page }) => {
         await injectMockTauri(page)
-        await page.goto('/inventory')
+        await page.goto('/#/inventory')
         await page.waitForLoadState('networkidle')
     })
 
@@ -58,24 +58,28 @@ test.describe('库存管理流程', () => {
     })
 
     test('空库存列表应显示空状态', async ({ page }) => {
-        // 注入空数据
+        // 注入空数据（override 必须是可序列化的数据，不能是函数）
         await injectMockTauri(page, {
-            get_inventory: () => []
+            get_inventory: { list: [], total: 0, page: 1, pageSize: 20 }
         })
         await page.reload()
         await page.waitForLoadState('networkidle')
         await page.waitForTimeout(500)
 
-        // 验证显示空状态
-        await expect(page.locator('text=暂无').or(page.locator('.n-empty'))).toBeVisible({ timeout: 3000 })
+        // 验证显示空状态（n-empty 可能多处渲染，取首个即可）
+        await expect(page.locator('.n-empty').first()).toBeVisible({ timeout: 3000 })
     })
 
     test('应显示批次信息', async ({ page }) => {
         // 等待数据加载
         await page.waitForTimeout(500)
 
+        // 批次号在行「详情」抽屉中展示，点击首行详情按钮打开抽屉
+        await page.locator('button', { hasText: '详情' }).first().click()
+        await page.waitForTimeout(1000)
+
         // 验证批次号显示（mock 数据中有 BN20260101 和 BN20260115）
-        await expect(page.locator('text=BN20260101').or(page.locator('text=批次'))).toBeVisible({ timeout: 3000 })
+        await expect(page.locator('text=BN20260101')).toBeVisible({ timeout: 3000 })
     })
 
     test('页面应包含筛选或搜索功能', async ({ page }) => {
@@ -89,7 +93,7 @@ test.describe('库存管理流程', () => {
         await page.waitForTimeout(500)
 
         // 验证表格存在（n-data-table 或 table 元素）
-        const table = page.locator('.n-data-table').or(page.locator('table'))
+        const table = page.locator('.n-data-table').first()
         await expect(table).toBeVisible({ timeout: 3000 })
     })
 
@@ -98,6 +102,6 @@ test.describe('库存管理流程', () => {
         await page.waitForTimeout(500)
 
         // 验证"商品名称"或"商品"列标题存在
-        await expect(page.locator('text=商品名称').or(page.locator('text=商品'))).toBeVisible({ timeout: 3000 })
+        await expect(page.locator('text=商品名称').first()).toBeVisible({ timeout: 3000 })
     })
 })

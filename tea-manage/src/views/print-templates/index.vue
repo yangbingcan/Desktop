@@ -119,9 +119,9 @@ function typeLabel(t: TemplateType): string {
 
 function shopInfo(): ShopInfo {
     return {
-        shopName: settings.settings.shopName || '茶易管',
-        shopAddress: settings.settings.shopAddress || '',
-        shopPhone: settings.settings.shopPhone || ''
+        shopName: settings.settings?.shopName || '茶易管',
+        shopAddress: settings.settings?.shopAddress || '',
+        shopPhone: settings.settings?.shopPhone || ''
     }
 }
 

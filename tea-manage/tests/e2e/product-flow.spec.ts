@@ -9,7 +9,7 @@ import { injectMockTauri, mockData } from './fixtures/mock-tauri'
 test.describe('商品管理流程', () => {
     test.beforeEach(async ({ page }) => {
         await injectMockTauri(page)
-        await page.goto('/products')
+        await page.goto('/#/products')
         await page.waitForLoadState('networkidle')
     })
 
@@ -60,16 +60,16 @@ test.describe('商品管理流程', () => {
     })
 
     test('空商品列表应显示空状态', async ({ page }) => {
-        // 注入空数据
+        // 注入空数据（override 必须是可序列化的数据，不能是函数；函数会被 JSON.stringify 丢弃）
         await injectMockTauri(page, {
-            get_products: () => []
+            get_products: { list: [], total: 0, page: 1, pageSize: 100 }
         })
         await page.reload()
         await page.waitForLoadState('networkidle')
         await page.waitForTimeout(500)
 
-        // 验证显示空状态
-        await expect(page.locator('text=暂无商品数据')).toBeVisible({ timeout: 3000 })
+        // 验证显示空状态（v0.6.0 统一 UI 后空状态文案为「暂无茶叶数据」）
+        await expect(page.locator('text=暂无茶叶数据')).toBeVisible({ timeout: 3000 })
     })
 
     test('筛选栏应包含分类选择器', async ({ page }) => {
@@ -79,8 +79,8 @@ test.describe('商品管理流程', () => {
     })
 
     test('筛选栏应包含商品类型选择器', async ({ page }) => {
-        // 验证类型选择器存在
-        const typeSelect = page.locator('input[placeholder="商品类型"]')
+        // 验证类型选择器存在（NSelect 渲染为 .n-base-selection，第二个为类型筛选）
+        const typeSelect = page.locator('.n-base-selection').nth(1)
         await expect(typeSelect).toBeVisible()
     })
 
@@ -110,7 +110,8 @@ test.describe('商品管理流程', () => {
     })
 
     test('页面应包含页头标题', async ({ page }) => {
-        // 验证页面标题
-        await expect(page.locator('h1', { hasText: '商品列表' })).toBeVisible()
+        // v0.6.0 统一 UI 后页头为深茶绿主题的 span（class text-[18px]），无 <h1> 标签
+        // 商品档案列表页头文案为「商品档案」
+        await expect(page.locator('.tea-page').getByText('商品档案')).toBeVisible()
     })
 })

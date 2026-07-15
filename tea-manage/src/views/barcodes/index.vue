@@ -250,9 +250,9 @@ function printSelected() {
 /** 由 settings 构造店铺信息，作为标签渲染数据来源 */
 function currentShop(): ShopInfo {
     return {
-        shopName: settings.settings.shopName || '茶易管',
-        shopAddress: settings.settings.shopAddress || '',
-        shopPhone: settings.settings.shopPhone || ''
+        shopName: settings.settings?.shopName || '茶易管',
+        shopAddress: settings.settings?.shopAddress || '',
+        shopPhone: settings.settings?.shopPhone || ''
     }
 }
 
