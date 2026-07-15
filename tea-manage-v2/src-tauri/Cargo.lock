@@ -1650,40 +1650,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "guanyong-gl"
-version = "0.6.0"
-dependencies = [
- "axum",
- "base64 0.22.1",
- "bcrypt",
- "chrono",
- "futures",
- "hex",
- "hmac",
- "hostname",
- "local-ip-address",
- "mac_address",
- "os_info",
- "r2d2",
- "r2d2_sqlite",
- "rand 0.8.6",
- "reqwest 0.12.28",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-opener",
- "tokio",
- "tokio-stream",
- "tower-http 0.5.2",
- "uuid",
-]
-
-[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4390,6 +4356,40 @@ dependencies = [
  "dunce",
  "embed-resource",
  "toml 1.1.2+spec-1.1.0",
+]
+
+[[package]]
+name = "tea-manage-v2"
+version = "2.0.0"
+dependencies = [
+ "axum",
+ "base64 0.22.1",
+ "bcrypt",
+ "chrono",
+ "futures",
+ "hex",
+ "hmac",
+ "hostname",
+ "local-ip-address",
+ "mac_address",
+ "os_info",
+ "r2d2",
+ "r2d2_sqlite",
+ "rand 0.8.6",
+ "reqwest 0.12.28",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-opener",
+ "tokio",
+ "tokio-stream",
+ "tower-http 0.5.2",
+ "uuid",
 ]
 
 [[package]]

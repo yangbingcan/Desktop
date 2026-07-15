@@ -3,7 +3,7 @@
 use crate::database::{DbState, get_conn};
 use crate::auth::verify_and_get_context;
 use rusqlite::params;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tauri::State;
 
 #[derive(Deserialize)]
@@ -55,7 +55,7 @@ pub fn create_sale_order(db: State<'_, DbState>, token: String, input: SaleOrder
     let order_no = gen_order_no("XS");
 
     // 获取会员信息
-    let (member_name, member_discount, member_points): (Option<String>, Option<f64>, i64) = if let Some(ref mid) = input.member_id {
+    let (member_name, member_discount, _member_points): (Option<String>, Option<f64>, i64) = if let Some(ref mid) = input.member_id {
         let row: (Option<String>, String, i64) = tx.query_row(
             "SELECT name, level, points FROM members WHERE id = ?1", params![mid], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?))
         ).map_err(|e| format!("查询会员失败: {}", e))?;
@@ -69,7 +69,7 @@ pub fn create_sale_order(db: State<'_, DbState>, token: String, input: SaleOrder
 
     for item in &input.items {
         // 获取单位和商品信息
-        let (unit_name, conversion, retail_price, member_price, product_id, product_name, ptype): (String, i64, f64, f64, String, String, String) = tx.query_row(
+        let (_unit_name, conversion, retail_price, member_price, product_id, product_name, ptype): (String, i64, f64, f64, String, String, String) = tx.query_row(
             "SELECT su.name, su.conversion_to_base, su.retail_price, su.member_price, su.product_id, p.name, p.product_type
              FROM sales_units su JOIN products p ON su.product_id = p.id
              WHERE su.id = ?1",
@@ -133,10 +133,11 @@ pub fn create_sale_order(db: State<'_, DbState>, token: String, input: SaleOrder
 
     // 创建销售明细
     for (item_id, product_id, product_name, quantity, unit_price, grams, subtotal) in &sale_items_data {
+        let unit_id = input.items.iter().find(|i| i.product_id == *product_id).map(|i| i.unit_id.as_str()).unwrap_or("");
         tx.execute(
             "INSERT INTO sales_items (id, order_id, product_id, product_name, unit_id, unit_name, quantity, unit_price, grams, subtotal)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?, ?6, ?7, ?8, ?9)",
-            params![item_id, order_id, product_id, product_name, input.items.iter().find(|i| i.product_id == *product_id).map(|i| i.unit_id.as_str()).unwrap_or(""), quantity, unit_price, grams, subtotal],
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            params![item_id, order_id, product_id, product_name, unit_id, "", quantity, unit_price, grams, subtotal],
         ).map_err(|e| format!("创建明细失败: {}", e))?;
     }
 
@@ -320,7 +321,7 @@ pub fn return_sale_order(db: State<'_, DbState>, token: String, input: ReturnSal
     let mut items_data: Vec<(String, String, i64, f64, f64)> = Vec::new();
 
     for item in &input.items {
-        let (product_name, unit_name, unit_price): (String, String, f64) = tx.query_row(
+        let (product_name, _unit_name, unit_price): (String, String, f64) = tx.query_row(
             "SELECT si.product_name, si.unit_name, si.unit_price FROM sales_items si WHERE si.order_id = ?1 AND si.product_id = ?2 AND si.unit_id = ?3",
             params![input.original_order_id, item.product_id, item.unit_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?))
         ).map_err(|e| format!("查询原订单明细失败: {}", e))?;
@@ -349,7 +350,7 @@ pub fn return_sale_order(db: State<'_, DbState>, token: String, input: ReturnSal
     for (item_id, product_name, quantity, unit_price, subtotal) in &items_data {
         tx.execute(
             "INSERT INTO return_sale_items (id, order_id, product_id, product_name, unit_id, unit_name, quantity, unit_price, subtotal)
-             VALUES (?1, ?2, ?, ?, ?, ?, ?, ?)",
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![item_id, return_id, "", product_name, "", "", quantity, unit_price, subtotal],
         ).map_err(|e| format!("创建退货明细失败: {}", e))?;
     }

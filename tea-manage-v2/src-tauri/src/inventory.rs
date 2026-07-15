@@ -206,7 +206,7 @@ pub fn purchase_in(db: State<'_, DbState>, token: String, input: PurchaseInInput
     let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
 
     // 获取单位换算系数
-    let (conversion, product_id, unit_name): (i64, String, String) = tx.query_row(
+    let (conversion, product_id, _unit_name): (i64, String, String) = tx.query_row(
         "SELECT conversion_to_base, product_id, name FROM sales_units WHERE id = ?1",
         params![input.unit_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?))
     ).map_err(|e| format!("查询销售单位失败: {}", e))?;

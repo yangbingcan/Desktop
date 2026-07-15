@@ -135,7 +135,7 @@ pub fn create_member(db: State<'_, DbState>, token: String, input: MemberInput) 
     let id = uuid::Uuid::new_v4().to_string();
     conn.execute(
         "INSERT INTO members (id, name, phone, gender, birthday, level) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![id, input.name, input.phone, input.gender, input.birthday, input.level.unwrap_or("normal")],
+        params![id, input.name, input.phone, input.gender, input.birthday, input.level.unwrap_or("normal".to_string())],
     ).map_err(|e| format!("创建会员失败: {}", e))?;
 
     Ok(id)
@@ -148,7 +148,7 @@ pub fn update_member(db: State<'_, DbState>, token: String, id: String, input: M
 
     conn.execute(
         "UPDATE members SET name = ?1, phone = ?2, gender = ?3, birthday = ?4, level = ?5, updated_at = datetime('now') WHERE id = ?6",
-        params![input.name, input.phone, input.gender, input.birthday, input.level.unwrap_or("normal"), id],
+        params![input.name, input.phone, input.gender, input.birthday, input.level.unwrap_or("normal".to_string()), id],
     ).map_err(|e| format!("更新会员失败: {}", e))?;
 
     Ok(())

@@ -676,10 +676,10 @@ fn migrate_v9_tea_tables(conn: &Connection) -> Result<(), String> {
 
     // 初始化默认打印模板
     tx.execute(
-        "INSERT OR IGNORE INTO print_templates (id, name, type, content, is_default) VALUES
+        r#"INSERT OR IGNORE INTO print_templates (id, name, type, content, is_default) VALUES
             ('tpl-receipt-default', '默认零售小票', 'receipt',
-             '<div class=\"receipt\"><h2>{{shopName}}<\/h2><p>{{shopAddress}}<\/p><p>电话: {{shopPhone}}<\/p><hr><table><thead><tr><th>商品<\/th><th>数量<\/th><th>金额<\/th><\/tr><\/thead><tbody>{{items}}<\/tbody><tfoot><tr><td colspan=\"2\">合计<\/td><td>{{total}}<\/td><\/tr><\/tfoot><\/table><p>会员: {{memberName}}<\/p><p>支付: {{payMethod}} {{actualAmount}}<\/p><hr><p>感谢惠顾！<\/p><\/div>',
-             1)",
+             '<div class="receipt"><h2>{{shopName}}</h2><p>{{shopAddress}}</p><p>电话: {{shopPhone}}</p><hr><table><thead><tr><th>商品</th><th>数量</th><th>金额</th></tr></thead><tbody>{{items}}</tbody><tfoot><tr><td colspan="2">合计</td><td>{{total}}</td></tr></tfoot></table><p>会员: {{memberName}}</p><p>支付: {{payMethod}} {{actualAmount}}</p><hr><p>感谢惠顾！</p></div>',
+             1)"#,
         [],
     ).map_err(|e| format!("v9迁移失败(默认模板): {}", e))?;
 
