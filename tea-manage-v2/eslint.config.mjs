@@ -31,6 +31,7 @@ export default [
         URL: 'readonly',
         HTMLElement: 'readonly',
         HTMLDivElement: 'readonly',
+        HTMLCanvasElement: 'readonly',
         HTMLInputElement: 'readonly',
         HTMLTextAreaElement: 'readonly',
         Event: 'readonly',
