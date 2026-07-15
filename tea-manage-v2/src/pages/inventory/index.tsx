@@ -1,9 +1,9 @@
 /** @file 库存管理 - 列表 + 批次详情 + 入库/报损/盘点弹窗 */
 import { useState, useEffect, useCallback } from 'react'
 import { Table, Input, Card, Tag, Button, Space, message, Modal, InputNumber, Form, Select, Drawer, Descriptions, Tabs } from 'antd'
-import { InboxOutlined, PlusOutlined, MinusOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons'
+import { PlusOutlined, MinusOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons'
+import { invoke } from '@tauri-apps/api/core'
 import { getInventory, getInventoryDetail, purchaseIn, damageOut, adjustStock, type InventoryItem } from '../../services/inventoryService'
-import { getProducts } from '../../services/productService'
 
 export default function InventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>([])

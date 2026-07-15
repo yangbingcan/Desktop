@@ -1,6 +1,6 @@
 /** @file 会员列表页 - 完整 CRUD + 储值充值 */
 import { useState, useEffect, useCallback } from 'react'
-import { Table, Input, Card, Tag, Button, Space, message, Popconfirm } from 'antd'
+import { Table, Input, Card, Tag, Button, Space, message } from 'antd'
 import { PlusOutlined, EditOutlined, DollarOutlined } from '@ant-design/icons'
 import { getMembers, type Member } from '../../../services/memberService'
 import MemberForm from './MemberForm'

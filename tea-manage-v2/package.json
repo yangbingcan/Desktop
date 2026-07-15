@@ -20,6 +20,7 @@
     "@tauri-apps/plugin-dialog": "^2",
     "@tauri-apps/plugin-fs": "^2",
     "@tauri-apps/plugin-opener": "^2",
+    "@types/qrcode": "^1.5.6",
     "antd": "^5.22.0",
     "dayjs": "^1.11.21",
     "jsbarcode": "^3.12.3",
