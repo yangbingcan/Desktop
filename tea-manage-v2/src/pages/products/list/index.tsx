@@ -13,7 +13,6 @@ export default function ProductListPage() {
   const [page, setPage] = useState(1)
   const [formOpen, setFormOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const token = localStorage.getItem('token') || ''
 
   const loadData = useCallback(async () => {
     setLoading(true)

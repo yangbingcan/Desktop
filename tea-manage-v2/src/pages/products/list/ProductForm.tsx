@@ -1,7 +1,7 @@
 /** @file 商品新增/编辑弹窗 - 多单位 + 分类选择 + 茶叶属性 */
 import { useState, useEffect, useCallback } from 'react'
-import { Modal, Form, Input, Select, Button, Space, InputNumber, Radio, Divider, message } from 'antd'
-import { PlusOutlined, DeleteOutlined, MinusCircleOutlined } from '@ant-design/icons'
+import { Modal, Form, Input, Select, Button, InputNumber, Radio, Divider, message } from 'antd'
+import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
 import { createProduct, updateProduct, getProduct, getCategories, type CreateProductInput, type UnitInput, type Category } from '../../../services/productService'
 
 interface Props {
