@@ -1,7 +1,8 @@
-/** @file 供应商管理 API 服务 */
+﻿/** @file 供应商管理 API 服务 */
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../stores/authStore'
 
-const getToken = () => localStorage.getItem('token') || ''
+const getToken = () => useAuthStore.getState().token || ''
 
 export interface Supplier {
   id: string; name: string; contact_person: string | null
@@ -38,3 +39,4 @@ export async function updateSupplier(id: string, input: SupplierInput) {
 export async function deleteSupplier(id: string) {
   return invoke<void>('delete_supplier', { token: getToken(), id })
 }
+

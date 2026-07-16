@@ -1,7 +1,8 @@
-/** @file 销售收银 API 服务 */
+﻿/** @file 销售收银 API 服务 */
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../stores/authStore'
 
-const getToken = () => localStorage.getItem('token') || ''
+const getToken = () => useAuthStore.getState().token || ''
 
 export interface CartItem {
   productId: string
@@ -48,3 +49,4 @@ export async function getDashboardStats() {
 export async function getMemberByPhone(phone: string) {
   return invoke<any>('get_member_by_phone', { token: getToken(), phone })
 }
+

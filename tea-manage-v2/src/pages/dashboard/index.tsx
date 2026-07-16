@@ -1,4 +1,4 @@
-/** @file 茶易管V2 首页仪表盘 - 今日经营概览 + 快捷入口 */
+﻿/** @file 茶易管V2 首页仪表盘 - 今日经营概览 + 快捷入口 */
 import { useState, useEffect, useCallback } from 'react'
 import { Card, Row, Col, Statistic, Button, message, Spin } from 'antd'
 import {
@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
   const [stats, setStats] = useState<DashboardStats>({ todayOrders: 0, todaySales: 0, lowStockCount: 0, newMembers: 0 })
   const [loading, setLoading] = useState(true)
-  const token = localStorage.getItem('token') || ''
+  const token = useAuthStore.getState().token || ''
 
   const loadData = useCallback(async () => {
     try {
@@ -106,3 +106,4 @@ export default function DashboardPage() {
     </div>
   )
 }
+

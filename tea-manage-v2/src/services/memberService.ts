@@ -1,7 +1,8 @@
-/** @file 会员管理 API 服务 */
+﻿/** @file 会员管理 API 服务 */
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../stores/authStore'
 
-const getToken = () => localStorage.getItem('token') || ''
+const getToken = () => useAuthStore.getState().token || ''
 
 export interface Member {
   id: string; name: string; phone: string; gender: string | null
@@ -63,3 +64,4 @@ export async function refundMemberBalance(input: RechargeInput) {
 export async function getMemberBalanceLogs(memberId: string, page?: number, pageSize?: number) {
   return invoke<any>('get_member_balance_logs', { token: getToken(), memberId, page, pageSize })
 }
+

@@ -1,8 +1,9 @@
-/** @file 库存管理 - 列表 + 批次详情 + 入库/报损/盘点弹窗 */
+﻿/** @file 库存管理 - 列表 + 批次详情 + 入库/报损/盘点弹窗 */
 import { useState, useEffect, useCallback } from 'react'
 import { Table, Input, Card, Tag, Button, Space, message, Modal, InputNumber, Form, Select, Drawer, Descriptions, Tabs } from 'antd'
 import { PlusOutlined, MinusOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons'
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../../stores/authStore'
 import { getInventory, getInventoryDetail, purchaseIn, damageOut, adjustStock, type InventoryItem } from '../../services/inventoryService'
 
 export default function InventoryPage() {
@@ -133,7 +134,7 @@ function StockInModal({ open, product, onClose, onSuccess }: { open: boolean; pr
   const [loading, setLoading] = useState(false)
   const [units, setUnits] = useState<any[]>([])
   const [suppliers, setSuppliers] = useState<any[]>([])
-  const token = localStorage.getItem('token') || ''
+  const token = useAuthStore.getState().token || ''
 
   useEffect(() => {
     if (open && product) {
@@ -255,3 +256,4 @@ function AdjustModal({ open, product, onClose, onSuccess }: { open: boolean; pro
     </Modal>
   )
 }
+

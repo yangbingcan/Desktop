@@ -1,4 +1,4 @@
-/** @file 授权码 Service - 封装 Tauri IPC 调用（license.rs 命令） */
+﻿﻿/** @file 授权码 Service - 封装 Tauri IPC 调用（license.rs 命令） */
 import { invoke } from '@tauri-apps/api/core'
 
 /** 授权状态查询结果 */

@@ -1,5 +1,6 @@
-/** @file 商品档案 API 服务 */
+﻿/** @file 商品档案 API 服务 */
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../stores/authStore'
 
 export interface Product {
   id: string; code: string; name: string; category_id: string | null
@@ -43,7 +44,7 @@ export interface Category {
   level: number; sort_order: number
 }
 
-const getToken = () => localStorage.getItem('token') || ''
+const getToken = () => useAuthStore.getState().token || ''
 
 export async function getProducts(params: { page?: number; pageSize?: number; keyword?: string; categoryId?: string }) {
   return invoke<any>('get_products', { token: getToken(), ...params })
@@ -72,3 +73,4 @@ export async function getCategories() {
 export async function createCategory(input: { name: string; parent_id?: string; level: number; sort_order?: number }) {
   return invoke<string>('create_category', { token: getToken(), input })
 }
+

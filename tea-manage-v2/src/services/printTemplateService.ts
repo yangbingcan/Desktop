@@ -1,7 +1,8 @@
-/** @file 打印模板 API 服务 */
+﻿/** @file 打印模板 API 服务 */
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../stores/authStore'
 
-const getToken = () => localStorage.getItem('token') || ''
+const getToken = () => useAuthStore.getState().token || ''
 
 export interface PrintTemplate {
   id: string; name: string; template_type: string
@@ -75,3 +76,4 @@ export const DEFAULT_RECEIPT_TEMPLATE = `<div style="width:280px;font-family:mon
   <hr style="border-top:1px dashed #000;margin:4px 0;" />
   <p style="text-align:center;margin:4px 0;">感谢惠顾，欢迎再次光临！</p>
 </div>`
+

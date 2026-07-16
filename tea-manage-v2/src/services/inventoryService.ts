@@ -1,7 +1,8 @@
-/** @file 库存管理 API 服务 */
+﻿/** @file 库存管理 API 服务 */
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../stores/authStore'
 
-const getToken = () => localStorage.getItem('token') || ''
+const getToken = () => useAuthStore.getState().token || ''
 
 export interface InventoryItem {
   product_id: string; product_name: string; category_name: string | null
@@ -60,3 +61,4 @@ export async function adjustStock(input: AdjustInput) {
 export async function getAvailableBatches(productId: string) {
   return invoke<any>('get_available_batches', { token: getToken(), productId })
 }
+

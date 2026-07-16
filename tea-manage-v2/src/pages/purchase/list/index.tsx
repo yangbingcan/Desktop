@@ -1,8 +1,9 @@
-/** @file 采购入库 - 列表 + 新增采购单表单 */
+﻿/** @file 采购入库 - 列表 + 新增采购单表单 */
 import { useState, useEffect, useCallback } from 'react'
 import { Table, Card, Tag, Button, message, Modal, Form, Select, InputNumber, Input, Space } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../../../stores/authStore'
 import { purchaseIn } from '../../../services/inventoryService'
 import { getProducts } from '../../../services/productService'
 
@@ -20,7 +21,7 @@ export default function PurchaseListPage() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [formOpen, setFormOpen] = useState(false)
-  const token = localStorage.getItem('token') || ''
+  const token = useAuthStore.getState().token || ''
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -67,7 +68,7 @@ function PurchaseForm({ open, onClose, onSuccess }: { open: boolean; onClose: ()
   const [suppliers, setSuppliers] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
-  const token = localStorage.getItem('token') || ''
+  const token = useAuthStore.getState().token || ''
 
   useEffect(() => {
     if (open) {
@@ -249,3 +250,4 @@ function PurchaseForm({ open, onClose, onSuccess }: { open: boolean; onClose: ()
     </Modal>
   )
 }
+

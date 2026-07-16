@@ -1,8 +1,9 @@
-/** @file 报表分析 - 销售统计 + 库存分析 + 会员消费 */
+﻿/** @file 报表分析 - 销售统计 + 库存分析 + 会员消费 */
 import { useState, useEffect, useCallback } from 'react'
 import { Card, Row, Col, Statistic, Table, Tag, DatePicker, message, Empty, Spin } from 'antd'
 import { DollarOutlined, ShoppingCartOutlined, TeamOutlined, InboxOutlined } from '@ant-design/icons'
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../../stores/authStore'
 import dayjs from 'dayjs'
 
 const { RangePicker } = DatePicker
@@ -13,7 +14,7 @@ export default function ReportPage() {
   const [salesData, setSalesData] = useState<any[]>([])
   const [stats, setStats] = useState({ totalSales: 0, totalOrders: 0, totalMembers: 0, lowStock: 0 })
 
-  const token = localStorage.getItem('token') || ''
+  const token = useAuthStore.getState().token || ''
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -131,3 +132,4 @@ export default function ReportPage() {
     </div>
   )
 }
+

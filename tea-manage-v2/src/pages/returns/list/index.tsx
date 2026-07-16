@@ -1,15 +1,16 @@
-/** @file 退货管理列表页 - V2 Phase 1 占位页面 */
+﻿/** @file 退货管理列表页 - V2 Phase 1 占位页面 */
 import { useState, useEffect, useCallback } from 'react'
 import { Table, Card, Button, message } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../../../stores/authStore'
 
 export default function ReturnListPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const token = localStorage.getItem('token') || ''
+  const token = useAuthStore.getState().token || ''
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -40,3 +41,4 @@ export default function ReturnListPage() {
     </div>
   )
 }
+

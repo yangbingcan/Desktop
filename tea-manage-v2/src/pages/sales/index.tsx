@@ -1,8 +1,9 @@
-/** @file 收银开单 - 商品搜索 + 购物车 + 会员识别 + 结算 */
+﻿/** @file 收银开单 - 商品搜索 + 购物车 + 会员识别 + 结算 */
 import { useState, useCallback, useEffect } from 'react'
 import { Card, Input, Button, Table, Tag, Space, Empty, Modal, Radio, message, InputNumber, Row, Col, Statistic } from 'antd'
 import { ScanOutlined, ShoppingCartOutlined, UserOutlined, DeleteOutlined } from '@ant-design/icons'
 import { invoke } from '@tauri-apps/api/core'
+import { useAuthStore } from '../../stores/authStore'
 import { getProducts } from '../../services/productService'
 import { createSaleOrder, getMemberByPhone, type CartItem } from '../../services/salesService'
 
@@ -219,7 +220,7 @@ export default function SalesPage() {
 /** 商品单位按钮组件 */
 function ProductUnitButtons({ product, onAdd }: { product: any; onAdd: (p: any, unitId: string, unitName: string, price: number, conversion: number) => void }) {
   const [units, setUnits] = useState<any[]>([])
-  const token = localStorage.getItem('token') || ''
+  const token = useAuthStore.getState().token || ''
 
   useEffect(() => {
     if (product.id) {
@@ -242,3 +243,4 @@ function ProductUnitButtons({ product, onAdd }: { product: any; onAdd: (p: any, 
     </Space>
   )
 }
+
