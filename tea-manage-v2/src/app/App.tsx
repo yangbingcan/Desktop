@@ -32,12 +32,18 @@ import ReportPage from '../pages/reports'
 import '../styles/ant-overrides.css'
 import RequireAuth from '../components/auth/RequireAuth'
 
-/** 授权门禁：未激活时仅显示激活页，已激活才进入正常路由 */
+/** 授权门禁：未激活时仅显示激活页，已激活才进入正常路由
+ *  开发模式（import.meta.env.DEV）跳过授权检查，直接进入应用 */
 function LicenseGuard({ children }: { children: React.ReactNode }) {
   const { activated, loading, checkStatus } = useLicenseStore()
   const [checked, setChecked] = useState(false)
 
   useEffect(() => {
+    // 开发模式跳过授权检查
+    if (import.meta.env.DEV) {
+      setChecked(true)
+      return
+    }
     checkStatus().finally(() => setChecked(true))
   }, [checkStatus])
 
@@ -49,7 +55,8 @@ function LicenseGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!activated) {
+  // 开发模式或已激活时，直接进入应用
+  if (!activated && !import.meta.env.DEV) {
     return (
       <BrowserRouter>
         <Routes>

@@ -75,6 +75,26 @@ export default function LoginPage() {
     appWindow.close().catch(() => {})
   }
 
+  // 开发模式快捷登录（非 Tauri 环境绕过 invoke）
+  const handleDevLogin = () => {
+    const mockUser = {
+      id: 'dev-admin',
+      username: 'admin',
+      real_name: '开发管理员',
+      phone: '13800000000',
+      email: null,
+      avatar: '',
+      status: 1,
+      permissions: [],
+      roles: [{ id: '1', name: '超级管理员' }],
+      is_super_admin: true,
+    }
+    setLogin('dev-token-mock', mockUser)
+    resetTabs()
+    message.success('开发模式登录成功')
+    navigate('/dashboard')
+  }
+
   const onFinish = async (values: { username: string; password: string; remember: boolean }) => {
     setLoading(true)
     try {
@@ -187,10 +207,10 @@ export default function LoginPage() {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                管用GL
+                茶易管V2
               </h1>
               <p className="text-[12px] leading-tight" style={{ color: 'var(--gl-login-text-muted)' }}>
-                企业资源管理平台
+                茶叶店智能管理系统
               </p>
             </div>
           </div>
@@ -292,6 +312,23 @@ export default function LoginPage() {
               </Button>
             </Form.Item>
           </Form>
+          {import.meta.env.DEV && (
+            <div className="text-center mt-3">
+              <button
+                onClick={handleDevLogin}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--gl-login-text-muted)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                开发模式快捷登录 →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
